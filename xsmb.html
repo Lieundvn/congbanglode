@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Bảng Tính Lô Đề (Nâng Cao)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<style>
+  body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#f3f4f6; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", monospace; }
+  .card { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e6edf3; }
+  .btn { transition: all .15s; }
+  textarea { box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
+  textarea:focus { outline: none; box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5); border-color: #60a5fa; }
+</style>
+</head>
+<body class="min-h-screen p-4 md:p-6">
+  <div class="max-w-5xl mx-auto">
+    <div class="bg-white p-6 rounded-lg shadow-xl">
+      <h1 class="text-3xl font-bold text-center mb-6 text-indigo-700">Bảng Tính Lô Đề (Nâng Cao)</h1>
+
+      <div class="grid grid-cols-1 md:grid-cols-1 mb-4">
+        <div class="max-w-xs mx-auto w-full">
+          <label class="block font-semibold mb-1 text-gray-700">Ngày</label>
+          <input id="sessionDate" type="date" class="w-full p-2 border rounded shadow-sm" />
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <button id="toggleGuide" class="w-full text-left p-3 rounded-lg bg-indigo-50 border border-indigo-100 font-semibold flex justify-between items-center hover:bg-indigo-100 transition-colors">
+          <span>Hướng dẫn nhập liệu (nhấn để mở/đóng)</span>
+          <span id="toggleIcon">▼</span>
+        </button>
+        <div id="guidePanel" class="mt-2 p-4 bg-white border rounded-lg hidden mono text-sm shadow-inner">
+          <p class="mb-2">Nhập mỗi lệnh trên một dòng, các loại cú pháp hợp lệ:</p>
+          <ul class="list-disc ml-6">
+            <li><code>lo 11 22 33 x10đ</code> (hoặc <code>l</code>, <code>lô</code>)</li>
+            <li><code>de 67 78 x50n</code> (hoặc <code>d</code>, <code>đ</code>, <code>đê</code>...)</li>
+            <li><code>3c 123 456 x10n</code> (hoặc <code>bc</code>, <code>ba càng</code>...)</li>
+            <li><code>x2 11-22 33-44 x20n</code> (hoặc <code>xi2</code>, <code>xien2</code>...)</li>
+            <li><code>x3 11-22-33 x10n</code> (hoặc <code>xi3</code>, <code>xien3</code>...)</li>
+          </ul>
+          <p class="mt-2 text-xs text-blue-600 font-bold">Cập nhật mới (Đã tối ưu 100%):</p>
+          <ul class="list-disc ml-6 text-xs text-blue-600">
+              <li>Nhận diện chính xác <code>Ba cang</code> không dấu.</li>
+              <li>Dấu chấm (.) dùng tách lệnh: <code>Lo 50 x 20d. 66 x 10d</code>.</li>
+              <li>Dấu phẩy (,) hoặc chấm (.) dùng nối số: <code>24,74 x 50k</code>.</li>
+              <li>Tự động tách cặp lộn ABA cho Lô/Đề (Vd: 262 -> 26, 62).</li>
+              <li>Chấp nhận các ký hiệu: <b>x, X, *, ×</b> và mọi đơn vị tiền: <b>đ, d, ₫, n, k</b>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="config-panel" class="mb-6 p-4 rounded-lg bg-gray-50 border border-gray-200 hidden">
+        <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">Cấu Hình Tính Toán</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <div class="bg-white p-4 rounded-lg border border-red-200 shadow-sm">
+              <h3 class="font-bold mb-3 text-lg text-red-600">Cấu hình Tiền Đánh</h3>
+              <div class="grid grid-cols-1 gap-3">
+                  <label class="block">
+                      <span class="block config-label text-sm font-semibold text-gray-700 mb-1">Giá / 1 Điểm Lô (VNĐ)</span>
+                      <input id="pricePerDiem" type="number" value="22500" class="p-2 border rounded w-full mono shadow-sm" />
+                  </label>
+                  <label class="block">
+                      <span class="block config-label text-sm font-semibold text-gray-700 mb-1">Giá / 1 Nghìn Đề (VNĐ)</span>
+                      <input id="pricePerDeUnit" type="number" value="1000" class="p-2 border rounded w-full mono shadow-sm" />
+                  </label>
+                  <label class="block">
+                      <span class="block config-label text-sm font-semibold text-gray-700 mb-1">Giá / 1n 3 Càng (VNĐ)</span>
+                      <input id="pricePer3CUnit" type="number" value="1000" class="p-2 border rounded w-full mono shadow-sm" />
+                  </label>
+                  <label class="block">
+                      <span class="block config-label text-sm font-semibold text-gray-700 mb-1">Giá / 1n Xiên 2 (VNĐ)</span>
+                      <input id="pricePerX2Unit" type="number" value="1000" class="p-2 border rounded w-full mono shadow-sm" />
+                  </label>
+                  <label class="block">
+                      <span class="block config-label text-sm font-semibold text-gray-700 mb-1">Giá / 1n Xiên 3 (VNĐ)</span>
+                      <input id="pricePerX3Unit" type="number" value="1000" class="p-2 border rounded w-full mono shadow-sm" />
+                  </label>
+              </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg border border-green-200 shadow-sm">
+              <h3 class="font-bold mb-3 text-lg text-green-600">Cấu hình Tiền Thưởng</h3>
+              <div class="grid grid-cols-1 gap-3">
+                  <label class="block">
+                      <span class="block config-label text-sm font-semibold text-gray-700 mb-1">Thưởng / 1 Điểm Lô (VNĐ)</span>
+                      <input id="lottoPayout" type="number" value="80000" class="p-2 border rounded w-full mono shadow-sm" />
+                  </label>
+                  <label class="block">
+                      <span class="block config-label text-sm font-semibold text-gray-700 mb-1">Thưởng / 1 Nghìn Đề (VNĐ)</span>
+                      <input id="dePayout" type="number" value="80000" class="p-2 border rounded w-full mono shadow-sm" />
+                  </label>
+                  <label class="block">
+                      <span class="block config-label text-sm font-semibold text-gray-700 mb-1">Tỷ lệ thưởng 3 Càng (lần)</span>
+                      <input id="payoutRatio3C" type="number" value="400" class="p-2 border rounded w-full mono shadow-sm" />
+                  </label>
+                  <label class="block">
+                      <span class="block config-label text-sm font-semibold text-gray-700 mb-1">Tỷ lệ thưởng Xiên 2 (lần)</span>
+                      <input id="payoutRatioX2" type="number" value="10" class="p-2 border rounded w-full mono shadow-sm" />
+                  </label>
+                  <label class="block">
+                      <span class="block config-label text-sm font-semibold text-gray-700 mb-1">Tỷ lệ thưởng Xiên 3 (lần)</span>
+                      <input id="payoutRatioX3" type="number" value="40" class="p-2 border rounded w-full mono shadow-sm" />
+                  </label>
+              </div>
+            </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="font-semibold mb-1 block text-gray-700">1. Nhập lệnh cược:</label>
+          <textarea id="master-input" rows="10" class="w-full p-3 border rounded mono" placeholder="Ví dụ:&#10;lo 89 87 x50đ&#10;33 44 x10 (sẽ tự hiểu là Lô 10đ)&#10;x2 11 22 33 44 x50n (sẽ hiểu là 2 xiên)&#10;x3 111 222 333 x10 (sẽ tự hiểu là 3 Càng 10n)"></textarea>
+        </div>
+        <div>
+          <label class="font-semibold mb-1 block text-gray-700">2. Nhập bảng kết quả (27 giải):</label>
+          <textarea id="results-input" rows="10" class="w-full p-3 border rounded mono" placeholder="Dán 27 giải vào đây. Giải ĐB (Đề) lấy từ số đầu tiên."></textarea>
+        </div>
+      </div>
+
+      <div class="mb-4 flex flex-wrap gap-2 justify-center">
+        <button id="calculate-button" class="btn px-5 py-2 bg-indigo-600 text-white rounded-lg font-semibold shadow-md hover:bg-indigo-700 transition-colors">Phân Tích & Tính Toán</button>
+        <button id="toggleConfig" class="btn px-5 py-2 bg-orange-500 text-white rounded-lg font-semibold shadow-md hover:bg-orange-600 transition-colors">Hiện cấu hình</button>
+        <button id="toggleDetails" class="btn px-5 py-2 bg-gray-600 text-white rounded-lg font-semibold shadow-md hover:bg-gray-700 transition-colors">Hiện chi tiết</button>
+        <button id="clearStorage" class="btn px-5 py-2 bg-red-600 text-white rounded-lg font-semibold shadow-md hover:bg-red-700 transition-colors">Xóa cấu hình lưu</button>
+      </div>
+
+      <div id="results-container" class="mb-4 hidden"></div>
+
+      <div id="total-summary" class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Tổng kết Lãi / Lỗ</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <div class="p-4 border border-gray-200 rounded-lg bg-white">
+            <h3 class="font-semibold text-xl text-red-600 text-center mb-3">Tổng Tiền Đánh</h3>
+            <div class="mt-2 space-y-2 text-base md:text-lg">
+              <div class="flex justify-between"><div>Lô:</div><div id="totalLottoCostOutput" class="font-mono">0₫</div></div>
+              <div class="flex justify-between"><div>Đề:</div><div id="totalDeCostOutput" class="font-mono">0₫</div></div>
+              <div class="flex justify-between"><div>3 Càng:</div><div id="total3CCostOutput" class="font-mono">0₫</div></div>
+              <div class="flex justify-between"><div>Xiên 2:</div><div id="totalX2CostOutput" class="font-mono">0₫</div></div>
+              <div class="flex justify-between"><div>Xiên 3:</div><div id="totalX3CostOutput" class="font-mono">0₫</div></div>
+              <div class="flex justify-between font-bold text-red-600 mt-3 pt-3 border-t"><div>Tổng Đánh:</div><div id="totalCostOutput" class="font-mono">0₫</div></div>
+            </div>
+          </div>
+          
+          <div class="p-4 border border-gray-200 rounded-lg bg-white">
+            <h3 class="font-semibold text-xl text-green-600 text-center mb-3">Tổng Tiền Trúng</h3>
+            <div class="mt-2 space-y-2 text-base md:text-lg">
+              <div class="flex justify-between"><div>Lô:</div><div id="totalLottoWinningsOutput" class="font-mono">0₫</div></div>
+              <div class="flex justify-between"><div>Đề:</div><div id="totalDeWinningsOutput" class="font-mono">0₫</div></div>
+              <div class="flex justify-between"><div>3 Càng:</div><div id="total3CWinningsOutput" class="font-mono">0₫</div></div>
+              <div class="flex justify-between"><div>Xiên 2:</div><div id="totalX2WinningsOutput" class="font-mono">0₫</div></div>
+              <div class="flex justify-between"><div>Xiên 3:</div><div id="totalX3WinningsOutput" class="font-mono">0₫</div></div>
+              <div class="flex justify-between font-bold text-green-600 mt-3 pt-3 border-t"><div>Tổng Trúng:</div><div id="totalWinningsOutput" class="font-mono">0₫</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center mt-6 pt-6 border-t-2 border-gray-300">
+          <div class="text-2xl md:text-3xl font-bold text-gray-700">Lãi / Lỗ:</div>
+          <div id="totalProfitOutput" class="text-2xl md:text-3xl font-bold font-mono">0₫</div>
+        </div>
+
+        <div class="mt-6">
+          <button id="exportMessage" class="btn w-full px-6 py-3 bg-emerald-600 text-white rounded-lg font-bold text-lg shadow-lg hover:bg-emerald-700 transition-colors">📋 Xuất Tin Nhắn Tổng Kết</button>
+        </div>
+        <div id="messageOutputContainer" class="mt-4 hidden">
+          <label class="font-bold mb-1 block">Tin nhắn (đã tự động sao chép, nhấn để sao chép lại):</label>
+          <textarea id="messageOutput" rows="10" class="w-full p-3 border rounded mono" readonly></textarea>
+        </div>
+        
+      </div>
+
+    </div>
+  </div>
+
+<script>
+// ---------- Utilities ----------
+function formatVND(amount) {
+  return new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND', minimumFractionDigits:0 }).format(amount||0);
+}
+function debounce(fn, delay) {
+  let t;
+  return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), delay); };
+}
+function getVal(id){ return document.getElementById(id).value; }
+function setVal(id, v){ document.getElementById(id).value = v; saveConfigDebounced(); }
+
+// ---------- LocalStorage config ----------
+const CONFIG_KEY = 'btld_config_v1';
+function saveConfig() {
+  const cfg = {
+    pricePerDiem: getVal('pricePerDiem'),
+    pricePerDeUnit: getVal('pricePerDeUnit'),
+    pricePer3CUnit: getVal('pricePer3CUnit'),
+    pricePerX2Unit: getVal('pricePerX2Unit'),
+    pricePerX3Unit: getVal('pricePerX3Unit'),
+    lottoPayout: getVal('lottoPayout'),
+    dePayout: getVal('dePayout'),
+    payoutRatio3C: getVal('payoutRatio3C'),
+    payoutRatioX2: getVal('payoutRatioX2'),
+    payoutRatioX3: getVal('payoutRatioX3')
+  };
+  try { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); } catch(e){ console.warn('Không lưu được cấu hình', e); }
+}
+const saveConfigDebounced = debounce(saveConfig, 400);
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem(CONFIG_KEY);
+    if(!raw) return;
+    const cfg = JSON.parse(raw);
+    if(!cfg) return;
+    Object.keys(cfg).forEach(k=>{ if(document.getElementById(k)) document.getElementById(k).value = cfg[k]; });
+  } catch(e){ console.warn('Không thể load cấu hình', e); }
+}
+document.getElementById('clearStorage').addEventListener('click', ()=>{ localStorage.removeItem(CONFIG_KEY); alert('Đã xóa cấu hình lưu.'); location.reload(); });
+
+// ---------- Accordion guide ----------
+document.getElementById('toggleGuide').addEventListener('click', ()=>{
+  const p = document.getElementById('guidePanel');
+  p.classList.toggle('hidden');
+  document.getElementById('toggleIcon').textContent = p.classList.contains('hidden') ? '▼' : '▲';
+});
+
+// ---------- Tự động xóa dấu chấm khi dán kết quả ----------
+document.getElementById('results-input').addEventListener('input', function() {
+    if (this.value.includes('.') || this.value.includes(',')) {
+        this.value = this.value.replace(/[.,]/g, ' ');
+    }
+});
+
+// ---------- Parsing improvements ----------
+function parseResultsText(rawResults) {
+  if(!rawResults || rawResults.trim()==='') return { deResult:null, de3CResult:null, loHitCounts:{} };
+  const cleaned = rawResults.replace(/[^\d\s]/g, ' ');
+  const tokens = cleaned.trim().split(/\s+/).filter(t=>t.length > 0);
+  if(tokens.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
+  const gdb = tokens[0] || '';
+  const deResult = gdb.slice(-2);
+  const de3CResult = gdb.slice(-3);
+  const loHitCounts = {};
+  tokens.forEach(num=>{ const lo = num.slice(-2); if(lo.length===2) loHitCounts[lo] = (loHitCounts[lo]||0)+1; });
+  return { deResult, de3CResult, loHitCounts };
+}
+
+function normalizeType(rawType) {
+    if (!rawType) return null;
+    const t = rawType.toLowerCase().trim();
+    if (['lo', 'lô', 'l'].includes(t)) return 'lo';
+    if (['de', 'đề', 'đe', 'dê', 'đê', 'đ', 'd'].includes(t)) return 'de';
+    // Đã thêm chữ "ba cang" không dấu để nhận diện chuẩn xác
+    if (['ba càng đề', 'đề ba càng', 'ba số', 'ba càng', 'ba cang', '3 càng', '3 cang', '3cang', 'bacang', 'bc', '3c'].includes(t)) return '3c';
+    if (['lô xiên 2', 'xien 2', 'xiên 2', 'xien2', 'xiên2', 'xi2', 'x2'].includes(t)) return 'x2';
+    if (['lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3'].includes(t)) return 'x3';
+    return null;
+}
+
+function parseBets(rawInput) {
+    const errors = [];
+    const lottoData = {};
+    const deData = {};
+    const de3CData = {};
+    const xien2Data = {};
+    const xien3Data = {};
+
+    const c3_keywords = ['ba càng đề', 'đề ba càng', 'ba số', 'ba càng', 'ba cang', '3 càng', '3 cang', '3cang', 'bacang', 'bc', '3c'];
+    const x2_keywords = ['lô xiên 2', 'xien 2', 'xiên 2', 'xien2', 'xiên2', 'xi2', 'x2'];
+    const x3_keywords = ['lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3'];
+    const lo_keywords = ['lo', 'lô', 'l'];
+    const de_keywords = ['de', 'đề', 'đe', 'dê', 'đê', 'đ', 'd'];
+    
+    const all_keywords = [...c3_keywords, ...x2_keywords, ...x3_keywords, ...lo_keywords, ...de_keywords];
+    const keywordsForMatcher = all_keywords; 
+    
+    // Tách bằng từ khóa
+    const splitterRegex = new RegExp(`(\\b(?:${keywordsForMatcher.join('|')})\\s+)`, 'gi');
+
+    // Nâng cấp regex bắt đơn vị và phép nhân (x, X, *, ×)
+    const withTypeRegex = new RegExp(`^(${keywordsForMatcher.join('|')})\\s+(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
+    const noTypeRegex = new RegExp(`^(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
+
+    let processedInput = rawInput.replace(/\n/g, '||');
+    
+    // XỬ LÝ LỖI DẤU CHẤM:
+    // Nếu dấu chấm đứng ngay sau chữ cái đơn vị tiền (d, đ, n, k) -> Cắt thành dòng mới
+    processedInput = processedInput.replace(/([a-zđ₫nk])\./gi, '$1||');
+    // Nếu dấu chấm đứng trước dấu cách -> Cắt thành dòng mới (vd: 200d. 66)
+    processedInput = processedInput.replace(/\.\s+/g, '||');
+    
+    // CÁC DẤU PHẨY VÀ CHẤM CÒN LẠI dùng để nối số (vd: 24,74) sẽ biến thành khoảng trắng
+    processedInput = processedInput.replace(/[.,]/g, ' ');
+
+    processedInput = processedInput.replace(splitterRegex, '||$1');
+    
+    const lines = processedInput.split('||').filter(line => line.trim() !== '');
+    let lastValidType = null;
+
+    lines.forEach((line, index) => {
+        const original = line.trim();
+        if (!original) return;
+
+        let match = original.match(withTypeRegex);
+        let type, numbersStr, quantity, unit;
+
+        try {
+            if (match) {
+                type = normalizeType(match[1]);
+                numbersStr = match[2];
+                quantity = parseInt(match[3]);
+                unit = match[4];
+                lastValidType = type;
+            } else {
+                match = original.match(noTypeRegex);
+                if (match) {
+                    if (lastValidType) {
+                        type = lastValidType;
+                        numbersStr = match[1];
+                        quantity = parseInt(match[2]);
+                        unit = match[3];
+                    } else {
+                        errors.push({ ln: index + 1, original: original, msg: "Lỗi: Lệnh đầu tiên phải có loại cược (vd: lo, de)" });
+                        return;
+                    }
+                } else {
+                    errors.push({ ln: index + 1, original: original, msg: "Không đúng định dạng. Cú pháp: [loại] [số] x[tiền][đ/n]" });
+                    return;
+                }
+            }
+
+            if (!unit) {
+                unit = (type === 'lo') ? 'đ' : 'n';
+            } else {
+                unit = unit.toLowerCase();
+            }
+
+            let numbers = [];
+            if (type === 'x2' || type === 'x3') {
+                const allTwoDigitNumbers = numbersStr.match(/\d{2}/g) || [];
+                const groupSize = (type === 'x2') ? 2 : 3;
+                
+                if (allTwoDigitNumbers.length === 0) {
+                     errors.push({ ln: index + 1, original: original, msg: `Lỗi: ${type} không tìm thấy số 2 chữ số nào.` });
+                     return;
+                }
+                if (allTwoDigitNumbers.length % groupSize !== 0) {
+                    errors.push({ ln: index + 1, original: original, msg: `Lỗi: Số lượng số cho ${type} không hợp lệ, phải chia hết cho ${groupSize} (tìm thấy ${allTwoDigitNumbers.length} số)` });
+                    return;
+                }
+                for (let i = 0; i < allTwoDigitNumbers.length; i += groupSize) {
+                    numbers.push(allTwoDigitNumbers.slice(i, i + groupSize).join('-'));
+                }
+            } else if (type === '3c') {
+                numbers = numbersStr.split(/[^\d]+/).filter(n => n.match(/^\d{3}$/));
+            } else {
+                const tempNums = numbersStr.split(/[^\d]+/);
+                tempNums.forEach(n => {
+                    if (n.length === 2) {
+                        numbers.push(n);
+                    } else if (n.length === 3 && n[0] === n[2]) {
+                        numbers.push(n.slice(0, 2));
+                        numbers.push(n.slice(1, 3));
+                    }
+                });
+            }
+
+            if (numbers.length === 0) {
+                errors.push({ ln: index + 1, original: original, msg: "Lỗi: Không tìm thấy số hợp lệ (2 chữ số cho Lô/Đề, 3 cho 3C)." });
+                return;
+            }
+
+            let dataTarget;
+            if (type === 'lo') dataTarget = lottoData;
+            else if (type === 'de') dataTarget = deData;
+            else if (type === '3c') dataTarget = de3CData;
+            else if (type === 'x2') dataTarget = xien2Data;
+            else if (type === 'x3') dataTarget = xien3Data;
+
+            if (dataTarget) {
+                if (!dataTarget[quantity]) dataTarget[quantity] = [];
+                dataTarget[quantity].push(...numbers);
+            }
+
+        } catch (e) {
+             errors.push({ ln: index + 1, original: original, msg: `Lỗi hệ thống: ${e.message}` });
+        }
+    }); 
+
+    return { lottoData, deData, de3CData, xien2Data, xien3Data, errors };
+}
+
+
+// ---------- Calculation & Display ----------
+function calculateAndRender() {
+  const rawInput = document.getElementById('master-input').value;
+  const resultsData = parseResultsText(document.getElementById('results-input').value);
+  
+  const parsed = parseBets(rawInput);
+
+  const resultsContainer = document.getElementById('results-container');
+  let html = '';
+  
+  if(parsed.errors && parsed.errors.length>0){
+    html += `<div class="p-3 mb-3 rounded bg-red-50 border text-red-700"><strong>Các lỗi nhập:</strong><ul class="ml-4 mt-2">`;
+    parsed.errors.forEach(e => {
+       html += `<li class="mono text-sm">Lỗi #${e.ln}: <span class="font-bold underline decoration-red-500 decoration-wavy decoration-from-font">${e.original}</span> → ${e.msg}</li>`;
+    });
+    html += `</ul></div>`;
+    
+    resultsContainer.classList.remove('hidden');
+    document.getElementById('toggleDetails').textContent = 'Ẩn chi tiết';
+  }
+
+  function renderSection(title, dataObj, computePerUnit, payoutComputeFn) {
+    if(!dataObj || Object.keys(dataObj).length===0) {
+      html += `<div class="mb-2 text-gray-500"><strong>${title}:</strong> Không có dữ liệu.</div>`;
+      return { totalCost:0, totalWin:0 };
+    }
+    let totalCost = 0, totalWin = 0;
+    html += `<div class="mb-3"><h3 class="font-bold text-lg">${title}</h3>`;
+    for(const qty in dataObj){
+      const arr = dataObj[qty];
+      const count = arr.length;
+      const cost = count * parseFloat(qty) * computePerUnit;
+      totalCost += cost;
+      const win = payoutComputeFn(arr, qty);
+      totalWin += win;
+      html += `<div class="p-2 rounded border mt-2 bg-white"><div class="flex justify-between"><div class="mono">${qty}${(title==='Lô'? 'đ':'n')} × ${count} con</div><div>${formatVND(cost)}</div></div>`;
+      if(win>0) html += `<div class="mt-1 text-green-700">Tiền trúng: ${formatVND(win)}</div>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+    return { totalCost, totalWin };
+  }
+
+  const pricePerDiem = parseFloat(getVal('pricePerDiem'))||0;
+  const pricePerDeUnit = parseFloat(getVal('pricePerDeUnit'))||0;
+  const pricePer3CUnit = parseFloat(getVal('pricePer3CUnit'))||0;
+  const pricePerX2Unit = parseFloat(getVal('pricePerX2Unit'))||0;
+  const pricePerX3Unit = parseFloat(getVal('pricePerX3Unit'))||0;
+  const lottoPayout = parseFloat(getVal('lottoPayout'))||0;
+  const dePayout = parseFloat(getVal('dePayout'))||0;
+  const payoutPer3CUnit = 1000 * (parseFloat(getVal('payoutRatio3C'))||0);
+  const payoutPerX2Unit = 1000 * (parseFloat(getVal('payoutRatioX2'))||0);
+  const payoutPerX3Unit = 1000 * (parseFloat(getVal('payoutRatioX3'))||0);
+
+  const lottoRes = renderSection('Lô', parsed.lottoData, pricePerDiem, (arr, qty)=>{
+    let win=0;
+    for(const num of [...new Set(arr)]){
+      const hits = resultsData.loHitCounts[num]||0;
+      if(hits>0){
+        const countInBet = arr.filter(x=>x===num).length;
+        win += hits * (countInBet * parseFloat(qty)) * lottoPayout;
+      }
+    }
+    return win;
+  });
+
+  const deRes = renderSection('Đề', parsed.deData, function(){return pricePerDeUnit; }(), (arr, qty)=>{
+    let win=0;
+    for(const num of [...new Set(arr)]){
+      if(num === resultsData.deResult){
+        const countInBet = arr.filter(x=>x===num).length;
+        win += (countInBet * parseFloat(qty)) * dePayout;
+      }
+    }
+    return win;
+  });
+
+  const c3Res = renderSection('3 Càng', parsed.de3CData, pricePer3CUnit, (arr, qty)=>{
+    let win=0;
+    for(const num of [...new Set(arr)]){
+      if(num === resultsData.de3CResult){
+        const countInBet = arr.filter(x=>x===num).length;
+        win += (countInBet * parseFloat(qty)) * payoutPer3CUnit;
+      }
+    }
+    return win;
+  });
+
+  const x2Res = renderSection('Xiên 2', parsed.xien2Data, pricePerX2Unit, (arr, qty)=>{
+    let win=0;
+    for(const pair of [...new Set(arr)]){
+      const [n1,n2] = pair.split('-');
+      if((resultsData.loHitCounts[n1]||0)>0 && (resultsData.loHitCounts[n2]||0)>0){
+        const countInBet = arr.filter(x=>x===pair).length;
+        win += (countInBet * parseFloat(qty)) * payoutPerX2Unit;
+      }
+    }
+    return win;
+  });
+
+  const x3Res = renderSection('Xiên 3', parsed.xien3Data, pricePerX3Unit, (arr, qty)=>{
+    let win=0;
+    for(const tri of [...new Set(arr)]){
+      const [n1,n2,n3] = tri.split('-');
+      if((resultsData.loHitCounts[n1]||0)>0 && (resultsData.loHitCounts[n2]||0)>0 && (resultsData.loHitCounts[n3]||0)>0){
+        const countInBet = arr.filter(x=>x===tri).length;
+        win += (countInBet * parseFloat(qty)) * payoutPerX3Unit;
+      }
+    }
+    return win;
+  });
+
+  const totalLottoCost = lottoRes.totalCost || 0;
+  const totalDeCost = deRes.totalCost || 0;
+  const total3CCost = c3Res.totalCost || 0;
+  const totalX2Cost = x2Res.totalCost || 0;
+  const totalX3Cost = x3Res.totalCost || 0;
+  const totalLottoWin = lottoRes.totalWin || 0;
+  const totalDeWin = deRes.totalWin || 0;
+  const total3CWin = c3Res.totalWin || 0;
+  const totalX2Win = x2Res.totalWin || 0;
+  const totalX3Win = x3Res.totalWin || 0;
+
+  document.getElementById('totalLottoCostOutput').textContent = formatVND(totalLottoCost);
+  document.getElementById('totalDeCostOutput').textContent = formatVND(totalDeCost);
+  document.getElementById('total3CCostOutput').textContent = formatVND(total3CCost);
+  document.getElementById('totalX2CostOutput').textContent = formatVND(totalX2Cost);
+  document.getElementById('totalX3CostOutput').textContent = formatVND(totalX3Cost);
+
+  document.getElementById('totalLottoWinningsOutput').textContent = formatVND(totalLottoWin);
+  document.getElementById('totalDeWinningsOutput').textContent = formatVND(totalDeWin);
+  document.getElementById('total3CWinningsOutput').textContent = formatVND(total3CWin);
+  document.getElementById('totalX2WinningsOutput').textContent = formatVND(totalX2Win);
+  document.getElementById('totalX3WinningsOutput').textContent = formatVND(totalX3Win);
+
+  const grandTotalCost = totalLottoCost + totalDeCost + total3CCost + totalX2Cost + totalX3Cost;
+  const grandTotalWin = totalLottoWin + totalDeWin + total3CWin + totalX2Win + totalX3Win;
+  const profit = grandTotalWin - grandTotalCost;
+
+  document.getElementById('totalCostOutput').textContent = formatVND(grandTotalCost);
+  document.getElementById('totalWinningsOutput').textContent = formatVND(grandTotalWin);
+  const profitEl = document.getElementById('totalProfitOutput');
+  profitEl.textContent = formatVND(profit);
+  profitEl.classList.remove('text-green-600','text-red-600', 'text-gray-700');
+  if(profit>0) profitEl.classList.add('text-green-600');
+  else if(profit<0) profitEl.classList.add('text-red-600');
+  else profitEl.classList.add('text-gray-700');
+
+  resultsContainer.innerHTML = html;
+  return {
+    totals: {
+      lotto: { cost: totalLottoCost, win: totalLottoWin },
+      de: { cost: totalDeCost, win: totalDeWin },
+      c3: { cost: total3CCost, win: total3CWin },
+      x2: { cost: totalX2Cost, win: totalX2Win },
+      x3: { cost: totalX3Cost, win: totalX3Win },
+      grand: { cost: grandTotalCost, win: grandTotalWin, profit }
+    },
+    errors: parsed.errors||[]
+  };
+}
+
+const debouncedCalc = debounce(()=>{ try{ saveConfig(); calculateAndRender(); }catch(e){console.error(e);} }, 300);
+document.getElementById('calculate-button').addEventListener('click', debouncedCalc);
+['pricePerDiem','pricePerDeUnit','pricePer3CUnit','pricePerX2Unit','pricePerX3Unit','lottoPayout','dePayout','payoutRatio3C','payoutRatioX2','payoutRatio3C','master-input','results-input','sessionDate'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input', debouncedCalc);
+});
+
+loadConfig();
+calculateAndRender();
+
+document.getElementById('exportMessage').addEventListener('click', ()=>{
+  const summaryData = calculateAndRender();
+  if (!summaryData) return;
+  const summary = summaryData.totals;
+
+  let dateStr = getVal('sessionDate');
+  if (dateStr) {
+    const parts = dateStr.split('-');
+    dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+  } else {
+    const d = new Date();
+    dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  }
+
+  const f = (n) => (n/1000).toLocaleString('vi', {maximumFractionDigits: 2});
+
+  const costLotto = f(summary.lotto.cost);
+  const costDe = f(summary.de.cost);
+  const cost3C = f(summary.c3.cost);
+  const costXien = f(summary.x2.cost + summary.x3.cost);
+  
+  const winLotto = f(summary.lotto.win);
+  const winDe = f(summary.de.win);
+  const win3C = f(summary.c3.win);
+  const winXien = f(summary.x2.win + summary.x3.win);
+
+  const profit = summary.grand.profit;
+  const profitStr = profit >= 0 ? `dương ${f(profit)}k` : `âm ${f(Math.abs(profit))}k`;
+
+  let msg = `Ngày ${dateStr}\n`;
+  msg += '--- NHẬN ---\n';
+  msg += `Lô: ${costLotto}k\n`;
+  msg += `Đề: ${costDe}k\n`;
+  msg += `3 Càng: ${cost3C}k\n`;
+  msg += `Lô Xiên: ${costXien}k\n`;
+  msg += `Tổng nhận: ${f(summary.grand.cost)}k\n`;
+  msg += '\n--- TRÚNG ---\n';
+  msg += `Lô: ${winLotto}k\n`;
+  msg += `Đề: ${winDe}k\n`;
+  msg += `3 Càng: ${win3C}k\n`;
+  msg += `Lô Xiên: ${winXien}k\n`;
+  msg += `Tổng trúng: ${f(summary.grand.win)}k\n`;
+  msg += '\n--- KẾT ---\n';
+  msg += `Tổng: ${profitStr}`;
+
+  const container = document.getElementById('messageOutputContainer');
+  const textarea = document.getElementById('messageOutput');
+  textarea.value = msg;
+  container.classList.remove('hidden');
+
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    alert('Đã sao chép tin nhắn vào bộ nhớ!');
+  } catch (err) {
+    console.warn('Không thể tự động sao chép.');
+  }
+});
+
+document.getElementById('messageOutput').addEventListener('click', function() {
+  this.select();
+  try {
+    document.execCommand('copy');
+  } catch (err) {
+  }
+});
+
+document.getElementById('toggleDetails').addEventListener('click', ()=>{
+  const el = document.getElementById('results-container');
+  const btn = document.getElementById('toggleDetails');
+  if(el.classList.toggle('hidden')){
+    btn.textContent = 'Hiện chi tiết';
+  } else {
+    btn.textContent = 'Ẩn chi tiết';
+  }
+});
+
+document.getElementById('toggleConfig').addEventListener('click', ()=>{
+  const el = document.getElementById('config-panel');
+  const btn = document.getElementById('toggleConfig');
+  if(el.classList.toggle('hidden')){
+    btn.textContent = 'Hiện cấu hình';
+  } else {
+    btn.textContent = 'Ẩn cấu hình';
+  }
+});
+
+</script>
+</body>
+</html>
