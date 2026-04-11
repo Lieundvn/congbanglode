@@ -24,7 +24,8 @@
         
         .col-name { min-width: 150px; text-align: left; font-weight: bold; cursor: pointer; color: #4f46e5; }
         .col-name:hover { text-decoration: underline; color: #3730a3; }
-        .day-input { width: 100px; padding: 8px; text-align: right; border: 1px solid #ccc; border-radius: 3px; font-size: 15px; font-weight: bold;}
+        .day-input { width: 100px; padding: 8px; text-align: right; border: 1px solid #ccc; border-radius: 3px; font-size: 15px; font-weight: bold; outline: none; transition: 0.2s;}
+        .day-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3); }
         .col-total { font-weight: bold; font-size: 16px;}
         .col-old-debt { font-weight: bold; }
         .today-col { background-color: #e0e7ff !important; border-bottom: 2px solid #4f46e5; }
@@ -166,14 +167,14 @@
             </div>
             
             <h3 id="chiTietTitle" class="text-xl font-bold text-indigo-700 mb-1">Đang hiển thị: Tất cả khách hàng</h3>
-            <p class="text-sm text-gray-500 italic mb-4">* Chú ý: Dấu <b>âm (-)</b> là Khách nợ mình, Dấu <b>dương (+)</b> là Mình nợ khách. (Anh có thể tự gõ dấu trừ vào ô Hôm Nay để sửa lại nợ)</p>
+            <p class="text-sm text-gray-500 italic mb-4">* Chú ý: Dấu <b>âm (-)</b> là Khách nợ mình, Dấu <b>dương (+)</b> là Mình nợ khách.</p>
             
             <div class="table-responsive">
                 <table class="debt-table">
                     <thead>
                         <tr id="headerRow">
                             <th style="text-align:left;">Tên Khách Hàng</th>
-                            <th>Nợ Cũ (VNĐ)</th>
+                            <th>Nợ Cũ (Sửa / Gạch Nợ)</th>
                             <th class="today-col" id="colTodayHeader">Hôm nay</th>
                             <th class="col-total">Tổng Cộng (VNĐ)</th>
                         </tr>
@@ -208,9 +209,6 @@
 
         function debounce(fn, delay) { let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), delay); }; }
         
-        // ==========================================
-        // ĐỒNG BỘ DỮ LIỆU & NÂNG CẤP CẤU TRÚC
-        // ==========================================
         function migrateData() {
             let needsSave = false;
             for (let name in creditData) {
@@ -253,9 +251,6 @@
         }
         const debouncedCloudSave = debounce(saveData, 2000);
 
-        // ==========================================
-        // CÁC HÀM TÍNH TOÁN NỢ CŨ / MỚI
-        // ==========================================
         let todayKey = new Date().toLocaleDateString('en-CA');
         
         document.addEventListener('DOMContentLoaded', () => {
@@ -294,8 +289,25 @@
         }
 
         // ==========================================
-        // QUẢN LÝ NGỮ CẢNH (CHUYỂN ĐỔI KHÁCH HÀNG)
+        // CẬP NHẬT TRỰC TIẾP NỢ CŨ / GẠCH NỢ
         // ==========================================
+        function updateOldDebt(name, value) {
+            let num = parseFloat(value);
+            if(isNaN(num)) num = 0;
+            
+            let currentOld = calculateOldDebt(name);
+            let diff = num - currentOld;
+            
+            if(diff !== 0) {
+                // Lưu sự chênh lệch này vào một key đặc biệt để điều chỉnh tổng nợ cũ
+                creditData[name].debts['GachNo_DieuChinh'] = (creditData[name].debts['GachNo_DieuChinh'] || 0) + diff;
+                saveData(); 
+                let currentFilter = document.getElementById('chiTietTitle')?.innerText.includes('Tất cả') ? null : name;
+                renderChiTiet(currentFilter); 
+                renderTongHop();
+            }
+        }
+
         function populateCustomerSelector() {
             const sel = document.getElementById('customerSelector');
             if (!sel) return;
@@ -362,7 +374,6 @@
             calculateAndRender();
         }
 
-        // BẢO VỆ CÁC EVENT BẰNG TOÁN TỬ ?.
         document.getElementById('customerSelector')?.addEventListener('change', (e) => {
             switchCustomerContext(e.target.value);
         });
@@ -395,9 +406,6 @@
             });
         });
 
-        // ==========================================
-        // GIAO DIỆN QUẢN LÝ NGƯỜI DÙNG
-        // ==========================================
         function renderTongHop() {
             const tbody = document.getElementById('tongHopBody'); 
             if(!tbody) return;
@@ -464,8 +472,15 @@
                 tr.innerHTML = `<td style="text-align:left; font-weight:bold; cursor:pointer;" onclick="switchCustomerContext('${name}'); document.getElementById('btnTabTinhToan').click();" class="hover:text-indigo-600">${name}</td>`;
                 
                 let oldDebt = calculateOldDebt(name);
-                let oldColor = oldDebt > 0 ? 'text-green-600' : (oldDebt < 0 ? 'text-red-600' : '');
-                tr.innerHTML += `<td class="col-old-debt ${oldColor}">${(oldDebt === 0) ? '0' : (oldDebt * 1000).toLocaleString('vi-VN')}</td>`;
+                let oldColor = oldDebt > 0 ? 'text-green-600 font-bold' : (oldDebt < 0 ? 'text-red-600 font-bold' : 'font-bold');
+                
+                // Ô SỬA NỢ CŨ & GẠCH NỢ
+                tr.innerHTML += `<td class="col-old-debt bg-gray-50 border-r-2 border-l-2">
+                    <div class="flex items-center justify-center gap-1">
+                        <input type="number" step="any" class="day-input ${oldColor}" style="width:80px; padding:4px;" value="${oldDebt}" onchange="updateOldDebt('${name}', this.value)" title="Nhập số nợ mới để sửa nợ cũ">
+                        <button onclick="updateOldDebt('${name}', 0)" title="Khách trả hết nợ (Về 0)" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-2 py-1 rounded text-xs shadow-sm">Về 0</button>
+                    </div>
+                </td>`;
                 
                 const currentDate = document.getElementById('sessionDate')?.value || todayKey;
                 let todayVal = creditData[name].debts[currentDate] || '';
@@ -497,9 +512,6 @@
             if(evt) evt.currentTarget.className += " active";
         }
 
-        // ==========================================
-        // ENGINE TÍNH LÔ ĐỀ VÀ XUẤT RÚT GỌN
-        // ==========================================
         const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND', minimumFractionDigits:0 }).format(amount||0);
         
         document.getElementById('results-input')?.addEventListener('input', function() { 
@@ -583,7 +595,6 @@
 
             let totalCost = cLo+cDe+c3C+cX2+cX3; let totalWin = wLo+wDe+w3C+wX2+wX3; let profit = totalWin - totalCost;
 
-            // HIỂN THỊ UI RÚT GỌN TÓM TẮT
             let html = `
             <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                 <h3 class="font-black text-indigo-800 text-lg border-b pb-2 mb-3">TÓM TẮT LỆNH</h3>
@@ -663,7 +674,6 @@
             }
         });
 
-        // ĐỊNH DẠNG XUẤT TIN NHẮN CHUẨN FORM
         document.getElementById('exportMessage')?.addEventListener('click', () => {
             if(!currentCalcData) return; 
             const dInput = document.getElementById('sessionDate');
