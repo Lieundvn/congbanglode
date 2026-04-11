@@ -80,7 +80,7 @@
             </div>
 
             <div class="mb-4">
-                <span class="font-bold text-gray-700 text-sm mr-2">Chọn nhanh:</span>
+                <span class="font-bold text-gray-700 text-sm mr-2">Bấm chọn nhanh:</span>
                 <div id="quickSelectContacts" class="inline-flex flex-wrap gap-2"></div>
             </div>
 
@@ -117,12 +117,16 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
-                    <textarea id="master-input" rows="8" class="w-full p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white" placeholder="lo 89 87 x50..."></textarea>
+                    <textarea id="master-input" rows="8" class="w-full p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
                 </div>
                 <div>
                     <label class="font-bold mb-1 block text-gray-700">2. Nhập bảng kết quả (27 giải):</label>
                     <textarea id="results-input" rows="8" class="w-full p-3 border rounded mono shadow-inner" placeholder="Dán 27 giải vào đây..."></textarea>
                 </div>
+            </div>
+
+            <div class="mb-6 flex flex-wrap gap-2 justify-center">
+                <button id="calculate-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded shadow-lg text-lg">PHÂN TÍCH & TÍNH TOÁN</button>
             </div>
 
             <div id="results-container" class="mb-4"></div>
@@ -148,10 +152,10 @@
                 ✍️ CHỐT SỐ & LƯU VÀO CÔNG NỢ
             </button>
             
-            <button id="exportMessage" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-xl">📋 XUẤT TIN NHẮN TRẢ KHÁCH</button>
+            <button id="exportMessage" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-xl uppercase">📋 Xuất tin nhắn trả khách chuẩn</button>
             
             <div id="messageOutputContainer" class="mt-4 hidden">
-                <textarea id="messageOutput" rows="10" class="w-full p-4 border-2 border-emerald-500 rounded mono bg-emerald-50 text-emerald-900 font-bold" readonly></textarea>
+                <textarea id="messageOutput" rows="10" class="w-full p-4 border-2 border-emerald-500 rounded mono bg-emerald-50 text-emerald-900 font-bold text-sm" readonly></textarea>
             </div>
         </div>
 
@@ -255,15 +259,18 @@
         let todayKey = new Date().toLocaleDateString('en-CA');
         
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('sessionDate').value = todayKey;
+            const sessionDateEl = document.getElementById('sessionDate');
+            if (sessionDateEl) sessionDateEl.value = todayKey;
             updateDateHeaders();
         });
 
         function updateDateHeaders() {
-            let dateVal = document.getElementById('sessionDate').value;
+            let dateVal = document.getElementById('sessionDate')?.value;
+            if(!dateVal) return;
             let d = new Date(dateVal);
             if(!isNaN(d)) {
-                document.getElementById('colTodayHeader').innerHTML = `Hôm nay<br>(${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')})`;
+                const header = document.getElementById('colTodayHeader');
+                if (header) header.innerHTML = `Hôm nay<br>(${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')})`;
             }
         }
 
@@ -277,7 +284,7 @@
 
         function calculateOldDebt(name) {
             let old = 0;
-            const currentDate = document.getElementById('sessionDate').value;
+            const currentDate = document.getElementById('sessionDate')?.value;
             if(creditData[name] && creditData[name].debts) {
                 for (let k in creditData[name].debts) {
                     if (k !== currentDate) old += parseFloat(creditData[name].debts[k]) || 0;
@@ -291,6 +298,7 @@
         // ==========================================
         function populateCustomerSelector() {
             const sel = document.getElementById('customerSelector');
+            if (!sel) return;
             sel.innerHTML = '<option value="">-- Chọn khách hàng --</option>';
             Object.keys(creditData).forEach(name => sel.innerHTML += `<option value="${name}">${name}</option>`);
             if (creditData[activeCustomer]) sel.value = activeCustomer;
@@ -298,15 +306,17 @@
 
         function renderQuickSelectContacts() {
             const container = document.getElementById('quickSelectContacts');
+            if (!container) return;
             container.innerHTML = '';
             Object.keys(creditData).forEach(name => {
                 const tag = document.createElement('span');
-                tag.className = 'bg-white border border-indigo-300 text-indigo-700 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-indigo-600 hover:text-white font-semibold transition';
+                tag.className = 'bg-white border border-indigo-300 text-indigo-700 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-indigo-600 hover:text-white font-semibold transition shadow-sm';
                 tag.textContent = name;
                 tag.onclick = () => {
-                    document.getElementById('customerSelector').value = name;
+                    const sel = document.getElementById('customerSelector');
+                    if (sel) sel.value = name;
                     switchCustomerContext(name);
-                    document.getElementById('master-input').focus();
+                    document.getElementById('master-input')?.focus();
                 };
                 container.appendChild(tag);
             });
@@ -314,6 +324,7 @@
 
         function applyCustomerConfig(name) {
             const noteEl = document.getElementById('configCustomerNote');
+            if (!noteEl) return;
             let cfg = defaultConfig;
             if (name && creditData[name] && creditData[name].config) {
                 cfg = creditData[name].config;
@@ -323,56 +334,60 @@
                 noteEl.innerText = `(Cấu hình mặc định)`;
                 noteEl.className = "text-sm text-gray-500 italic mb-2";
             }
-            for (let domId in configMap) document.getElementById(domId).value = cfg[configMap[domId]];
+            for (let domId in configMap) {
+                const inputEl = document.getElementById(domId);
+                if (inputEl) inputEl.value = cfg[configMap[domId]];
+            }
         }
 
         function switchCustomerContext(newCustomer) {
-            const dateKey = document.getElementById('sessionDate').value;
+            const dateKey = document.getElementById('sessionDate')?.value;
             const inputEl = document.getElementById('master-input');
 
-            if (activeCustomer && creditData[activeCustomer]) {
+            if (activeCustomer && creditData[activeCustomer] && dateKey && inputEl) {
                 creditData[activeCustomer].inputs[dateKey] = inputEl.value;
             }
 
             activeCustomer = newCustomer;
-            document.getElementById('lblActiveUser').innerText = activeCustomer || "Khách Vãng Lai";
+            const lbl = document.getElementById('lblActiveUser');
+            if (lbl) lbl.innerText = activeCustomer || "Khách Vãng Lai";
 
-            if (activeCustomer && creditData[activeCustomer]) {
+            if (activeCustomer && creditData[activeCustomer] && dateKey && inputEl) {
                 inputEl.value = creditData[activeCustomer].inputs[dateKey] || '';
                 applyCustomerConfig(activeCustomer);
-            } else {
+            } else if (inputEl) {
                 inputEl.value = '';
                 applyCustomerConfig('');
             }
             calculateAndRender();
         }
 
-        document.getElementById('customerSelector').addEventListener('change', (e) => {
+        // BẢO VỆ CÁC EVENT BẰNG TOÁN TỬ ?.
+        document.getElementById('customerSelector')?.addEventListener('change', (e) => {
             switchCustomerContext(e.target.value);
         });
 
-        document.getElementById('sessionDate').addEventListener('change', () => {
+        document.getElementById('sessionDate')?.addEventListener('change', () => {
             updateDateHeaders();
             switchCustomerContext(activeCustomer);
             renderChiTiet(); 
         });
 
-        // Bắt sự kiện gõ tin nhắn -> tự động lưu vào khách hàng hiện tại
-        document.getElementById('master-input').addEventListener('input', () => {
-            const dateKey = document.getElementById('sessionDate').value;
-            if (activeCustomer && creditData[activeCustomer]) {
+        document.getElementById('master-input')?.addEventListener('input', () => {
+            const dateKey = document.getElementById('sessionDate')?.value;
+            if (activeCustomer && creditData[activeCustomer] && dateKey) {
                 creditData[activeCustomer].inputs[dateKey] = document.getElementById('master-input').value;
-                debouncedCloudSave(); // Lưu thầm lên mây
+                debouncedCloudSave(); 
             }
-            calculateAndRender();
+            setTimeout(calculateAndRender, 300);
         });
 
-        // Cập nhật giá đánh -> tự động lưu
         document.querySelectorAll('.config-input').forEach(input => {
             input.addEventListener('input', () => {
                 if (activeCustomer && creditData[activeCustomer]) {
                     for (let domId in configMap) {
-                        creditData[activeCustomer].config[configMap[domId]] = parseFloat(document.getElementById(domId).value) || 0;
+                        const el = document.getElementById(domId);
+                        if(el) creditData[activeCustomer].config[configMap[domId]] = parseFloat(el.value) || 0;
                     }
                     debouncedCloudSave(); 
                 }
@@ -381,10 +396,12 @@
         });
 
         // ==========================================
-        // GIAO DIỆN QUẢN LÝ NGƯỜI DÙNG (TỔNG HỢP & CHI TIẾT)
+        // GIAO DIỆN QUẢN LÝ NGƯỜI DÙNG
         // ==========================================
         function renderTongHop() {
-            const tbody = document.getElementById('tongHopBody'); tbody.innerHTML = '';
+            const tbody = document.getElementById('tongHopBody'); 
+            if(!tbody) return;
+            tbody.innerHTML = '';
             let names = Object.keys(creditData);
             if(names.length === 0) tbody.innerHTML = '<tr><td colspan="2">Chưa có dữ liệu.</td></tr>';
             else names.forEach(name => {
@@ -399,11 +416,17 @@
         }
 
         function addNewUser() {
-            let nameInput = document.getElementById('newUserName'); let name = nameInput.value.trim();
+            let nameInput = document.getElementById('newUserName'); 
+            if(!nameInput) return;
+            let name = nameInput.value.trim();
             if(!name) return alert("Vui lòng nhập tên!"); if(creditData[name]) return alert("Khách đã tồn tại!");
             creditData[name] = { debts: {}, config: { ...defaultConfig }, inputs: {} }; 
             saveData(); nameInput.value = ""; renderTongHop(); goToDetail(name);
         }
+        
+        document.getElementById('newUserName')?.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') addNewUser();
+        });
 
         function renameUser(oldName) {
             let newName = prompt(`Tên mới thay thế cho "${oldName}":`, oldName);
@@ -417,13 +440,16 @@
             if(confirm(`⚠️ CHÚ Ý: Xóa toàn bộ sổ của "${name}"?`)) {
                 delete creditData[name]; 
                 if(activeCustomer === name) switchCustomerContext('');
-                saveData(); renderTongHop(); document.getElementById('btnTabTongHop').click(); 
+                saveData(); renderTongHop(); document.getElementById('btnTabTongHop')?.click(); 
             }
         }
 
         function renderChiTiet(filterName = null) {
-            const tbody = document.getElementById('chiTietBody'); const title = document.getElementById('chiTietTitle');
+            const tbody = document.getElementById('chiTietBody'); 
+            const title = document.getElementById('chiTietTitle');
             const actionBtns = document.getElementById('userActionButtons');
+            if(!tbody || !title || !actionBtns) return;
+            
             tbody.innerHTML = ''; actionBtns.innerHTML = ''; 
 
             let names = Object.keys(creditData);
@@ -441,7 +467,7 @@
                 let oldColor = oldDebt > 0 ? 'text-green-600' : (oldDebt < 0 ? 'text-red-600' : '');
                 tr.innerHTML += `<td class="col-old-debt ${oldColor}">${(oldDebt === 0) ? '0' : (oldDebt * 1000).toLocaleString('vi-VN')}</td>`;
                 
-                const currentDate = document.getElementById('sessionDate').value;
+                const currentDate = document.getElementById('sessionDate')?.value || todayKey;
                 let todayVal = creditData[name].debts[currentDate] || '';
                 let todayColor = todayVal > 0 ? 'text-green-600 font-bold' : (todayVal < 0 ? 'text-red-600 font-bold' : 'font-bold');
                 tr.innerHTML += `<td class="today-col"><input type="number" step="any" class="day-input ${todayColor}" value="${todayVal}" onchange="updateRecord('${name}', '${currentDate}', this.value)" placeholder="0"></td>`;
@@ -457,24 +483,29 @@
         function updateRecord(name, dateKey, value) {
             let num = parseFloat(value);
             if(isNaN(num) || num === 0) delete creditData[name].debts[dateKey]; else creditData[name].debts[dateKey] = num;
-            saveData(); let currentFilter = document.getElementById('chiTietTitle').innerText.includes('Tất cả') ? null : name;
+            saveData(); let currentFilter = document.getElementById('chiTietTitle')?.innerText.includes('Tất cả') ? null : name;
             renderChiTiet(currentFilter); renderTongHop();
         }
 
-        function goToDetail(name) { document.getElementById('btnTabChiTiet').click(); renderChiTiet(name); }
+        function goToDetail(name) { document.getElementById('btnTabChiTiet')?.click(); renderChiTiet(name); }
 
         function openTab(evt, tabName) {
             let tabs = document.getElementsByClassName("tabcontent"); for (let i = 0; i < tabs.length; i++) tabs[i].style.display = "none";
             let links = document.getElementsByClassName("tablinks"); for (let i = 0; i < links.length; i++) links[i].className = links[i].className.replace(" active", "");
-            document.getElementById(tabName).style.display = "block"; if(evt) evt.currentTarget.className += " active";
+            const target = document.getElementById(tabName);
+            if(target) target.style.display = "block"; 
+            if(evt) evt.currentTarget.className += " active";
         }
 
         // ==========================================
         // ENGINE TÍNH LÔ ĐỀ VÀ XUẤT RÚT GỌN
         // ==========================================
         const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND', minimumFractionDigits:0 }).format(amount||0);
-        const getVal = (id) => document.getElementById(id).value;
-        document.getElementById('results-input').addEventListener('input', function() { if (this.value.includes('.') || this.value.includes(',')) this.value = this.value.replace(/[.,]/g, ' '); setTimeout(calculateAndRender, 300); });
+        
+        document.getElementById('results-input')?.addEventListener('input', function() { 
+            if (this.value.includes('.') || this.value.includes(',')) this.value = this.value.replace(/[.,]/g, ' '); 
+            setTimeout(calculateAndRender, 300); 
+        });
 
         function parseResultsText(rawResults) {
             if(!rawResults || rawResults.trim()==='') return { deResult:null, de3CResult:null, loHitCounts:{} };
@@ -521,11 +552,18 @@
         }
 
         function calculateAndRender() {
-            const resData = parseResultsText(getVal('results-input')); 
-            const pData = parseBets(getVal('master-input'));
+            const masterInputEl = document.getElementById('master-input');
+            const resultsInputEl = document.getElementById('results-input');
+            if(!masterInputEl || !resultsInputEl) return;
+
+            const resData = parseResultsText(resultsInputEl.value); 
+            const pData = parseBets(masterInputEl.value);
+            
+            const getValSafely = (id) => { const e = document.getElementById(id); return e ? e.value : 0; };
+            
             const p = { 
-                lo: parseFloat(getVal('pricePerDiem'))||0, de: parseFloat(getVal('pricePerDeUnit'))||0, '3c': parseFloat(getVal('pricePer3CUnit'))||0, x2: parseFloat(getVal('pricePerX2Unit'))||0, x3: parseFloat(getVal('pricePerX3Unit'))||0, 
-                payLo: parseFloat(getVal('lottoPayout'))||0, payDe: parseFloat(getVal('dePayout'))||0, pay3C: 1000 * (parseFloat(getVal('payoutRatio3C'))||0), payX2: 1000 * (parseFloat(getVal('payoutRatioX2'))||0), payX3: 1000 * (parseFloat(getVal('payoutRatioX3'))||0) 
+                lo: parseFloat(getValSafely('pricePerDiem'))||0, de: parseFloat(getValSafely('pricePerDeUnit'))||0, '3c': parseFloat(getValSafely('pricePer3CUnit'))||0, x2: parseFloat(getValSafely('pricePerX2Unit'))||0, x3: parseFloat(getValSafely('pricePerX3Unit'))||0, 
+                payLo: parseFloat(getValSafely('lottoPayout'))||0, payDe: parseFloat(getValSafely('dePayout'))||0, pay3C: 1000 * (parseFloat(getValSafely('payoutRatio3C'))||0), payX2: 1000 * (parseFloat(getValSafely('payoutRatioX2'))||0), payX3: 1000 * (parseFloat(getValSafely('payoutRatioX3'))||0) 
             };
 
             let sLoGhi=0, sDeGhi=0, s3CGhi=0, sX2Ghi=0, sX3Ghi=0;
@@ -545,7 +583,7 @@
 
             let totalCost = cLo+cDe+c3C+cX2+cX3; let totalWin = wLo+wDe+w3C+wX2+wX3; let profit = totalWin - totalCost;
 
-            // HIỂN THỊ UI RÚT GỌN
+            // HIỂN THỊ UI RÚT GỌN TÓM TẮT
             let html = `
             <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                 <h3 class="font-black text-indigo-800 text-lg border-b pb-2 mb-3">TÓM TẮT LỆNH</h3>
@@ -575,28 +613,36 @@
                 </div>
             </div>`;
 
-            document.getElementById('results-container').innerHTML = html;
+            const resContainer = document.getElementById('results-container');
+            if(resContainer) resContainer.innerHTML = html;
 
-            document.getElementById('totalCostOutput').textContent = formatVND(totalCost); 
-            document.getElementById('totalWinningsOutput').textContent = formatVND(totalWin);
+            const costOut = document.getElementById('totalCostOutput');
+            if(costOut) costOut.textContent = formatVND(totalCost); 
             
-            const pEl = document.getElementById('totalProfitOutput'); const pStatus = document.getElementById('profitStatusText');
-            pEl.textContent = formatVND(Math.abs(profit)); 
-            pEl.className = `text-2xl md:text-3xl font-bold font-mono ${profit > 0 ? 'text-green-600' : (profit < 0 ? 'text-red-600' : 'text-gray-700')}`;
+            const winOut = document.getElementById('totalWinningsOutput');
+            if(winOut) winOut.textContent = formatVND(totalWin);
             
-            if(profit > 0) { pStatus.textContent = "(Khách Dương - Mình nợ khách)"; pStatus.className = "text-center font-bold mt-2 text-sm text-green-600"; } 
-            else if (profit < 0) { pStatus.textContent = "(Khách Âm - Khách nợ mình)"; pStatus.className = "text-center font-bold mt-2 text-sm text-red-600"; } 
-            else { pStatus.textContent = "(Hòa tiền)"; pStatus.className = "text-center font-bold mt-2 text-sm text-gray-500"; }
+            const pEl = document.getElementById('totalProfitOutput'); 
+            const pStatus = document.getElementById('profitStatusText');
+            if(pEl) {
+                pEl.textContent = formatVND(Math.abs(profit)); 
+                pEl.className = `text-2xl md:text-3xl font-bold font-mono ${profit > 0 ? 'text-green-600' : (profit < 0 ? 'text-red-600' : 'text-gray-700')}`;
+            }
+            if(pStatus) {
+                if(profit > 0) { pStatus.textContent = "(Khách Dương - Mình nợ khách)"; pStatus.className = "text-center font-bold mt-2 text-sm text-green-600"; } 
+                else if (profit < 0) { pStatus.textContent = "(Khách Âm - Khách nợ mình)"; pStatus.className = "text-center font-bold mt-2 text-sm text-red-600"; } 
+                else { pStatus.textContent = "(Hòa tiền)"; pStatus.className = "text-center font-bold mt-2 text-sm text-gray-500"; }
+            }
             
             currentCalcData = { cost: totalCost, win: totalWin, netCost: profit, sLoGhi, sDeGhi, s3CGhi, sX2Ghi, sX3Ghi, sLoTrung, sDeTrung, s3CTrung, sX2Trung, sX3Trung, cLo, cDe, c3C, cX2, cX3, wLo, wDe, w3C, wX2, wX3 }; 
         }
 
-        document.getElementById('calculate-button').addEventListener('click', calculateAndRender);
+        document.getElementById('calculate-button')?.addEventListener('click', calculateAndRender);
 
-        document.getElementById('saveToDebtButton').addEventListener('click', () => {
+        document.getElementById('saveToDebtButton')?.addEventListener('click', () => {
             if(!activeCustomer) return alert("❌ Anh chưa chọn khách hàng!");
             if(!currentCalcData || (currentCalcData.cost === 0 && currentCalcData.win === 0)) return alert("Chưa có dữ liệu!");
-            const rawDate = document.getElementById('sessionDate').value; if(!rawDate) return alert("Chưa chọn ngày!");
+            const rawDate = document.getElementById('sessionDate')?.value; if(!rawDate) return alert("Chưa chọn ngày!");
             
             const amountToSave = currentCalcData.netCost / 1000;
             if(!creditData[activeCustomer].debts[rawDate]) creditData[activeCustomer].debts[rawDate] = 0;
@@ -608,14 +654,22 @@
             goToDetail(activeCustomer);
         });
 
-        document.getElementById('toggleConfig').addEventListener('click', () => {
-            const p = document.getElementById('config-panel'); p.classList.toggle('hidden'); document.getElementById('toggleConfig').textContent = p.classList.contains('hidden') ? 'Hiện Cấu Hình Giá Của Khách' : 'Ẩn Cấu Hình';
+        document.getElementById('toggleConfig')?.addEventListener('click', () => {
+            const p = document.getElementById('config-panel'); 
+            if(p) {
+                p.classList.toggle('hidden'); 
+                const btn = document.getElementById('toggleConfig');
+                if(btn) btn.textContent = p.classList.contains('hidden') ? 'Hiện Cấu Hình Giá Của Khách' : 'Ẩn Cấu Hình';
+            }
         });
 
-        // ĐỊNH DẠNG XUẤT TIN NHẮN THEO MẪU
-        document.getElementById('exportMessage').addEventListener('click', () => {
+        // ĐỊNH DẠNG XUẤT TIN NHẮN CHUẨN FORM
+        document.getElementById('exportMessage')?.addEventListener('click', () => {
             if(!currentCalcData) return; 
-            let d = document.getElementById('sessionDate').value.split('-'); let dateStr = `${d[2]}-${d[1]}-${d[0]}`; 
+            const dInput = document.getElementById('sessionDate');
+            if(!dInput) return;
+            
+            let d = dInput.value.split('-'); let dateStr = `${d[2]}-${d[1]}-${d[0]}`; 
             
             let fn = (val) => (val/1000).toLocaleString('vi-VN') + 'n';
             let fs = (val) => { let sign = val < 0 ? '-' : ''; return sign + (Math.abs(val)/1000).toLocaleString('vi-VN'); };
@@ -643,11 +697,17 @@
             msg += `No cu: ${fs(oldDebtVND)}n\n`;
 
             let finalTotal = oldDebtVND + p.netCost;
-            msg += `Tong: ${fs(p.netCost)} + (${fs(oldDebtVND)}) = ${fs(finalTotal)}n.`;
+            msg += `Tong: ${fs(p.netCost)}+(${fs(oldDebtVND)})= ${fs(finalTotal)}n.`;
 
-            const txt = document.getElementById('messageOutput'); txt.value = msg; 
-            document.getElementById('messageOutputContainer').classList.remove('hidden'); 
-            txt.select(); document.execCommand('copy'); alert('Đã copy tin nhắn chuẩn form của anh!');
+            const txt = document.getElementById('messageOutput'); 
+            const container = document.getElementById('messageOutputContainer');
+            if(txt && container) {
+                txt.value = msg; 
+                container.classList.remove('hidden'); 
+                txt.select(); 
+                document.execCommand('copy'); 
+                alert('Đã copy tin nhắn chuẩn form của anh!');
+            }
         });
 
         window.onload = () => { loadDataFromSupabase(); };
