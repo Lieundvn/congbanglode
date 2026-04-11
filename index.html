@@ -68,9 +68,9 @@
         </div>
 
         <div id="TinhToan" class="tabcontent">
-            <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg mb-6 flex flex-wrap items-center gap-4 shadow-sm">
+            <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg mb-4 flex flex-wrap items-center gap-4 shadow-sm">
                 <div class="w-full md:w-auto flex-1">
-                    <label class="block font-bold text-indigo-800 mb-1">CHỌN KHÁCH HÀNG ĐỂ GHI SỔ & CÀI GIÁ:</label>
+                    <label class="block font-bold text-indigo-800 mb-1">CHỌN KHÁCH HÀNG (Để lưu tin nhắn & cài giá):</label>
                     <select id="customerSelector" class="w-full p-2 border border-indigo-300 rounded font-bold text-lg shadow-inner"></select>
                 </div>
                 <div class="w-full md:w-auto">
@@ -79,14 +79,13 @@
                 </div>
             </div>
 
-            <div class="mb-4 flex gap-2">
-                <button id="toggleConfig" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm">Hiện Cấu Hình Giá Của Khách</button>
-                <button id="toggleGuide" class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold py-2 px-4 border border-blue-300 rounded text-sm">Hướng dẫn nhập</button>
+            <div class="mb-4">
+                <span class="font-bold text-gray-700 text-sm mr-2">Chọn nhanh:</span>
+                <div id="quickSelectContacts" class="inline-flex flex-wrap gap-2"></div>
             </div>
 
-            <div id="guidePanel" class="mb-4 p-4 bg-white border border-blue-200 rounded-lg hidden mono text-sm shadow-inner text-blue-900">
-                <p>Cú pháp: <code>lo 11 22 x10đ</code> | <code>de 67 78 x50n</code> | <code>3c 123 x10n</code> | <code>x2 11-22 x20n</code></p>
-                <p class="text-xs text-blue-600 mt-1">Hỗ trợ nhận diện "ba cang", dấu chấm/phẩy nối số tự động.</p>
+            <div class="mb-4 flex gap-2">
+                <button id="toggleConfig" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm">Hiện Cấu Hình Giá Của Khách</button>
             </div>
 
             <div id="config-panel" class="mb-6 p-4 rounded-lg bg-gray-50 border border-gray-200 hidden">
@@ -117,8 +116,8 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="font-bold mb-1 block text-gray-700">1. Nhập lệnh cược:</label>
-                    <textarea id="master-input" rows="8" class="w-full p-3 border rounded mono shadow-inner bg-yellow-50" placeholder="lo 89 87 x50..."></textarea>
+                    <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
+                    <textarea id="master-input" rows="8" class="w-full p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white" placeholder="lo 89 87 x50..."></textarea>
                 </div>
                 <div>
                     <label class="font-bold mb-1 block text-gray-700">2. Nhập bảng kết quả (27 giải):</label>
@@ -126,39 +125,33 @@
                 </div>
             </div>
 
-            <div class="mb-6 flex flex-wrap gap-2 justify-center">
-                <button id="calculate-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded shadow-lg text-lg">PHÂN TÍCH & TÍNH TOÁN</button>
-                <button id="toggleDetails" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded shadow">Chi tiết lệnh</button>
-            </div>
-
-            <div id="results-container" class="mb-4 hidden"></div>
+            <div id="results-container" class="mb-4"></div>
 
             <div id="total-summary" class="bg-gray-100 border border-gray-300 rounded-lg p-6 mb-6 shadow-sm">
                 <h2 class="text-xl font-bold text-center text-gray-800 mb-4">TỔNG KẾT PHƠI</h2>
                 <div class="flex justify-between items-center border-b pb-2 mb-2 text-lg">
-                    <span class="text-red-600 font-bold">Tổng Đánh (Khách nợ mình):</span>
+                    <span class="text-red-600 font-bold">Tổng Nhận (Đánh):</span>
                     <span id="totalCostOutput" class="font-mono text-red-600 font-bold">0₫</span>
                 </div>
                 <div class="flex justify-between items-center border-b pb-2 mb-2 text-lg">
-                    <span class="text-green-600 font-bold">Tổng Trúng (Mình nợ khách):</span>
+                    <span class="text-green-600 font-bold">Tổng Trúng:</span>
                     <span id="totalWinningsOutput" class="font-mono text-green-600 font-bold">0₫</span>
                 </div>
                 <div class="flex justify-between items-center mt-4 pt-2">
-                    <span class="text-2xl md:text-3xl font-bold text-gray-800">CHỐT LÃI/LỖ:</span>
+                    <span class="text-2xl md:text-3xl font-bold text-gray-800">CHỐT HÔM NAY:</span>
                     <span id="totalProfitOutput" class="text-2xl md:text-3xl font-bold font-mono">0₫</span>
                 </div>
                 <p id="profitStatusText" class="text-center font-bold mt-2 text-sm"></p>
             </div>
 
-            <button id="saveToDebtButton" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-xl flex items-center justify-center gap-2 transition-all">
-                ✍️ CHỐT SỐ TỰ ĐỘNG LƯU VÀO CÔNG NỢ
+            <button id="saveToDebtButton" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-xl flex items-center justify-center gap-2 transition-all mb-4">
+                ✍️ CHỐT SỐ & LƯU VÀO CÔNG NỢ
             </button>
             
-            <div class="mt-4">
-                <button id="exportMessage" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded shadow">📋 Xuất Tin Nhắn Trả Khách</button>
-            </div>
-            <div id="messageOutputContainer" class="mt-2 hidden">
-                <textarea id="messageOutput" rows="8" class="w-full p-3 border rounded mono bg-gray-50" readonly></textarea>
+            <button id="exportMessage" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-xl">📋 XUẤT TIN NHẮN TRẢ KHÁCH</button>
+            
+            <div id="messageOutputContainer" class="mt-4 hidden">
+                <textarea id="messageOutput" rows="10" class="w-full p-4 border-2 border-emerald-500 rounded mono bg-emerald-50 text-emerald-900 font-bold" readonly></textarea>
             </div>
         </div>
 
@@ -192,34 +185,38 @@
         // KHỞI TẠO SUPABASE
         // ==========================================
         const { createClient } = supabase;
-        
-        // 🚨 URL VÀ KEY SUPABASE CỦA ANH
         const supabaseUrl = 'https://rcndrqiebvdynqrmkamm.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjbmRycWllYnZkeW5xcm1rYW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3OTA1MDQsImV4cCI6MjA5MTM2NjUwNH0.DZnXTSuGDkgwB8-vZvND7e7XhzTrXrqfVgKeydfYe_c';
-        
         const sb = createClient(supabaseUrl, supabaseKey);
 
         let creditData = {}; 
-        
+        let activeCustomer = '';
+        let currentCalcData = null; 
+
         const defaultConfig = {
             lo: 22500, de: 1000, c3: 1000, x2: 1000, x3: 1000,
             payLo: 80000, payDe: 80000, pay3C: 400, payX2: 10, payX3: 40
         };
-
         const configMap = {
             pricePerDiem: 'lo', pricePerDeUnit: 'de', pricePer3CUnit: 'c3', pricePerX2Unit: 'x2', pricePerX3Unit: 'x3',
             lottoPayout: 'payLo', dePayout: 'payDe', payoutRatio3C: 'pay3C', payoutRatioX2: 'payX2', payoutRatioX3: 'payX3'
         };
 
+        function debounce(fn, delay) { let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), delay); }; }
+        
+        // ==========================================
+        // ĐỒNG BỘ DỮ LIỆU & NÂNG CẤP CẤU TRÚC
+        // ==========================================
         function migrateData() {
             let needsSave = false;
             for (let name in creditData) {
                 if (!creditData[name].debts) {
                     let oldDebts = { ...creditData[name] };
-                    creditData[name] = {
-                        debts: oldDebts,
-                        config: { ...defaultConfig }
-                    };
+                    creditData[name] = { debts: oldDebts, config: { ...defaultConfig }, inputs: {} };
+                    needsSave = true;
+                }
+                if (!creditData[name].inputs) {
+                    creditData[name].inputs = {};
                     needsSave = true;
                 }
             }
@@ -234,7 +231,8 @@
             }
             document.getElementById('loadingScreen').style.display = 'none';
             renderTongHop();
-            applyCustomerConfig(""); 
+            renderQuickSelectContacts();
+            switchCustomerContext(""); 
             document.getElementById('btnTabTongHop').click();
         }
 
@@ -249,6 +247,7 @@
                 status.innerText = 'Lỗi kết nối ❌'; status.style.background = '#ef4444';
             }
         }
+        const debouncedCloudSave = debounce(saveData, 2000);
 
         // ==========================================
         // CÁC HÀM TÍNH TOÁN NỢ CŨ / MỚI
@@ -257,9 +256,16 @@
         
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('sessionDate').value = todayKey;
-            let d = new Date();
-            document.getElementById('colTodayHeader').innerHTML = `Hôm nay<br>(${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')})`;
+            updateDateHeaders();
         });
+
+        function updateDateHeaders() {
+            let dateVal = document.getElementById('sessionDate').value;
+            let d = new Date(dateVal);
+            if(!isNaN(d)) {
+                document.getElementById('colTodayHeader').innerHTML = `Hôm nay<br>(${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')})`;
+            }
+        }
 
         function calculateUserTotal(name) {
             let total = 0;
@@ -271,23 +277,39 @@
 
         function calculateOldDebt(name) {
             let old = 0;
+            const currentDate = document.getElementById('sessionDate').value;
             if(creditData[name] && creditData[name].debts) {
                 for (let k in creditData[name].debts) {
-                    if (k !== todayKey) old += parseFloat(creditData[name].debts[k]) || 0;
+                    if (k !== currentDate) old += parseFloat(creditData[name].debts[k]) || 0;
                 }
             }
             return old;
         }
 
         // ==========================================
-        // GIAO DIỆN & CẤU HÌNH GIÁ RIÊNG
+        // QUẢN LÝ NGỮ CẢNH (CHUYỂN ĐỔI KHÁCH HÀNG)
         // ==========================================
         function populateCustomerSelector() {
             const sel = document.getElementById('customerSelector');
-            const currentVal = sel.value;
-            sel.innerHTML = '<option value="">-- Click để chọn khách hàng --</option>';
+            sel.innerHTML = '<option value="">-- Chọn khách hàng --</option>';
             Object.keys(creditData).forEach(name => sel.innerHTML += `<option value="${name}">${name}</option>`);
-            if (creditData[currentVal]) sel.value = currentVal;
+            if (creditData[activeCustomer]) sel.value = activeCustomer;
+        }
+
+        function renderQuickSelectContacts() {
+            const container = document.getElementById('quickSelectContacts');
+            container.innerHTML = '';
+            Object.keys(creditData).forEach(name => {
+                const tag = document.createElement('span');
+                tag.className = 'bg-white border border-indigo-300 text-indigo-700 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-indigo-600 hover:text-white font-semibold transition';
+                tag.textContent = name;
+                tag.onclick = () => {
+                    document.getElementById('customerSelector').value = name;
+                    switchCustomerContext(name);
+                    document.getElementById('master-input').focus();
+                };
+                container.appendChild(tag);
+            });
         }
 
         function applyCustomerConfig(name) {
@@ -295,37 +317,72 @@
             let cfg = defaultConfig;
             if (name && creditData[name] && creditData[name].config) {
                 cfg = creditData[name].config;
-                noteEl.innerText = `(Đang áp dụng cấu hình tự động của: ${name})`;
+                noteEl.innerText = `(Đang áp dụng cấu hình của: ${name})`;
                 noteEl.className = "text-sm text-indigo-700 font-bold mb-2";
             } else {
-                noteEl.innerText = `(Cấu hình mặc định - Chưa chọn khách)`;
+                noteEl.innerText = `(Cấu hình mặc định)`;
                 noteEl.className = "text-sm text-gray-500 italic mb-2";
             }
-            
-            for (let domId in configMap) {
-                document.getElementById(domId).value = cfg[configMap[domId]];
+            for (let domId in configMap) document.getElementById(domId).value = cfg[configMap[domId]];
+        }
+
+        function switchCustomerContext(newCustomer) {
+            const dateKey = document.getElementById('sessionDate').value;
+            const inputEl = document.getElementById('master-input');
+
+            if (activeCustomer && creditData[activeCustomer]) {
+                creditData[activeCustomer].inputs[dateKey] = inputEl.value;
+            }
+
+            activeCustomer = newCustomer;
+            document.getElementById('lblActiveUser').innerText = activeCustomer || "Khách Vãng Lai";
+
+            if (activeCustomer && creditData[activeCustomer]) {
+                inputEl.value = creditData[activeCustomer].inputs[dateKey] || '';
+                applyCustomerConfig(activeCustomer);
+            } else {
+                inputEl.value = '';
+                applyCustomerConfig('');
             }
             calculateAndRender();
         }
 
         document.getElementById('customerSelector').addEventListener('change', (e) => {
-            applyCustomerConfig(e.target.value);
+            switchCustomerContext(e.target.value);
         });
 
+        document.getElementById('sessionDate').addEventListener('change', () => {
+            updateDateHeaders();
+            switchCustomerContext(activeCustomer);
+            renderChiTiet(); 
+        });
+
+        // Bắt sự kiện gõ tin nhắn -> tự động lưu vào khách hàng hiện tại
+        document.getElementById('master-input').addEventListener('input', () => {
+            const dateKey = document.getElementById('sessionDate').value;
+            if (activeCustomer && creditData[activeCustomer]) {
+                creditData[activeCustomer].inputs[dateKey] = document.getElementById('master-input').value;
+                debouncedCloudSave(); // Lưu thầm lên mây
+            }
+            calculateAndRender();
+        });
+
+        // Cập nhật giá đánh -> tự động lưu
         document.querySelectorAll('.config-input').forEach(input => {
             input.addEventListener('input', () => {
-                const customer = document.getElementById('customerSelector').value;
-                if (customer && creditData[customer]) {
+                if (activeCustomer && creditData[activeCustomer]) {
                     for (let domId in configMap) {
-                        creditData[customer].config[configMap[domId]] = parseFloat(document.getElementById(domId).value) || 0;
+                        creditData[activeCustomer].config[configMap[domId]] = parseFloat(document.getElementById(domId).value) || 0;
                     }
-                    saveData(); 
+                    debouncedCloudSave(); 
                 }
                 calculateAndRender(); 
             });
         });
 
-        // BẢNG TỔNG HỢP: HIỂN THỊ MÀU SẮC ĐỎ (ÂM) / XANH (DƯƠNG)
+        // ==========================================
+        // GIAO DIỆN QUẢN LÝ NGƯỜI DÙNG (TỔNG HỢP & CHI TIẾT)
+        // ==========================================
         function renderTongHop() {
             const tbody = document.getElementById('tongHopBody'); tbody.innerHTML = '';
             let names = Object.keys(creditData);
@@ -338,12 +395,13 @@
                 tbody.appendChild(tr);
             });
             populateCustomerSelector();
+            renderQuickSelectContacts();
         }
 
         function addNewUser() {
             let nameInput = document.getElementById('newUserName'); let name = nameInput.value.trim();
             if(!name) return alert("Vui lòng nhập tên!"); if(creditData[name]) return alert("Khách đã tồn tại!");
-            creditData[name] = { debts: {}, config: { ...defaultConfig } }; 
+            creditData[name] = { debts: {}, config: { ...defaultConfig }, inputs: {} }; 
             saveData(); nameInput.value = ""; renderTongHop(); goToDetail(name);
         }
 
@@ -356,12 +414,13 @@
         }
 
         function deleteUser(name) {
-            if(confirm(`⚠️ CHÚ Ý: Xóa sổ của "${name}"?`)) {
-                delete creditData[name]; saveData(); renderTongHop(); document.getElementById('btnTabTongHop').click(); 
+            if(confirm(`⚠️ CHÚ Ý: Xóa toàn bộ sổ của "${name}"?`)) {
+                delete creditData[name]; 
+                if(activeCustomer === name) switchCustomerContext('');
+                saveData(); renderTongHop(); document.getElementById('btnTabTongHop').click(); 
             }
         }
 
-        // BẢNG CHI TIẾT: BỎ KHÓA NHẬP SỐ ÂM (XÓA MIN="0") VÀ THÊM MÀU SẮC
         function renderChiTiet(filterName = null) {
             const tbody = document.getElementById('chiTietBody'); const title = document.getElementById('chiTietTitle');
             const actionBtns = document.getElementById('userActionButtons');
@@ -376,19 +435,17 @@
 
             names.forEach(name => {
                 let tr = document.createElement('tr'); 
-                tr.innerHTML = `<td style="text-align:left; font-weight:bold;">${name}</td>`;
+                tr.innerHTML = `<td style="text-align:left; font-weight:bold; cursor:pointer;" onclick="switchCustomerContext('${name}'); document.getElementById('btnTabTinhToan').click();" class="hover:text-indigo-600">${name}</td>`;
                 
-                // 1. Nợ Cũ
                 let oldDebt = calculateOldDebt(name);
                 let oldColor = oldDebt > 0 ? 'text-green-600' : (oldDebt < 0 ? 'text-red-600' : '');
                 tr.innerHTML += `<td class="col-old-debt ${oldColor}">${(oldDebt === 0) ? '0' : (oldDebt * 1000).toLocaleString('vi-VN')}</td>`;
                 
-                // 2. Hôm Nay (Cho phép nhập dấu Âm)
-                let todayVal = creditData[name].debts[todayKey] || '';
+                const currentDate = document.getElementById('sessionDate').value;
+                let todayVal = creditData[name].debts[currentDate] || '';
                 let todayColor = todayVal > 0 ? 'text-green-600 font-bold' : (todayVal < 0 ? 'text-red-600 font-bold' : 'font-bold');
-                tr.innerHTML += `<td class="today-col"><input type="number" step="any" class="day-input ${todayColor}" value="${todayVal}" onchange="updateRecord('${name}', '${todayKey}', this.value)" placeholder="0"></td>`;
+                tr.innerHTML += `<td class="today-col"><input type="number" step="any" class="day-input ${todayColor}" value="${todayVal}" onchange="updateRecord('${name}', '${currentDate}', this.value)" placeholder="0"></td>`;
                 
-                // 3. Tổng Cộng
                 let total = calculateUserTotal(name);
                 let totalColor = total > 0 ? 'text-green-600' : (total < 0 ? 'text-red-600' : '');
                 tr.innerHTML += `<td class="col-total ${totalColor}">${(total === 0) ? '0' : (total * 1000).toLocaleString('vi-VN')}</td>`;
@@ -413,11 +470,11 @@
         }
 
         // ==========================================
-        // ENGINE TÍNH LÔ ĐỀ 
+        // ENGINE TÍNH LÔ ĐỀ VÀ XUẤT RÚT GỌN
         // ==========================================
         const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND', minimumFractionDigits:0 }).format(amount||0);
         const getVal = (id) => document.getElementById(id).value;
-        document.getElementById('results-input').addEventListener('input', function() { if (this.value.includes('.') || this.value.includes(',')) this.value = this.value.replace(/[.,]/g, ' '); });
+        document.getElementById('results-input').addEventListener('input', function() { if (this.value.includes('.') || this.value.includes(',')) this.value = this.value.replace(/[.,]/g, ' '); setTimeout(calculateAndRender, 300); });
 
         function parseResultsText(rawResults) {
             if(!rawResults || rawResults.trim()==='') return { deResult:null, de3CResult:null, loHitCounts:{} };
@@ -437,7 +494,7 @@
         }
 
         function parseBets(rawInput) {
-            const errors = []; const data = { lo: {}, de: {}, '3c': {}, x2: {}, x3: {} };
+            const data = { lo: {}, de: {}, '3c': {}, x2: {}, x3: {} };
             const keys = ['ba càng đề', 'đề ba càng', 'ba càng', 'ba cang', '3 càng', '3 cang', '3cang', 'bacang', 'bc', '3c', 'lô xiên 2', 'xien 2', 'xiên 2', 'xien2', 'xiên2', 'xi2', 'x2', 'lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3', 'lo', 'lô', 'l', 'de', 'đề', 'đe', 'dê', 'đê', 'đ', 'd'];
             const withTypeRegex = new RegExp(`^(${keys.join('|')})\\s+(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
             const noTypeRegex = new RegExp(`^(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
@@ -447,127 +504,153 @@
             pInput.split('||').filter(l => l.trim() !== '').forEach((line, idx) => {
                 let match = line.trim().match(withTypeRegex), type, numStr, qty;
                 if (match) { type = normalizeType(match[1]); numStr = match[2]; qty = parseInt(match[3]); lastType = type; } 
-                else { match = line.trim().match(noTypeRegex); if (match && lastType) { type = lastType; numStr = match[1]; qty = parseInt(match[2]); } else return errors.push({ ln: idx + 1, original: line, msg: "Sai cú pháp." }); }
+                else { match = line.trim().match(noTypeRegex); if (match && lastType) { type = lastType; numStr = match[1]; qty = parseInt(match[2]); } else return; }
 
                 let nums = [];
                 if (type === 'x2' || type === 'x3') {
                     const allNums = numStr.match(/\d{2}/g) || []; const gs = (type === 'x2') ? 2 : 3;
-                    if(allNums.length % gs !== 0 || allNums.length === 0) return errors.push({ ln: idx+1, original: line, msg: "Thiếu số xiên." });
+                    if(allNums.length % gs !== 0 || allNums.length === 0) return;
                     for (let i = 0; i < allNums.length; i += gs) nums.push(allNums.slice(i, i + gs).join('-'));
                 } else if (type === '3c') nums = numStr.split(/[^\d]+/).filter(n => n.match(/^\d{3}$/));
                 else { numStr.split(/[^\d]+/).forEach(n => { if (n.length === 2) nums.push(n); else if (n.length === 3 && n[0] === n[2]) { nums.push(n.slice(0, 2)); nums.push(n.slice(1, 3)); } }); }
                 
-                if (nums.length === 0) return errors.push({ ln: idx+1, original: line, msg: "Không tìm thấy số." });
+                if (nums.length === 0) return;
                 if (!data[type][qty]) data[type][qty] = []; data[type][qty].push(...nums);
             });
-            return { data, errors };
+            return data;
         }
 
-        let currentCalcData = null; 
         function calculateAndRender() {
-            const resData = parseResultsText(getVal('results-input')); const parsed = parseBets(getVal('master-input'));
-            const p = { lo: parseFloat(getVal('pricePerDiem'))||0, de: parseFloat(getVal('pricePerDeUnit'))||0, '3c': parseFloat(getVal('pricePer3CUnit'))||0, x2: parseFloat(getVal('pricePerX2Unit'))||0, x3: parseFloat(getVal('pricePerX3Unit'))||0, payLo: parseFloat(getVal('lottoPayout'))||0, payDe: parseFloat(getVal('dePayout'))||0, pay3C: 1000 * (parseFloat(getVal('payoutRatio3C'))||0), payX2: 1000 * (parseFloat(getVal('payoutRatioX2'))||0), payX3: 1000 * (parseFloat(getVal('payoutRatioX3'))||0) };
-            let html = '', totalCost = 0, totalWin = 0; const resContainer = document.getElementById('results-container');
-            if(parsed.errors.length > 0) {
-                html += `<div class="p-3 mb-3 bg-red-100 text-red-700"><strong>Lỗi:</strong><ul>`;
-                parsed.errors.forEach(e => html += `<li>Dòng ${e.ln}: ${e.msg} (${e.original})</li>`);
-                html += `</ul></div>`; resContainer.classList.remove('hidden'); document.getElementById('toggleDetails').textContent = 'Ẩn chi tiết';
-            }
-
-            const calcGroup = (t, n, dObj, cPU, wC) => {
-                let gCost = 0, gWin = 0;
-                if(Object.keys(dObj).length > 0) {
-                    html += `<div class="mb-3"><strong>${n}</strong>`;
-                    for(let qty in dObj) {
-                        let arr = dObj[qty], count = arr.length, cost = count * parseFloat(qty) * cPU, win = wC(arr, parseFloat(qty)); gCost += cost; gWin += win;
-                        html += `<div class="p-2 border bg-white mt-1">Đánh: ${qty} × ${count} con = ${formatVND(cost)}` + (win > 0 ? `<br><span class="text-green-600 font-bold">Trúng: ${formatVND(win)}</span>` : '') + `</div>`;
-                    }
-                    html += `</div>`;
-                } return { gCost, gWin };
+            const resData = parseResultsText(getVal('results-input')); 
+            const pData = parseBets(getVal('master-input'));
+            const p = { 
+                lo: parseFloat(getVal('pricePerDiem'))||0, de: parseFloat(getVal('pricePerDeUnit'))||0, '3c': parseFloat(getVal('pricePer3CUnit'))||0, x2: parseFloat(getVal('pricePerX2Unit'))||0, x3: parseFloat(getVal('pricePerX3Unit'))||0, 
+                payLo: parseFloat(getVal('lottoPayout'))||0, payDe: parseFloat(getVal('dePayout'))||0, pay3C: 1000 * (parseFloat(getVal('payoutRatio3C'))||0), payX2: 1000 * (parseFloat(getVal('payoutRatioX2'))||0), payX3: 1000 * (parseFloat(getVal('payoutRatioX3'))||0) 
             };
 
-            const loR = calcGroup('lo', 'LÔ', parsed.data.lo, p.lo, (arr, q) => arr.reduce((w, num) => w + (resData.loHitCounts[num]||0) * q * p.payLo, 0));
-            const deR = calcGroup('de', 'ĐỀ', parsed.data.de, p.de, (arr, q) => arr.filter(n => n === resData.deResult).length * q * p.payDe);
-            const c3R = calcGroup('3c', '3 CÀNG', parsed.data['3c'], p['3c'], (arr, q) => arr.filter(n => n === resData.de3CResult).length * q * p.pay3C);
-            const x2R = calcGroup('x2', 'XIÊN 2', parsed.data.x2, p.x2, (arr, q) => arr.filter(p => { let [n1,n2] = p.split('-'); return (resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0; }).length * q * p.payX2);
-            const x3R = calcGroup('x3', 'XIÊN 3', parsed.data.x3, p.x3, (arr, q) => arr.filter(tr => { let [n1,n2,n3] = tr.split('-'); return (resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0 && (resData.loHitCounts[n3]||0)>0; }).length * q * p.payX3);
+            let sLoGhi=0, sDeGhi=0, s3CGhi=0, sX2Ghi=0, sX3Ghi=0;
+            let sLoTrung=0, sDeTrung=0, s3CTrung=0, sX2Trung=0, sX3Trung=0;
 
-            // SỬA CÔNG THỨC: Lãi/Lỗ = Tiền Trúng (Mình phải trả) - Tiền Đánh (Khách phải trả)
-            totalCost = loR.gCost + deR.gCost + c3R.gCost + x2R.gCost + x3R.gCost; 
-            totalWin = loR.gWin + deR.gWin + c3R.gWin + x2R.gWin + x3R.gWin; 
-            let profit = totalWin - totalCost; 
+            for(let q in pData.lo) { let qty=parseFloat(q); sLoGhi += pData.lo[q].length * qty; pData.lo[q].forEach(n=>{ sLoTrung += (resData.loHitCounts[n]||0)*qty; }); }
+            for(let q in pData.de) { let qty=parseFloat(q); sDeGhi += pData.de[q].length * qty; pData.de[q].forEach(n=>{ if(n===resData.deResult) sDeTrung+=qty; }); }
+            for(let q in pData['3c']) { let qty=parseFloat(q); s3CGhi += pData['3c'][q].length * qty; pData['3c'][q].forEach(n=>{ if(n===resData.de3CResult) s3CTrung+=qty; }); }
+            for(let q in pData.x2) { let qty=parseFloat(q); sX2Ghi += pData.x2[q].length * qty; pData.x2[q].forEach(pair=>{ let [n1,n2]=pair.split('-'); if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0) sX2Trung+=qty; }); }
+            for(let q in pData.x3) { let qty=parseFloat(q); sX3Ghi += pData.x3[q].length * qty; pData.x3[q].forEach(tri=>{ let [n1,n2,n3]=tri.split('-'); if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0 && (resData.loHitCounts[n3]||0)>0) sX3Trung+=qty; }); }
+
+            let cLo = sLoGhi*p.lo, wLo = sLoTrung*p.payLo;
+            let cDe = sDeGhi*p.de, wDe = sDeTrung*p.payDe;
+            let c3C = s3CGhi*p['3c'], w3C = s3CTrung*p.pay3C;
+            let cX2 = sX2Ghi*p.x2, wX2 = sX2Trung*p.payX2;
+            let cX3 = sX3Ghi*p.x3, wX3 = sX3Trung*p.payX3;
+
+            let totalCost = cLo+cDe+c3C+cX2+cX3; let totalWin = wLo+wDe+w3C+wX2+wX3; let profit = totalWin - totalCost;
+
+            // HIỂN THỊ UI RÚT GỌN
+            let html = `
+            <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                <h3 class="font-black text-indigo-800 text-lg border-b pb-2 mb-3">TÓM TẮT LỆNH</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-red-600 mb-2 border-b pb-1">🔴 NHẬN ĐÁNH</h4>
+                        <div class="space-y-1 text-[15px]">
+                            ${sLoGhi>0 ? `<div class="flex justify-between"><span>Lô: <b>${sLoGhi}đ</b></span> <span>${formatVND(cLo)}</span></div>` : ''}
+                            ${sDeGhi>0 ? `<div class="flex justify-between"><span>Đề: <b>${sDeGhi}n</b></span> <span>${formatVND(cDe)}</span></div>` : ''}
+                            ${s3CGhi>0 ? `<div class="flex justify-between"><span>3 Càng: <b>${s3CGhi}n</b></span> <span>${formatVND(c3C)}</span></div>` : ''}
+                            ${sX2Ghi>0 ? `<div class="flex justify-between"><span>Xiên 2: <b>${sX2Ghi}n</b></span> <span>${formatVND(cX2)}</span></div>` : ''}
+                            ${sX3Ghi>0 ? `<div class="flex justify-between"><span>Xiên 3: <b>${sX3Ghi}n</b></span> <span>${formatVND(cX3)}</span></div>` : ''}
+                            ${totalCost===0 ? '<span class="text-gray-400 italic">Chưa có lệnh...</span>' : ''}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-green-600 mb-2 border-b pb-1">🟢 TRÚNG THƯỞNG</h4>
+                        <div class="space-y-1 text-[15px]">
+                            ${sLoTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Lô: <b>${sLoTrung}đ</b></span> <span>${formatVND(wLo)}</span></div>` : ''}
+                            ${sDeTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${sDeTrung}n</b></span> <span>${formatVND(wDe)}</span></div>` : ''}
+                            ${s3CTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>3 Càng: <b>${s3CTrung}n</b></span> <span>${formatVND(w3C)}</span></div>` : ''}
+                            ${sX2Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 2: <b>${sX2Trung}n</b></span> <span>${formatVND(wX2)}</span></div>` : ''}
+                            ${sX3Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 3: <b>${sX3Trung}n</b></span> <span>${formatVND(wX3)}</span></div>` : ''}
+                            ${totalWin===0 && totalCost>0 ? '<span class="text-gray-400 italic">Trượt hết...</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+            document.getElementById('results-container').innerHTML = html;
 
             document.getElementById('totalCostOutput').textContent = formatVND(totalCost); 
             document.getElementById('totalWinningsOutput').textContent = formatVND(totalWin);
             
-            const pEl = document.getElementById('totalProfitOutput'); 
-            const pStatus = document.getElementById('profitStatusText');
+            const pEl = document.getElementById('totalProfitOutput'); const pStatus = document.getElementById('profitStatusText');
             pEl.textContent = formatVND(Math.abs(profit)); 
-            
             pEl.className = `text-2xl md:text-3xl font-bold font-mono ${profit > 0 ? 'text-green-600' : (profit < 0 ? 'text-red-600' : 'text-gray-700')}`;
             
-            // XỬ LÝ MÀU VÀ CHỮ HIỂN THỊ LOGIC MỚI
-            if(profit > 0) { 
-                pStatus.textContent = "(Khách Dương - Mình nợ khách)"; 
-                pStatus.className = "text-center font-bold mt-2 text-sm text-green-600"; 
-            } 
-            else if (profit < 0) { 
-                pStatus.textContent = "(Khách Âm - Khách nợ mình)"; 
-                pStatus.className = "text-center font-bold mt-2 text-sm text-red-600"; 
-            } 
-            else { 
-                pStatus.textContent = "(Hòa tiền)"; 
-                pStatus.className = "text-center font-bold mt-2 text-sm text-gray-500"; 
-            }
+            if(profit > 0) { pStatus.textContent = "(Khách Dương - Mình nợ khách)"; pStatus.className = "text-center font-bold mt-2 text-sm text-green-600"; } 
+            else if (profit < 0) { pStatus.textContent = "(Khách Âm - Khách nợ mình)"; pStatus.className = "text-center font-bold mt-2 text-sm text-red-600"; } 
+            else { pStatus.textContent = "(Hòa tiền)"; pStatus.className = "text-center font-bold mt-2 text-sm text-gray-500"; }
             
-            resContainer.innerHTML = html; 
-            currentCalcData = { cost: totalCost, win: totalWin, netCost: profit }; 
-            return currentCalcData;
+            currentCalcData = { cost: totalCost, win: totalWin, netCost: profit, sLoGhi, sDeGhi, s3CGhi, sX2Ghi, sX3Ghi, sLoTrung, sDeTrung, s3CTrung, sX2Trung, sX3Trung, cLo, cDe, c3C, cX2, cX3, wLo, wDe, w3C, wX2, wX3 }; 
         }
 
         document.getElementById('calculate-button').addEventListener('click', calculateAndRender);
-        ['master-input', 'results-input'].forEach(id => document.getElementById(id).addEventListener('input', () => { setTimeout(calculateAndRender, 300); }));
 
         document.getElementById('saveToDebtButton').addEventListener('click', () => {
-            const customer = document.getElementById('customerSelector').value;
-            if(!customer) return alert("❌ Anh chưa chọn khách hàng!");
+            if(!activeCustomer) return alert("❌ Anh chưa chọn khách hàng!");
             if(!currentCalcData || (currentCalcData.cost === 0 && currentCalcData.win === 0)) return alert("Chưa có dữ liệu!");
             const rawDate = document.getElementById('sessionDate').value; if(!rawDate) return alert("Chưa chọn ngày!");
             
-            const netCostInVND = currentCalcData.netCost; 
-            const amountToSave = netCostInVND / 1000;
-            if(!creditData[customer].debts[rawDate]) creditData[customer].debts[rawDate] = 0;
+            const amountToSave = currentCalcData.netCost / 1000;
+            if(!creditData[activeCustomer].debts[rawDate]) creditData[activeCustomer].debts[rawDate] = 0;
             
-            // CỘNG DỒN VÀO NỢ HIỆN TẠI (Âm là khách nợ thêm, Dương là giảm nợ)
-            creditData[customer].debts[rawDate] += amountToSave;
-            saveData(); 
-            renderTongHop(); 
+            creditData[activeCustomer].debts[rawDate] += amountToSave;
+            saveData(); renderTongHop(); renderChiTiet();
             
-            alert(`✅ Đã chốt sổ thành công cho "${customer}"!\n📅 Ngày: ${rawDate}\n💰 Hôm nay chốt: ${netCostInVND > 0 ? `+${amountToSave}k (Khách Dương)` : `${amountToSave}k (Khách Âm)`}`);
-            goToDetail(customer);
+            alert(`✅ Đã chốt sổ thành công cho "${activeCustomer}"!\n📅 Ngày: ${rawDate}\n💰 Hôm nay: ${currentCalcData.netCost > 0 ? `Khách Dương ${amountToSave}k` : `Khách Âm ${Math.abs(amountToSave)}k`}`);
+            goToDetail(activeCustomer);
         });
 
-        document.getElementById('toggleDetails').addEventListener('click', () => {
-            const res = document.getElementById('results-container'); res.classList.toggle('hidden'); document.getElementById('toggleDetails').textContent = res.classList.contains('hidden') ? 'Chi tiết lệnh' : 'Ẩn chi tiết';
-        });
         document.getElementById('toggleConfig').addEventListener('click', () => {
             const p = document.getElementById('config-panel'); p.classList.toggle('hidden'); document.getElementById('toggleConfig').textContent = p.classList.contains('hidden') ? 'Hiện Cấu Hình Giá Của Khách' : 'Ẩn Cấu Hình';
         });
-        document.getElementById('toggleGuide').addEventListener('click', () => { document.getElementById('guidePanel').classList.toggle('hidden'); });
-        
+
+        // ĐỊNH DẠNG XUẤT TIN NHẮN THEO MẪU
         document.getElementById('exportMessage').addEventListener('click', () => {
-            if(!currentCalcData) return; let d = document.getElementById('sessionDate').value.split('-'); let dateStr = `${d[2]}/${d[1]}/${d[0]}`; const f = (n) => (n/1000).toLocaleString('vi');
-            let profit = currentCalcData.win - currentCalcData.cost; 
-            let msg = `Ngày ${dateStr}\n--- TỔNG KẾT ---\nNhận (Đánh): ${f(currentCalcData.cost)}k\nTrúng: ${f(currentCalcData.win)}k\n----------------\nLãi/Lỗ: ${profit > 0 ? 'Khách Dương ' + f(profit) : 'Khách Âm ' + f(Math.abs(profit))}k`;
-            const txt = document.getElementById('messageOutput'); txt.value = msg; document.getElementById('messageOutputContainer').classList.remove('hidden'); txt.select(); document.execCommand('copy'); alert('Đã copy tin nhắn!');
+            if(!currentCalcData) return; 
+            let d = document.getElementById('sessionDate').value.split('-'); let dateStr = `${d[2]}-${d[1]}-${d[0]}`; 
+            
+            let fn = (val) => (val/1000).toLocaleString('vi-VN') + 'n';
+            let fs = (val) => { let sign = val < 0 ? '-' : ''; return sign + (Math.abs(val)/1000).toLocaleString('vi-VN'); };
+            let p = currentCalcData;
+
+            let msg = `Ngay: ${dateStr}\n`;
+            msg += `E nhan cua ${activeCustomer || 'A'}\n`;
+            
+            if (p.sLoGhi > 0) msg += `Lo: ${p.sLoGhi}d = ${fn(p.cLo)}\n`;
+            if (p.sDeGhi > 0) msg += `De: ${p.sDeGhi}n = ${fn(p.cDe)}\n`;
+            if (p.s3CGhi > 0) msg += `3c: ${p.s3CGhi}n = ${fn(p.c3C)}\n`;
+            if (p.sX2Ghi > 0) msg += `X2: ${p.sX2Ghi}n = ${fn(p.cX2)}\n`;
+            if (p.sX3Ghi > 0) msg += `X3: ${p.sX3Ghi}n = ${fn(p.cX3)}\n`;
+
+            if (p.sLoTrung > 0) msg += `Th lo: ${p.sLoTrung}d = ${fn(p.wLo)}\n`;
+            if (p.sDeTrung > 0) msg += `Th de: ${p.sDeTrung}n = ${fn(p.wDe)}\n`;
+            if (p.s3CTrung > 0) msg += `Th 3c: ${p.s3CTrung}n = ${fn(p.w3C)}\n`;
+            if (p.sX2Trung > 0) msg += `Th x2: ${p.sX2Trung}n = ${fn(p.wX2)}\n`;
+            if (p.sX3Trung > 0) msg += `Th x3: ${p.sX3Trung}n = ${fn(p.wX3)}\n`;
+
+            let profitStr = p.netCost > 0 ? `(duong) ${fn(p.netCost)}` : (p.netCost < 0 ? `(am) ${fn(Math.abs(p.netCost))}` : `0n`);
+            msg += `Hom nay ${activeCustomer || 'A'}: ${profitStr}\n`;
+
+            let oldDebtVND = calculateOldDebt(activeCustomer) * 1000;
+            msg += `No cu: ${fs(oldDebtVND)}n\n`;
+
+            let finalTotal = oldDebtVND + p.netCost;
+            msg += `Tong: ${fs(p.netCost)} + (${fs(oldDebtVND)}) = ${fs(finalTotal)}n.`;
+
+            const txt = document.getElementById('messageOutput'); txt.value = msg; 
+            document.getElementById('messageOutputContainer').classList.remove('hidden'); 
+            txt.select(); document.execCommand('copy'); alert('Đã copy tin nhắn chuẩn form của anh!');
         });
 
-        // ==========================================
-        // VỪA VÀO WEB LÀ KÍCH HOẠT HÀM KÉO DỮ LIỆU TỪ MÂY
-        // ==========================================
-        window.onload = () => { 
-            loadDataFromSupabase(); 
-        };
+        window.onload = () => { loadDataFromSupabase(); };
     </script>
 </body>
 </html>
