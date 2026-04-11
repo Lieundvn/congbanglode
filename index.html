@@ -299,7 +299,6 @@
             let diff = num - currentOld;
             
             if(diff !== 0) {
-                // Lưu sự chênh lệch này vào một key đặc biệt để điều chỉnh tổng nợ cũ
                 creditData[name].debts['GachNo_DieuChinh'] = (creditData[name].debts['GachNo_DieuChinh'] || 0) + diff;
                 saveData(); 
                 let currentFilter = document.getElementById('chiTietTitle')?.innerText.includes('Tất cả') ? null : name;
@@ -308,6 +307,9 @@
             }
         }
 
+        // ==========================================
+        // QUẢN LÝ NGỮ CẢNH (CHUYỂN ĐỔI KHÁCH HÀNG)
+        // ==========================================
         function populateCustomerSelector() {
             const sel = document.getElementById('customerSelector');
             if (!sel) return;
@@ -406,6 +408,9 @@
             });
         });
 
+        // ==========================================
+        // GIAO DIỆN QUẢN LÝ NGƯỜI DÙNG
+        // ==========================================
         function renderTongHop() {
             const tbody = document.getElementById('tongHopBody'); 
             if(!tbody) return;
@@ -512,6 +517,9 @@
             if(evt) evt.currentTarget.className += " active";
         }
 
+        // ==========================================
+        // ENGINE TÍNH LÔ ĐỀ VÀ XUẤT RÚT GỌN
+        // ==========================================
         const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND', minimumFractionDigits:0 }).format(amount||0);
         
         document.getElementById('results-input')?.addEventListener('input', function() { 
@@ -554,8 +562,30 @@
                     const allNums = numStr.match(/\d{2}/g) || []; const gs = (type === 'x2') ? 2 : 3;
                     if(allNums.length % gs !== 0 || allNums.length === 0) return;
                     for (let i = 0; i < allNums.length; i += gs) nums.push(allNums.slice(i, i + gs).join('-'));
-                } else if (type === '3c') nums = numStr.split(/[^\d]+/).filter(n => n.match(/^\d{3}$/));
-                else { numStr.split(/[^\d]+/).forEach(n => { if (n.length === 2) nums.push(n); else if (n.length === 3 && n[0] === n[2]) { nums.push(n.slice(0, 2)); nums.push(n.slice(1, 3)); } }); }
+                } else if (type === '3c') {
+                    nums = numStr.split(/[^\d]+/).filter(n => n.match(/^\d{3}$/));
+                } else {
+                    // TÍCH HỢP TỰ ĐỘNG BUNG ĐẦU, ĐUÔI (ĐÍT), TỔNG
+                    let strL = numStr.toLowerCase();
+                    let mode = /đầu|dau/.test(strL) ? 'dau' : (/đít|dit|đuôi|duoi/.test(strL) ? 'dit' : (/tổng|tong/.test(strL) ? 'tong' : null));
+                    
+                    if (mode) {
+                        let digits = numStr.match(/\d/g) || [];
+                        digits.forEach(d => {
+                            let v = parseInt(d);
+                            for(let i=0; i<=9; i++) {
+                                if(mode==='dau') nums.push(v.toString() + i.toString());
+                                else if(mode==='dit') nums.push(i.toString() + v.toString());
+                                else { for(let j=0; j<=9; j++) if((i+j)%10===v) nums.push(i.toString() + j.toString()); }
+                            }
+                        });
+                    } else {
+                        numStr.split(/[^\d]+/).forEach(n => { 
+                            if (n.length === 2) nums.push(n); 
+                            else if (n.length === 3 && n[0] === n[2]) { nums.push(n.slice(0, 2)); nums.push(n.slice(1, 3)); } 
+                        }); 
+                    }
+                }
                 
                 if (nums.length === 0) return;
                 if (!data[type][qty]) data[type][qty] = []; data[type][qty].push(...nums);
@@ -595,6 +625,7 @@
 
             let totalCost = cLo+cDe+c3C+cX2+cX3; let totalWin = wLo+wDe+w3C+wX2+wX3; let profit = totalWin - totalCost;
 
+            // HIỂN THỊ UI RÚT GỌN TÓM TẮT
             let html = `
             <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                 <h3 class="font-black text-indigo-800 text-lg border-b pb-2 mb-3">TÓM TẮT LỆNH</h3>
@@ -674,6 +705,7 @@
             }
         });
 
+        // ĐỊNH DẠNG XUẤT TIN NHẮN CHUẨN FORM
         document.getElementById('exportMessage')?.addEventListener('click', () => {
             if(!currentCalcData) return; 
             const dInput = document.getElementById('sessionDate');
