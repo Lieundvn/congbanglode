@@ -119,7 +119,7 @@
                 <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
                     <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
-                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Gợi ý: Tự động hiểu (kép, kép lệch, đầu, đít, tổng)</div>
+                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Đã nâng cấp: Đầu, Đít, Tổng, Kép, Kép Lệch tự động chia số.</div>
                 </div>
                 <div class="flex flex-col h-full">
                     <div class="flex justify-between items-center mb-1">
@@ -128,7 +128,12 @@
                             🔍 Mở KQXS Đúng Ngày
                         </button>
                     </div>
-                    <textarea id="results-input" rows="8" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Bấm nút 'Mở KQXS Đúng Ngày' ở trên, bôi đen copy kết quả rồi dán vào đây..."></textarea>
+                    <textarea id="results-input" rows="6" class="w-full p-3 border rounded mono shadow-inner mb-2" placeholder="Bấm nút 'Mở KQXS Đúng Ngày' ở trên, bôi đen copy kết quả rồi dán vào đây..."></textarea>
+                    
+                    <label class="font-bold text-sm text-gray-600 mb-1">🔍 Bảng KQXS Minh Ngọc Trực Tiếp:</label>
+                    <iframe srcdoc='<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0; font-family: Arial, sans-serif; background:#fff;"><script src="https://www.minhngoc.net/jquery/jquery-1.7.2.js"><\/script><link rel="stylesheet" href="https://www.minhngoc.net/style/bangketqua_mini.css"/><div id="box_kqxs_minhngoc"><script>bgcolor="#ffffff";titlecolor="#4f46e5";dbcolor="#e60000";fsize="14px";kqwidth="100%";<\/script><script src="https://www.minhngoc.net/getkqxs/mien-bac.js"><\/script></div></body></html>' 
+                            class="w-full flex-grow border rounded shadow-inner min-h-[350px]">
+                    </iframe>
                 </div>
             </div>
 
@@ -278,14 +283,10 @@
             }
         }
 
-        // ==========================================
-        // MỞ TRANG WEB XSMB THEO ĐÚNG NGÀY ĐÃ CHỌN
-        // ==========================================
         function openXSMB() {
             let dateVal = document.getElementById('sessionDate')?.value;
             if(!dateVal) { alert("Vui lòng chọn ngày trước!"); return; }
-            let parts = dateVal.split('-'); // parts = [yyyy, mm, dd]
-            // Cấu trúc URL của xoso.com.vn: xsmb-dd-mm-yyyy.html
+            let parts = dateVal.split('-');
             let url = `https://xoso.com.vn/xsmb-${parts[2]}-${parts[1]}-${parts[0]}.html`;
             window.open(url, 'XSMB', 'width=500,height=700');
         }
@@ -543,12 +544,24 @@
             setTimeout(calculateAndRender, 300); 
         });
 
+        // BỘ QUÉT KẾT QUẢ SIÊU CHUẨN, LỌC DÍNH SỐ CHỐNG SÓT NHÁY
         function parseResultsText(rawResults) {
             if(!rawResults || rawResults.trim()==='') return { deResult:null, de3CResult:null, loHitCounts:{} };
-            const tokens = rawResults.replace(/[^\d\s]/g, ' ').trim().split(/\s+/).filter(t=>t.length > 0);
+            // Chỉ giữ lại số và khoảng trắng. 
+            let cleaned = rawResults.replace(/[^\d]/g, ' ');
+            let tokens = cleaned.trim().split(/\s+/).filter(t=>t.length >= 2);
             if(tokens.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
-            const gdb = tokens[0] || ''; const deResult = gdb.slice(-2); const de3CResult = gdb.slice(-3);
-            const loHitCounts = {}; tokens.forEach(num=>{ const lo = num.slice(-2); if(lo.length===2) loHitCounts[lo] = (loHitCounts[lo]||0)+1; });
+            
+            // Tìm Giải Đặc Biệt (Là số đầu tiên có độ dài >= 4 chữ số, thường MB là 5 số)
+            let gdb = tokens.find(t => t.length >= 4) || tokens[0] || ''; 
+            const deResult = gdb.slice(-2); 
+            const de3CResult = gdb.slice(-3);
+            
+            const loHitCounts = {}; 
+            tokens.forEach(num=>{ 
+                const lo = num.slice(-2); 
+                if(lo.length===2) loHitCounts[lo] = (loHitCounts[lo]||0)+1; 
+            });
             return { deResult, de3CResult, loHitCounts };
         }
 
@@ -560,7 +573,6 @@
             if (['lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3'].includes(t)) return 'x3'; return null;
         }
 
-        // TÁCH LỆNH CHUẨN XÁC, BẮT ĐƯỢC CẢ "ĐẦU", "ĐÍT", "TỔNG", "KÉP"
         function parseBets(rawInput) {
             const data = { lo: {}, de: {}, '3c': {}, x2: {}, x3: {} };
             const keys = ['ba càng đề', 'đề ba càng', 'ba càng', 'ba cang', '3 càng', '3 cang', '3cang', 'bacang', 'bc', '3c', 'lô xiên 2', 'xien 2', 'xiên 2', 'xien2', 'xiên2', 'xi2', 'x2', 'lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3', 'lo', 'lô', 'l', 'de', 'đề', 'đe', 'dê', 'đê', 'đ', 'd'];
@@ -670,12 +682,51 @@
 
             let sLoGhi=0, sDeGhi=0, s3CGhi=0, sX2Ghi=0, sX3Ghi=0;
             let sLoTrung=0, sDeTrung=0, s3CTrung=0, sX2Trung=0, sX3Trung=0;
+            
+            // LƯU TRỮ CHI TIẾT TỪNG CON TRÚNG ĐỂ HIỂN THỊ
+            let loHitsDetail = {}, deHitsDetail = {}, c3HitsDetail = {}, x2HitsDetail = {}, x3HitsDetail = {};
 
-            for(let q in pData.lo) { let qty=parseFloat(q); sLoGhi += pData.lo[q].length * qty; pData.lo[q].forEach(n=>{ sLoTrung += (resData.loHitCounts[n]||0)*qty; }); }
-            for(let q in pData.de) { let qty=parseFloat(q); sDeGhi += pData.de[q].length * qty; pData.de[q].forEach(n=>{ if(n===resData.deResult) sDeTrung+=qty; }); }
-            for(let q in pData['3c']) { let qty=parseFloat(q); s3CGhi += pData['3c'][q].length * qty; pData['3c'][q].forEach(n=>{ if(n===resData.de3CResult) s3CTrung+=qty; }); }
-            for(let q in pData.x2) { let qty=parseFloat(q); sX2Ghi += pData.x2[q].length * qty; pData.x2[q].forEach(pair=>{ let [n1,n2]=pair.split('-'); if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0) sX2Trung+=qty; }); }
-            for(let q in pData.x3) { let qty=parseFloat(q); sX3Ghi += pData.x3[q].length * qty; pData.x3[q].forEach(tri=>{ let [n1,n2,n3]=tri.split('-'); if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0 && (resData.loHitCounts[n3]||0)>0) sX3Trung+=qty; }); }
+            for(let q in pData.lo) { 
+                let qty=parseFloat(q); 
+                sLoGhi += pData.lo[q].length * qty; 
+                pData.lo[q].forEach(n=>{ 
+                    let hits = resData.loHitCounts[n]||0;
+                    if(hits>0){ 
+                        sLoTrung += hits*qty; 
+                        loHitsDetail[n] = hits;
+                    } 
+                }); 
+            }
+            for(let q in pData.de) { 
+                let qty=parseFloat(q); 
+                sDeGhi += pData.de[q].length * qty; 
+                pData.de[q].forEach(n=>{ 
+                    if(n===resData.deResult) { sDeTrung+=qty; deHitsDetail[n]=1; } 
+                }); 
+            }
+            for(let q in pData['3c']) { 
+                let qty=parseFloat(q); 
+                s3CGhi += pData['3c'][q].length * qty; 
+                pData['3c'][q].forEach(n=>{ 
+                    if(n===resData.de3CResult) { s3CTrung+=qty; c3HitsDetail[n]=1; } 
+                }); 
+            }
+            for(let q in pData.x2) { 
+                let qty=parseFloat(q); 
+                sX2Ghi += pData.x2[q].length * qty; 
+                pData.x2[q].forEach(pair=>{ 
+                    let [n1,n2]=pair.split('-'); 
+                    if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0) { sX2Trung+=qty; x2HitsDetail[pair]=1; } 
+                }); 
+            }
+            for(let q in pData.x3) { 
+                let qty=parseFloat(q); 
+                sX3Ghi += pData.x3[q].length * qty; 
+                pData.x3[q].forEach(tri=>{ 
+                    let [n1,n2,n3]=tri.split('-'); 
+                    if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0 && (resData.loHitCounts[n3]||0)>0) { sX3Trung+=qty; x3HitsDetail[tri]=1; } 
+                }); 
+            }
 
             let cLo = sLoGhi*p.lo, wLo = sLoTrung*p.payLo;
             let cDe = sDeGhi*p.de, wDe = sDeTrung*p.payDe;
@@ -685,7 +736,13 @@
 
             let totalCost = cLo+cDe+c3C+cX2+cX3; let totalWin = wLo+wDe+w3C+wX2+wX3; let profit = totalWin - totalCost;
 
-            // HIỂN THỊ UI RÚT GỌN TÓM TẮT
+            // XỬ LÝ CHUỖI HIỂN THỊ CHI TIẾT NHÁY (GIÚP ANH NHÌN RÕ RÀNG NHẤT)
+            let loDetailStr = Object.entries(loHitsDetail).map(([n, h]) => h > 1 ? `${n}(x${h}nháy)` : n).join(', ');
+            let deDetailStr = Object.keys(deHitsDetail).join(', ');
+            let c3DetailStr = Object.keys(c3HitsDetail).join(', ');
+            let x2DetailStr = Object.keys(x2HitsDetail).join(', ');
+            let x3DetailStr = Object.keys(x3HitsDetail).join(', ');
+
             let html = `
             <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                 <h3 class="font-black text-indigo-800 text-lg border-b pb-2 mb-3">TÓM TẮT LỆNH</h3>
@@ -704,11 +761,11 @@
                     <div>
                         <h4 class="font-bold text-green-600 mb-2 border-b pb-1">🟢 TRÚNG THƯỞNG</h4>
                         <div class="space-y-1 text-[15px]">
-                            ${sLoTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Lô: <b>${sLoTrung}đ</b></span> <span>${formatVND(wLo)}</span></div>` : ''}
-                            ${sDeTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${sDeTrung}n</b></span> <span>${formatVND(wDe)}</span></div>` : ''}
-                            ${s3CTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>3 Càng: <b>${s3CTrung}n</b></span> <span>${formatVND(w3C)}</span></div>` : ''}
-                            ${sX2Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 2: <b>${sX2Trung}n</b></span> <span>${formatVND(wX2)}</span></div>` : ''}
-                            ${sX3Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 3: <b>${sX3Trung}n</b></span> <span>${formatVND(wX3)}</span></div>` : ''}
+                            ${sLoTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Lô: <b>${sLoTrung}đ</b> <span class="text-xs text-blue-600 font-normal ml-1">[${loDetailStr}]</span></span> <span>${formatVND(wLo)}</span></div>` : ''}
+                            ${sDeTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${sDeTrung}n</b> <span class="text-xs text-blue-600 font-normal ml-1">[${deDetailStr}]</span></span> <span>${formatVND(wDe)}</span></div>` : ''}
+                            ${s3CTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>3 Càng: <b>${s3CTrung}n</b> <span class="text-xs text-blue-600 font-normal ml-1">[${c3DetailStr}]</span></span> <span>${formatVND(w3C)}</span></div>` : ''}
+                            ${sX2Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 2: <b>${sX2Trung}n</b> <span class="text-xs text-blue-600 font-normal ml-1">[${x2DetailStr}]</span></span> <span>${formatVND(wX2)}</span></div>` : ''}
+                            ${sX3Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 3: <b>${sX3Trung}n</b> <span class="text-xs text-blue-600 font-normal ml-1">[${x3DetailStr}]</span></span> <span>${formatVND(wX3)}</span></div>` : ''}
                             ${totalWin===0 && totalCost>0 ? '<span class="text-gray-400 italic">Trượt hết...</span>' : ''}
                         </div>
                     </div>
@@ -736,7 +793,13 @@
                 else { pStatus.textContent = "(Hòa tiền)"; pStatus.className = "text-center font-bold mt-2 text-sm text-gray-500"; }
             }
             
-            currentCalcData = { cost: totalCost, win: totalWin, netCost: profit, sLoGhi, sDeGhi, s3CGhi, sX2Ghi, sX3Ghi, sLoTrung, sDeTrung, s3CTrung, sX2Trung, sX3Trung, cLo, cDe, c3C, cX2, cX3, wLo, wDe, w3C, wX2, wX3 }; 
+            currentCalcData = { 
+                cost: totalCost, win: totalWin, netCost: profit, 
+                sLoGhi, sDeGhi, s3CGhi, sX2Ghi, sX3Ghi, 
+                sLoTrung, sDeTrung, s3CTrung, sX2Trung, sX3Trung, 
+                cLo, cDe, c3C, cX2, cX3, wLo, wDe, w3C, wX2, wX3,
+                loHitsDetail, deHitsDetail, c3HitsDetail, x2HitsDetail, x3HitsDetail
+            }; 
         }
 
         document.getElementById('calculate-button')?.addEventListener('click', calculateAndRender);
@@ -765,7 +828,7 @@
             }
         });
 
-        // ĐỊNH DẠNG XUẤT TIN NHẮN CHUẨN FORM
+        // ĐỊNH DẠNG XUẤT TIN NHẮN CHUẨN FORM (CÓ HIỆN CHI TIẾT SỐ TRÚNG)
         document.getElementById('exportMessage')?.addEventListener('click', () => {
             if(!currentCalcData) return; 
             const dInput = document.getElementById('sessionDate');
@@ -777,6 +840,13 @@
             let fs = (val) => { let sign = val < 0 ? '-' : ''; return sign + (Math.abs(val)/1000).toLocaleString('vi-VN'); };
             let p = currentCalcData;
 
+            // Xây dựng chuỗi hiển thị số trúng cho tin nhắn
+            let loDet = Object.entries(p.loHitsDetail).map(([n,h]) => h>1 ? `${n}(x${h})` : n).join(', ');
+            let deDet = Object.keys(p.deHitsDetail).join(', ');
+            let c3Det = Object.keys(p.c3HitsDetail).join(', ');
+            let x2Det = Object.keys(p.x2HitsDetail).join(', ');
+            let x3Det = Object.keys(p.x3HitsDetail).join(', ');
+
             let msg = `Ngay: ${dateStr}\n`;
             msg += `E nhan cua ${activeCustomer || 'A'}\n`;
             
@@ -786,11 +856,11 @@
             if (p.sX2Ghi > 0) msg += `X2: ${p.sX2Ghi}n = ${fn(p.cX2)}\n`;
             if (p.sX3Ghi > 0) msg += `X3: ${p.sX3Ghi}n = ${fn(p.cX3)}\n`;
 
-            if (p.sLoTrung > 0) msg += `Th lo: ${p.sLoTrung}d = ${fn(p.wLo)}\n`;
-            if (p.sDeTrung > 0) msg += `Th de: ${p.sDeTrung}n = ${fn(p.wDe)}\n`;
-            if (p.s3CTrung > 0) msg += `Th 3c: ${p.s3CTrung}n = ${fn(p.w3C)}\n`;
-            if (p.sX2Trung > 0) msg += `Th x2: ${p.sX2Trung}n = ${fn(p.wX2)}\n`;
-            if (p.sX3Trung > 0) msg += `Th x3: ${p.sX3Trung}n = ${fn(p.wX3)}\n`;
+            if (p.sLoTrung > 0) msg += `Th lo: ${p.sLoTrung}d [${loDet}] = ${fn(p.wLo)}\n`;
+            if (p.sDeTrung > 0) msg += `Th de: ${p.sDeTrung}n [${deDet}] = ${fn(p.wDe)}\n`;
+            if (p.s3CTrung > 0) msg += `Th 3c: ${p.s3CTrung}n [${c3Det}] = ${fn(p.w3C)}\n`;
+            if (p.sX2Trung > 0) msg += `Th x2: ${p.sX2Trung}n [${x2Det}] = ${fn(p.wX2)}\n`;
+            if (p.sX3Trung > 0) msg += `Th x3: ${p.sX3Trung}n [${x3Det}] = ${fn(p.wX3)}\n`;
 
             let profitStr = p.netCost > 0 ? `(duong) ${fn(p.netCost)}` : (p.netCost < 0 ? `(am) ${fn(Math.abs(p.netCost))}` : `0n`);
             msg += `Hom nay ${activeCustomer || 'A'}: ${profitStr}\n`;
