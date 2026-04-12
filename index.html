@@ -116,14 +116,19 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
+                <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
-                    <textarea id="master-input" rows="8" class="w-full p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
-                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Gợi ý: Nhận diện Tự Động (kép, kép lệch, đầu, đít, tổng)</div>
+                    <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
+                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Gợi ý: Tự động hiểu (kép, kép lệch, đầu, đít, tổng)</div>
                 </div>
-                <div>
+                <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">2. Nhập bảng kết quả (27 giải):</label>
-                    <textarea id="results-input" rows="8" class="w-full p-3 border rounded mono shadow-inner" placeholder="Dán 27 giải vào đây..."></textarea>
+                    <textarea id="results-input" rows="6" class="w-full p-3 border rounded mono shadow-inner mb-2" placeholder="Bôi đen KQXS ở bảng bên dưới, dán vào đây..."></textarea>
+                    
+                    <label class="font-bold text-sm text-gray-600 mb-1">🔍 Bảng KQXS Minh Ngọc Trực Tiếp:</label>
+                    <iframe srcdoc='<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0; font-family: Arial, sans-serif; background:#fff;"><script src="https://www.minhngoc.net/jquery/jquery-1.7.2.js"><\/script><link rel="stylesheet" href="https://www.minhngoc.net/style/bangketqua_mini.css"/><div id="box_kqxs_minhngoc"><script>bgcolor="#ffffff";titlecolor="#4f46e5";dbcolor="#e60000";fsize="14px";kqwidth="100%";<\/script><script src="https://www.minhngoc.net/getkqxs/mien-bac.js"><\/script></div></body></html>' 
+                            class="w-full flex-grow border rounded shadow-inner min-h-[350px]">
+                    </iframe>
                 </div>
             </div>
 
@@ -232,22 +237,25 @@
                 creditData = data.du_lieu;
                 migrateData(); 
             }
-            document.getElementById('loadingScreen').style.display = 'none';
+            const loader = document.getElementById('loadingScreen');
+            if(loader) loader.style.display = 'none';
             renderTongHop();
             renderQuickSelectContacts();
             switchCustomerContext(""); 
-            document.getElementById('btnTabTongHop').click();
+            document.getElementById('btnTabTongHop')?.click();
         }
 
         async function saveData() {
             const status = document.getElementById('cloudStatus');
-            status.style.display = 'block'; status.innerText = 'Đang đồng bộ... ⏳'; status.style.background = '#f59e0b';
+            if(status) {
+                status.style.display = 'block'; status.innerText = 'Đang đồng bộ... ⏳'; status.style.background = '#f59e0b';
+            }
             const { error } = await sb.from('nhat_ky_cong_no').update({ du_lieu: creditData }).eq('id', 1);
             if(!error) {
-                status.innerText = 'Đã đồng bộ Cloud ☁️'; status.style.background = '#10b981';
-                setTimeout(() => { status.style.display = 'none'; }, 3000);
+                if(status) { status.innerText = 'Đã đồng bộ Cloud ☁️'; status.style.background = '#10b981'; }
+                setTimeout(() => { if(status) status.style.display = 'none'; }, 3000);
             } else {
-                status.innerText = 'Lỗi kết nối ❌'; status.style.background = '#ef4444';
+                if(status) { status.innerText = 'Lỗi kết nối ❌'; status.style.background = '#ef4444'; }
             }
         }
         const debouncedCloudSave = debounce(saveData, 2000);
@@ -302,7 +310,8 @@
             if(diff !== 0) {
                 creditData[name].debts['GachNo_DieuChinh'] = (creditData[name].debts['GachNo_DieuChinh'] || 0) + diff;
                 saveData(); 
-                let currentFilter = document.getElementById('chiTietTitle')?.innerText.includes('Tất cả') ? null : name;
+                let title = document.getElementById('chiTietTitle');
+                let currentFilter = (title && title.innerText.includes('Tất cả')) ? null : name;
                 renderChiTiet(currentFilter); 
                 renderTongHop();
             }
@@ -480,7 +489,6 @@
                 let oldDebt = calculateOldDebt(name);
                 let oldColor = oldDebt > 0 ? 'text-green-600 font-bold' : (oldDebt < 0 ? 'text-red-600 font-bold' : 'font-bold');
                 
-                // Ô SỬA NỢ CŨ & GẠCH NỢ
                 tr.innerHTML += `<td class="col-old-debt bg-gray-50 border-r-2 border-l-2">
                     <div class="flex items-center justify-center gap-1">
                         <input type="number" step="any" class="day-input ${oldColor}" style="width:80px; padding:4px;" value="${oldDebt}" onchange="updateOldDebt('${name}', this.value)" title="Nhập số nợ mới để sửa nợ cũ">
@@ -549,18 +557,7 @@
             const data = { lo: {}, de: {}, '3c': {}, x2: {}, x3: {} };
             const keys = ['ba càng đề', 'đề ba càng', 'ba càng', 'ba cang', '3 càng', '3 cang', '3cang', 'bacang', 'bc', '3c', 'lô xiên 2', 'xien 2', 'xiên 2', 'xien2', 'xiên2', 'xi2', 'x2', 'lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3', 'lo', 'lô', 'l', 'de', 'đề', 'đe', 'dê', 'đê', 'đ', 'd'];
             
-            // XỬ LÝ CHUỖI NHẬP ĐỂ TÁCH LỆNH CHUẨN XÁC KHI VIẾT LIỀN NHAU
-            let pInput = rawInput.replace(/\n/g, '||');
-            // Cắt lệnh nếu dấu chấm đứng ngay sau ký tự tiền tệ
-            pInput = pInput.replace(/([a-zđ₫nk])\./gi, '$1||');
-            // Cắt lệnh nếu dấu chấm đứng trước dấu cách
-            pInput = pInput.replace(/\.\s+/g, '||');
-            // Các dấu phẩy và chấm còn lại dùng làm khoảng trắng phân cách số
-            pInput = pInput.replace(/[.,]/g, ' ');
-            // Tạo vách ngăn ngay sau cấu trúc Tiền cược (VD: x10đ -> x10đ||)
-            pInput = pInput.replace(/((?:x|X|×|\*)\s*\d+\s*[a-zA-Zđ₫]*)\s+/gi, '$1||');
-            // Cắt lệnh nếu thấy từ khóa bắt đầu mục mới (lo, de, 3c)
-            pInput = pInput.replace(new RegExp(`(\\b(?:${keys.join('|')})\\s+)`, 'gi'), '||$1');
+            let pInput = rawInput.replace(/\n/g, '||').replace(/([a-zđ₫nk])\./gi, '$1||').replace(/\.\s+/g, '||').replace(/[.,]/g, ' ').replace(new RegExp(`(\\b(?:${keys.join('|')})\\s+)`, 'gi'), '||$1');
             
             const withTypeRegex = new RegExp(`^(${keys.join('|')})\\s+(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
             const noTypeRegex = new RegExp(`^(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
@@ -585,7 +582,6 @@
                 } else if (type === '3c') {
                     nums = numStr.split(/[^\d]+/).filter(n => n.match(/^\d{3}$/));
                 } else {
-                    // TÍCH HỢP TỰ ĐỘNG BUNG KÉP, KÉP LỆCH, ĐẦU, ĐÍT, TỔNG
                     let strL = numStr.toLowerCase();
                     if (/kép lệch|kep lech/.test(strL)) {
                         ['05','50','16','61','27','72','38','83','49','94'].forEach(n => nums.push(n));
@@ -650,7 +646,6 @@
 
             let totalCost = cLo+cDe+c3C+cX2+cX3; let totalWin = wLo+wDe+w3C+wX2+wX3; let profit = totalWin - totalCost;
 
-            // HIỂN THỊ UI RÚT GỌN TÓM TẮT
             let html = `
             <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                 <h3 class="font-black text-indigo-800 text-lg border-b pb-2 mb-3">TÓM TẮT LỆNH</h3>
