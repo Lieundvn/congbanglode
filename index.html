@@ -91,7 +91,16 @@
             </div>
 
             <div id="config-panel" class="mb-6 p-4 rounded-lg bg-gray-50 border border-gray-200 hidden">
-                <p id="configCustomerNote" class="text-sm text-gray-500 italic mb-2">(Cấu hình mặc định)</p>
+                <div class="flex justify-between items-center mb-3">
+                    <p id="configCustomerNote" class="text-sm text-gray-500 italic">(Cấu hình mặc định)</p>
+                    
+                    <label class="relative inline-flex items-center cursor-pointer bg-red-50 py-1 px-3 rounded border border-red-200 shadow-sm" title="Bật lên để máy tự gom phơi của khách lẻ vào đây">
+                        <input type="checkbox" id="isCompanyConfig" class="sr-only peer config-input">
+                        <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[6px] after:left-[14px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
+                        <span class="ml-2 text-sm font-bold text-red-700 uppercase">Khách này là CÔNG TY</span>
+                    </label>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-white p-4 rounded border border-red-200 shadow-sm">
                         <h3 class="font-bold mb-2 text-red-600">Giá Đánh (Tự lưu cho khách này)</h3>
@@ -122,7 +131,7 @@
                     <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
                 </div>
                 <div class="flex flex-col h-full">
-                    <label class="font-bold mb-1 block text-gray-700">2. Nhập bảng kết quả (Được lưu lại theo ngày):</label>
+                    <label class="font-bold mb-1 block text-gray-700">2. Nhập bảng kết quả (Lưu theo ngày):</label>
                     <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Dán 27 giải vào đây..."></textarea>
                 </div>
             </div>
@@ -151,13 +160,13 @@
             </div>
 
             <button id="saveToDebtButton" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-xl flex items-center justify-center gap-2 transition-all mb-4">
-                ✍️ CHỐT SỐ & LƯU VÀO CÔNG NỢ
+                ✍️ CHỐT SỐ TỰ ĐỘNG LƯU VÀO CÔNG NỢ
             </button>
         </div>
 
         <div id="ChiTiet" class="tabcontent">
             <div class="flex justify-between mb-4">
-                <button class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" onclick="renderChiTiet()">Hiển thị tất cả sổ</button>
+                <button class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded shadow" onclick="renderChiTiet()">Hiển thị tất cả sổ</button>
                 <div id="userActionButtons"></div>
             </div>
             
@@ -202,11 +211,13 @@
 
         const defaultConfig = {
             lo: 22500, de: 1000, c3: 1000, x2: 1000, x3: 1000,
-            payLo: 80000, payDe: 80000, pay3C: 400, payX2: 10, payX3: 40
+            payLo: 80000, payDe: 80000, pay3C: 400, payX2: 10, payX3: 40,
+            isCompany: false
         };
         const configMap = {
             pricePerDiem: 'lo', pricePerDeUnit: 'de', pricePer3CUnit: 'c3', pricePerX2Unit: 'x2', pricePerX3Unit: 'x3',
-            lottoPayout: 'payLo', dePayout: 'payDe', payoutRatio3C: 'pay3C', payoutRatioX2: 'payX2', payoutRatioX3: 'payX3'
+            lottoPayout: 'payLo', dePayout: 'payDe', payoutRatio3C: 'pay3C', payoutRatioX2: 'payX2', payoutRatioX3: 'payX3',
+            isCompanyConfig: 'isCompany'
         };
 
         function debounce(fn, delay) { let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), delay); }; }
@@ -352,18 +363,20 @@
                 noteEl.className = "text-sm text-red-500 font-bold mb-2";
             }
             for (let domId in configMap) {
-                const inputEl = document.getElementById(domId);
-                if (inputEl) inputEl.value = cfg[configMap[domId]];
+                const el = document.getElementById(domId);
+                if (el) {
+                    if (el.type === 'checkbox') el.checked = cfg[configMap[domId]] === true;
+                    else el.value = cfg[configMap[domId]];
+                }
             }
         }
 
-        // TÍNH NĂNG TỰ ĐỘNG GOM PHƠI CHO "CÔNG TY" NẰM Ở ĐÂY
+        // CHỨC NĂNG GOM PHƠI DỰA VÀO CÔNG TẮC "LÀ CÔNG TY"
         function switchCustomerContext(newCustomer) {
             const dateKey = document.getElementById('sessionDate')?.value;
             const inputEl = document.getElementById('master-input');
 
             if (activeCustomer && creditData[activeCustomer] && dateKey && inputEl) {
-                // Lưu lại nội dung của khách trước đó
                 creditData[activeCustomer].inputs[dateKey] = inputEl.value;
             }
 
@@ -372,14 +385,19 @@
             if (lbl) lbl.innerText = activeCustomer || "Khách Vãng Lai";
 
             if (activeCustomer && creditData[activeCustomer] && dateKey && inputEl) {
-                
+                let cfg = creditData[activeCustomer].config || {};
+                let isComp = cfg.isCompany === true;
                 let nameLower = activeCustomer.toLowerCase();
-                // PHÁT HIỆN TÊN LÀ "CÔNG TY" -> GOM PHƠI
-                if (nameLower.includes('công ty') || nameLower.includes('cong ty') || nameLower.includes('congty')) {
+                
+                // Vẫn giữ dự phòng bắt tên "công ty" lỡ anh quên bật công tắc
+                if (isComp || nameLower.includes('công ty') || nameLower.includes('cong ty') || nameLower.includes('congty')) {
                     let aggregatedText = '';
                     for (let n in creditData) {
                         let nLower = n.toLowerCase();
-                        if (n !== '__default_config__' && n !== '__results__' && !nLower.includes('công ty') && !nLower.includes('cong ty') && !nLower.includes('congty')) {
+                        let nCfg = creditData[n].config || {};
+                        let nIsComp = nCfg.isCompany === true || nLower.includes('công ty') || nLower.includes('cong ty') || nLower.includes('congty');
+                        
+                        if (n !== '__default_config__' && n !== '__results__' && n !== activeCustomer && !nIsComp) {
                             if (creditData[n].inputs && creditData[n].inputs[dateKey] && creditData[n].inputs[dateKey].trim() !== '') {
                                 aggregatedText += creditData[n].inputs[dateKey].trim() + '\n\n';
                             }
@@ -388,7 +406,6 @@
                     inputEl.value = aggregatedText.trim();
                     creditData[activeCustomer].inputs[dateKey] = inputEl.value;
                 } else {
-                    // Nếu là khách bình thường thì hiện phơi của khách đó
                     inputEl.value = creditData[activeCustomer].inputs[dateKey] || '';
                 }
                 
@@ -449,8 +466,9 @@
             }
         });
 
+        // LƯU CẤU HÌNH KHI CÓ SỰ THAY ĐỔI (Bao gồm cả Công Tắc Mới)
         document.querySelectorAll('.config-input').forEach(input => {
-            input.addEventListener('input', () => {
+            input.addEventListener('change', (e) => {
                 let targetConfig = null;
                 const currentCust = document.getElementById('customerSelector').value;
 
@@ -463,10 +481,19 @@
 
                 for (let domId in configMap) {
                     const el = document.getElementById(domId);
-                    if(el) targetConfig[configMap[domId]] = parseFloat(el.value) || 0;
+                    if(el) {
+                        if (el.type === 'checkbox') targetConfig[configMap[domId]] = el.checked;
+                        else targetConfig[configMap[domId]] = parseFloat(el.value) || 0;
+                    }
                 }
                 debouncedCloudSave(); 
-                calculateAndRender(); 
+                
+                // Nếu bấm công tắc Công Ty, tự động tải lại màn hình để gom phơi ngay lập tức
+                if(e.target.id === 'isCompanyConfig') {
+                    switchCustomerContext(currentCust);
+                } else {
+                    calculateAndRender(); 
+                }
             });
         });
 
@@ -588,11 +615,12 @@
             let allNumbers = [];
             tokens.forEach(t => {
                 if (t.length === 1) return; 
-                if (t.length === 10 || t.length === 30 || t.length === 15 || t.length === 25 || t.length === 20) {
+                
+                if (t.length === 10 || t.length === 30) {
                     for(let i=0; i<t.length; i+=5) allNumbers.push(t.slice(i, i+5));
-                } else if (t.length === 16 || t.length === 24 || t.length === 12) {
+                } else if (t.length === 16 || t.length === 24) {
                     for(let i=0; i<t.length; i+=4) allNumbers.push(t.slice(i, i+4));
-                } else if (t.length === 9 || t.length === 18) {
+                } else if (t.length === 9) {
                     for(let i=0; i<t.length; i+=3) allNumbers.push(t.slice(i, i+3));
                 } else if (t.length === 8) {
                     for(let i=0; i<t.length; i+=2) allNumbers.push(t.slice(i, i+2));
@@ -737,12 +765,6 @@
 
             let p = runCoreMath(masterInputEl.value, resultsInputEl.value, pObj);
 
-            let loDetailStr = Object.entries(p.loHitsDetail).map(([n, h]) => h > 1 ? `${n}(x${h})` : n).join(' ');
-            let deDetailStr = Object.keys(p.deHitsDetail).join(' ');
-            let c3DetailStr = Object.keys(p.c3HitsDetail).join(' ');
-            let x2DetailStr = Object.keys(p.x2HitsDetail).join(' ');
-            let x3DetailStr = Object.keys(p.x3HitsDetail).join(' ');
-
             let html = `
             <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                 <h3 class="font-black text-indigo-800 text-lg border-b pb-2 mb-3">TÓM TẮT LỆNH</h3>
@@ -761,11 +783,11 @@
                     <div>
                         <h4 class="font-bold text-green-600 mb-2 border-b pb-1">🟢 TRÚNG THƯỞNG</h4>
                         <div class="space-y-1 text-[15px]">
-                            ${p.sLoTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Lô: <b>${p.sLoTrung}đ</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${loDetailStr}]</span></span> <span>${formatVND(p.wLo)}</span></div>` : ''}
-                            ${p.sDeTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${p.sDeTrung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${deDetailStr}]</span></span> <span>${formatVND(p.wDe)}</span></div>` : ''}
-                            ${p.s3CTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>3 Càng: <b>${p.s3CTrung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${c3DetailStr}]</span></span> <span>${formatVND(p.w3C)}</span></div>` : ''}
-                            ${p.sX2Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 2: <b>${p.sX2Trung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${x2DetailStr}]</span></span> <span>${formatVND(p.wX2)}</span></div>` : ''}
-                            ${p.sX3Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 3: <b>${p.sX3Trung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${x3DetailStr}]</span></span> <span>${formatVND(p.wX3)}</span></div>` : ''}
+                            ${p.sLoTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Lô: <b>${p.sLoTrung}đ</b></span> <span>${formatVND(p.wLo)}</span></div>` : ''}
+                            ${p.sDeTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${p.sDeTrung}n</b></span> <span>${formatVND(p.wDe)}</span></div>` : ''}
+                            ${p.s3CTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>3 Càng: <b>${p.s3CTrung}n</b></span> <span>${formatVND(p.w3C)}</span></div>` : ''}
+                            ${p.sX2Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 2: <b>${p.sX2Trung}n</b></span> <span>${formatVND(p.wX2)}</span></div>` : ''}
+                            ${p.sX3Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 3: <b>${p.sX3Trung}n</b></span> <span>${formatVND(p.wX3)}</span></div>` : ''}
                             ${p.win===0 && p.cost>0 ? '<span class="text-gray-400 italic">Trượt hết...</span>' : ''}
                         </div>
                     </div>
@@ -813,9 +835,6 @@
             goToDetail(activeCustomer);
         });
 
-        // ==========================================
-        // 4. CHUẨN HÓA MẪU TIN NHẮN TỪ TAB 3
-        // ==========================================
         function exportMessageForCustomer(name) {
             const dInput = document.getElementById('sessionDate');
             if(!dInput) return;
@@ -882,6 +901,7 @@
                 container.classList.remove('hidden'); 
                 txt.select(); 
                 document.execCommand('copy'); 
+                alert('✅ Đã copy tin nhắn hóa đơn chuẩn form vào bộ nhớ. Anh có thể qua Zalo dán luôn!');
             }
         }
 
