@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thống Hệ Quản Lý Tín Dụng & Lô Đề (Cloud)</title>
+    <title>Hệ Thống Quản Lý & Tính Lô Đề (Cloud)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         body { background-color: #f3f4f6; font-family: Arial, sans-serif; }
         .mono { font-family: ui-monospace, monospace; }
-        .tab-container { margin-bottom: 20px; }
+        .tab-container { margin-top: 10px; margin-bottom: 20px; }
         .tab { overflow: hidden; border: 1px solid #ccc; background-color: #e9ecef; border-radius: 5px 5px 0 0; }
         .tab button { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 20px; font-size: 16px; font-weight: bold; transition: 0.3s; }
         .tab button:hover { background-color: #ddd; }
@@ -40,7 +40,7 @@
     <div id="loadingScreen">Đang tải sổ sách từ Cloud... ☁️</div>
     <div id="cloudStatus">Đã đồng bộ Cloud ☁️</div>
 
-    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4"> Cộng Bảng MR: LIÊU</h2>
+    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">Hệ Thống Quản Lý Tín Dụng & Lô Đề</h2>
 
     <div class="flex justify-center items-center gap-3 mb-6">
         <label class="font-bold text-indigo-800 text-lg">Ngày chốt sổ:</label>
@@ -87,7 +87,7 @@
             </div>
 
             <div class="mb-4 flex gap-2">
-                <button id="toggleConfig" onclick="toggleConfigPanel()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm">Hiện Cấu Hình Giá Của Khách</button>
+                <button id="toggleConfig" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm">Hiện Cấu Hình Giá Của Khách</button>
             </div>
 
             <div id="config-panel" class="mb-6 p-4 rounded-lg bg-gray-50 border border-gray-200 hidden">
@@ -120,21 +120,10 @@
                 <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
                     <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
-                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Tự động bung: Đầu, Đít, Tổng, Kép, Kép Lệch.</div>
                 </div>
                 <div class="flex flex-col h-full">
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="font-bold text-gray-700">2. Kết quả XSMB (Lưu theo ngày):</label>
-                        <div class="flex gap-2">
-                            <button id="btnAutoFetch" onclick="autoFetchKQXS()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded shadow transition-colors flex items-center gap-1">
-                                ⚡ TỰ ĐỘNG LẤY KQXS
-                            </button>
-                            <button onclick="openXSMB()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded shadow transition-colors flex items-center gap-1" title="Mở web tự copy tay nếu lỗi">
-                                🔍 Copy Thủ Công
-                            </button>
-                        </div>
-                    </div>
-                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Bấm nút '⚡ TỰ ĐỘNG LẤY KQXS' ở trên. Hệ thống sẽ tự động gắp đúng 27 giải, loại bỏ hoàn toàn tiền thưởng và số rác!"></textarea>
+                    <label class="font-bold mb-1 block text-gray-700">2. Nhập bảng kết quả (Được lưu lại theo ngày):</label>
+                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Dán 27 giải vào đây..."></textarea>
                 </div>
             </div>
 
@@ -180,7 +169,7 @@
                     <thead>
                         <tr id="headerRow">
                             <th style="text-align:left;">Tên Khách Hàng</th>
-                            <th>Nợ Cũ (Sửa / Gạch Nợ)</th>
+                            <th>Nợ Cũ (VNĐ)</th>
                             <th class="today-col" id="colTodayHeader">Hôm nay</th>
                             <th class="col-total">Tổng Cộng (VNĐ)</th>
                             <th class="bg-emerald-100 text-emerald-800 border-emerald-300">Xuất TN</th>
@@ -189,15 +178,12 @@
                     <tbody id="chiTietBody"></tbody>
                 </table>
             </div>
-        </div>
-    </div>
-
-    <div id="messageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[10000] flex justify-center items-center p-4">
-        <div class="bg-white rounded-lg p-6 w-full max-w-lg shadow-2xl relative">
-            <h3 class="text-xl font-bold text-emerald-600 mb-2">Đã tự động copy nội dung bên dưới!</h3>
-            <p class="text-sm text-gray-500 mb-4">Anh có thể dán (Paste) ngay sang Zalo cho khách.</p>
-            <textarea id="messageOutput" rows="12" class="w-full p-3 border-2 border-emerald-500 rounded mono bg-emerald-50 text-emerald-900 font-bold text-sm outline-none" readonly></textarea>
-            <button onclick="document.getElementById('messageModal').classList.add('hidden')" class="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Đóng Lại</button>
+            
+            <div id="messageOutputContainer" class="mt-6 hidden">
+                <h4 class="font-bold text-emerald-700 mb-2">Nội dung hóa đơn (Đã tự động Copy vào bộ nhớ, anh chỉ việc dán sang Zalo):</h4>
+                <textarea id="messageOutput" rows="8" class="w-full p-4 border-2 border-emerald-500 rounded mono bg-emerald-50 text-emerald-900 font-bold text-sm" readonly></textarea>
+                <button onclick="document.getElementById('messageOutputContainer').classList.add('hidden')" class="mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-4 rounded text-sm">Đóng Lại</button>
+            </div>
         </div>
     </div>
 
@@ -227,7 +213,6 @@
         
         function migrateData() {
             let needsSave = false;
-            // KHỞI TẠO BỘ NHỚ KẾT QUẢ VÀ CẤU HÌNH GỐC
             if (!creditData['__default_config__']) {
                 creditData['__default_config__'] = { ...defaultConfig };
                 needsSave = true;
@@ -262,7 +247,6 @@
             renderTongHop();
             renderQuickSelectContacts();
             
-            // Lấy lại kết quả đã ghim của ngày hôm nay đổ ra ô kết quả
             const todayStr = document.getElementById('sessionDate').value;
             const resInput = document.getElementById('results-input');
             if (creditData['__results__'] && creditData['__results__'][todayStr]) {
@@ -308,131 +292,6 @@
             }
         }
 
-        // ==========================================
-        // CƠ CHẾ TỰ ĐỘNG KÉO KẾT QUẢ XSMB (LỌC BẮN TỈA & VƯỢT TƯỜNG LỬA)
-        // ==========================================
-        async function autoFetchKQXS() {
-            const dateVal = document.getElementById('sessionDate')?.value;
-            if(!dateVal) { alert("Vui lòng chọn ngày chốt sổ trước!"); return; }
-            
-            const btn = document.getElementById('btnAutoFetch');
-            const resInput = document.getElementById('results-input');
-            
-            btn.innerHTML = "⏳ ĐANG LẤY...";
-            btn.disabled = true;
-            resInput.value = "Đang tải và lọc kết quả. Xin chờ vài giây (nếu mạng nghẽn sẽ tự đổi trạm)...";
-            
-            let parts = dateVal.split('-'); 
-            let d = parseInt(parts[2]), m = parseInt(parts[1]), y = parts[0];
-            let dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
-            
-            let url1 = `https://xoso.com.vn/xsmb-${dStr}.html`;
-            let url2 = `https://xskt.com.vn/xsmb/ngay-${d}-${m}-${y}`;
-            
-            const cb = Date.now();
-            const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(url1 + '?t=' + cb)}`,
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(url2 + '?t=' + cb)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url1)}`
-            ];
-            
-            let htmlContent = null;
-
-            for (let i = 0; i < proxies.length; i++) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 6000); 
-                    
-                    let response = await fetch(proxies[i], { signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    
-                    if (response.ok) {
-                        let text = await response.text();
-                        if (text && text.includes('<html') && (text.includes('KQCS') || text.includes('table-result'))) {
-                            htmlContent = text;
-                            break; 
-                        }
-                    }
-                } catch (e) {
-                    console.warn(`Trạm Proxy ${i+1} chậm/lỗi, chuyển trạm...`);
-                }
-            }
-            
-            if(htmlContent) {
-                let parser = new DOMParser();
-                let doc = parser.parseFromString(htmlContent, "text/html");
-                let numbers = [];
-
-                let spans = doc.querySelectorAll('table.table-result span[data-val]');
-                if (spans.length >= 27) {
-                    spans.forEach(s => {
-                        let num = s.getAttribute('data-val').trim().replace(/\D/g, '');
-                        if(num.length >= 2 && num.length <= 5) numbers.push(num);
-                    });
-                }
-
-                if (numbers.length < 27) {
-                    numbers = [];
-                    let ems = doc.querySelectorAll('table#KQCS em');
-                    if (ems.length >= 27) {
-                        ems.forEach(e => {
-                            let num = e.innerText.replace(/\D/g, '');
-                            if(num.length >= 2 && num.length <= 5) numbers.push(num);
-                        });
-                    }
-                }
-
-                if (numbers.length < 27) {
-                    numbers = [];
-                    let vgs = doc.querySelectorAll('table.table-result span[class^="v-g"]');
-                    if (vgs.length >= 27) {
-                        vgs.forEach(e => {
-                            let num = e.innerText.replace(/\D/g, '');
-                            if(num.length >= 2 && num.length <= 5) numbers.push(num);
-                        });
-                    }
-                }
-                
-                if(numbers.length >= 27) {
-                    numbers = numbers.slice(0, 27);
-                    let finalString = numbers.join('\n');
-                    
-                    resInput.value = finalString;
-
-                    // LƯU KẾT QUẢ TỰ ĐỘNG VÀO BỘ NHỚ THEO NGÀY
-                    if (!creditData['__results__']) creditData['__results__'] = {};
-                    creditData['__results__'][dateVal] = finalString;
-                    debouncedCloudSave();
-
-                    if(document.getElementById('TinhToan').style.display === 'block') {
-                        calculateAndRender();
-                    }
-                    alert("✅ Bắn tỉa thành công chuẩn 27 giải!");
-                } else {
-                    resInput.value = "";
-                    alert("⚠️ Chưa quay xong kết quả hoặc web lỗi. Vui lòng bấm 'Copy Thủ Công' để copy tay!");
-                    openXSMB();
-                }
-            } else {
-                resInput.value = "";
-                alert("⚠️ Lỗi cáp quang mạng (Cả 3 trạm đều từ chối kết nối). Xin anh bấm 'Copy Thủ Công' để lấy số chữa cháy nhé!");
-            }
-            
-            btn.innerHTML = "⚡ TỰ ĐỘNG LẤY KQXS";
-            btn.disabled = false;
-        }
-
-        function openXSMB() {
-            let dateVal = document.getElementById('sessionDate')?.value;
-            if(!dateVal) { alert("Vui lòng chọn ngày trước!"); return; }
-            let parts = dateVal.split('-'); 
-            let url = `https://xoso.com.vn/xsmb-${parts[2]}-${parts[1]}-${parts[0]}.html`;
-            window.open(url, 'XSMB', 'width=500,height=700');
-        }
-
-        // ==========================================
-        // CÁC HÀM TÍNH TOÁN & CẬP NHẬT CÔNG NỢ
-        // ==========================================
         function calculateUserTotal(name) {
             if (name === '__default_config__' || name === '__results__') return 0;
             let total = 0;
@@ -452,23 +311,6 @@
                 }
             }
             return old;
-        }
-
-        function updateOldDebt(name, value) {
-            let num = parseFloat(value);
-            if(isNaN(num)) num = 0;
-            
-            let currentOld = calculateOldDebt(name);
-            let diff = num - currentOld;
-            
-            if(diff !== 0) {
-                creditData[name].debts['GachNo_DieuChinh'] = (creditData[name].debts['GachNo_DieuChinh'] || 0) + diff;
-                saveData(); 
-                let title = document.getElementById('chiTietTitle');
-                let currentFilter = (title && title.innerText.includes('Tất cả')) ? null : name;
-                renderChiTiet(currentFilter); 
-                renderTongHop();
-            }
         }
 
         function populateCustomerSelector() {
@@ -500,17 +342,14 @@
         function applyCustomerConfig(name) {
             const noteEl = document.getElementById('configCustomerNote');
             if (!noteEl) return;
-            
-            let baseDefault = creditData['__default_config__'] || defaultConfig;
-            let cfg = baseDefault;
-            
+            let cfg = creditData['__default_config__'] || defaultConfig;
             if (name && creditData[name] && creditData[name].config) {
                 cfg = creditData[name].config;
                 noteEl.innerText = `(Đang áp dụng cấu hình của: ${name})`;
                 noteEl.className = "text-sm text-indigo-700 font-bold mb-2";
             } else {
-                noteEl.innerText = `(Cấu hình Mặc Định - Áp dụng chung)`;
-                noteEl.className = "text-sm text-red-600 font-bold mb-2";
+                noteEl.innerText = `(Cấu hình Mặc Định - Áp dụng chung cho Khách Vãng Lai)`;
+                noteEl.className = "text-sm text-red-500 font-bold mb-2";
             }
             for (let domId in configMap) {
                 const inputEl = document.getElementById(domId);
@@ -518,11 +357,13 @@
             }
         }
 
+        // TÍNH NĂNG TỰ ĐỘNG GOM PHƠI CHO "CÔNG TY" NẰM Ở ĐÂY
         function switchCustomerContext(newCustomer) {
             const dateKey = document.getElementById('sessionDate')?.value;
             const inputEl = document.getElementById('master-input');
 
             if (activeCustomer && creditData[activeCustomer] && dateKey && inputEl) {
+                // Lưu lại nội dung của khách trước đó
                 creditData[activeCustomer].inputs[dateKey] = inputEl.value;
             }
 
@@ -531,7 +372,26 @@
             if (lbl) lbl.innerText = activeCustomer || "Khách Vãng Lai";
 
             if (activeCustomer && creditData[activeCustomer] && dateKey && inputEl) {
-                inputEl.value = creditData[activeCustomer].inputs[dateKey] || '';
+                
+                let nameLower = activeCustomer.toLowerCase();
+                // PHÁT HIỆN TÊN LÀ "CÔNG TY" -> GOM PHƠI
+                if (nameLower.includes('công ty') || nameLower.includes('cong ty') || nameLower.includes('congty')) {
+                    let aggregatedText = '';
+                    for (let n in creditData) {
+                        let nLower = n.toLowerCase();
+                        if (n !== '__default_config__' && n !== '__results__' && !nLower.includes('công ty') && !nLower.includes('cong ty') && !nLower.includes('congty')) {
+                            if (creditData[n].inputs && creditData[n].inputs[dateKey] && creditData[n].inputs[dateKey].trim() !== '') {
+                                aggregatedText += creditData[n].inputs[dateKey].trim() + '\n\n';
+                            }
+                        }
+                    }
+                    inputEl.value = aggregatedText.trim();
+                    creditData[activeCustomer].inputs[dateKey] = inputEl.value;
+                } else {
+                    // Nếu là khách bình thường thì hiện phơi của khách đó
+                    inputEl.value = creditData[activeCustomer].inputs[dateKey] || '';
+                }
+                
                 applyCustomerConfig(activeCustomer);
             } else if (inputEl) {
                 inputEl.value = '';
@@ -544,7 +404,6 @@
             switchCustomerContext(e.target.value);
         });
 
-        // BẮT SỰ KIỆN KHI ĐỔI NGÀY LÀ ĐỔI LUÔN BẢNG KẾT QUẢ
         document.getElementById('sessionDate')?.addEventListener('change', () => {
             updateDateHeaders();
             
@@ -570,7 +429,6 @@
             setTimeout(calculateAndRender, 300);
         });
 
-        // LƯU KẾT QUẢ XỔ SỐ VÀO BỘ NHỚ THEO NGÀY KHI ANH GÕ TAY / COPY DÁN
         document.getElementById('results-input')?.addEventListener('input', function() { 
             if (this.value.includes('.') || this.value.includes(',')) this.value = this.value.replace(/[.,]/g, ' '); 
             
@@ -582,17 +440,15 @@
             setTimeout(calculateAndRender, 300); 
         });
 
-        // HIỂN THỊ CẤU HÌNH BẰNG ONCLICK TRỰC TIẾP (FIX LỖI NÚT KHÔNG BẤM ĐƯỢC)
-        function toggleConfigPanel() {
-            const p = document.getElementById('config-panel');
+        document.getElementById('toggleConfig')?.addEventListener('click', () => {
+            const p = document.getElementById('config-panel'); 
             if(p) {
-                p.classList.toggle('hidden');
+                p.classList.toggle('hidden'); 
                 const btn = document.getElementById('toggleConfig');
-                if(btn) btn.textContent = p.classList.contains('hidden') ? 'Hiện Cấu Hình Giá Của Khách' : 'Ẩn Cấu Hình Giá';
+                if(btn) btn.textContent = p.classList.contains('hidden') ? 'Hiện Cấu Hình Giá Của Khách' : 'Ẩn Cấu Hình';
             }
-        }
+        });
 
-        // LƯU CẤU HÌNH VÀO KHÁCH HOẶC LÀM MẶC ĐỊNH VĨNH VIỄN
         document.querySelectorAll('.config-input').forEach(input => {
             input.addEventListener('input', () => {
                 let targetConfig = null;
@@ -614,9 +470,6 @@
             });
         });
 
-        // ==========================================
-        // GIAO DIỆN QUẢN LÝ NGƯỜI DÙNG
-        // ==========================================
         function renderTongHop() {
             const tbody = document.getElementById('tongHopBody'); 
             if(!tbody) return;
@@ -687,14 +540,8 @@
                 tr.innerHTML = `<td style="text-align:left; font-weight:bold; cursor:pointer;" onclick="switchCustomerContext('${name}'); document.getElementById('btnTabTinhToan').click();" class="hover:text-indigo-600">${name}</td>`;
                 
                 let oldDebt = calculateOldDebt(name);
-                let oldColor = oldDebt > 0 ? 'text-green-600 font-bold' : (oldDebt < 0 ? 'text-red-600 font-bold' : 'font-bold');
-                
-                tr.innerHTML += `<td class="col-old-debt bg-gray-50 border-r-2 border-l-2">
-                    <div class="flex items-center justify-center gap-1">
-                        <input type="number" step="any" class="day-input ${oldColor}" style="width:80px; padding:4px;" value="${oldDebt}" onchange="updateOldDebt('${name}', this.value)" title="Nhập số nợ mới để sửa nợ cũ">
-                        <button onclick="updateOldDebt('${name}', 0)" title="Khách trả hết nợ (Về 0)" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-2 py-1 rounded text-xs shadow-sm">Về 0</button>
-                    </div>
-                </td>`;
+                let oldColor = oldDebt > 0 ? 'text-green-600' : (oldDebt < 0 ? 'text-red-600' : '');
+                tr.innerHTML += `<td class="col-old-debt ${oldColor}">${(oldDebt === 0) ? '0' : (oldDebt * 1000).toLocaleString('vi-VN')}</td>`;
                 
                 const currentDate = document.getElementById('sessionDate')?.value || todayKey;
                 let todayVal = creditData[name].debts[currentDate] || '';
@@ -705,7 +552,6 @@
                 let totalColor = total > 0 ? 'text-green-600' : (total < 0 ? 'text-red-600' : '');
                 tr.innerHTML += `<td class="col-total ${totalColor}">${(total === 0) ? '0' : (total * 1000).toLocaleString('vi-VN')}</td>`;
                 
-                // 3. NÚT XUẤT TIN NHẮN TẠI TAB 3
                 tr.innerHTML += `<td class="bg-emerald-50 border-emerald-200">
                     <button onclick="exportMessageForCustomer('${name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-3 rounded shadow text-sm w-full flex items-center justify-center">📋 Xuất TN</button>
                 </td>`;
@@ -731,9 +577,6 @@
             if(evt) evt.currentTarget.className += " active";
         }
 
-        // ==========================================
-        // ENGINE TÍNH LÔ ĐỀ CỐT LÕI
-        // ==========================================
         const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND', minimumFractionDigits:0 }).format(amount||0);
 
         function parseResultsText(rawResults) {
@@ -745,12 +588,11 @@
             let allNumbers = [];
             tokens.forEach(t => {
                 if (t.length === 1) return; 
-                
-                if (t.length === 10 || t.length === 30) {
+                if (t.length === 10 || t.length === 30 || t.length === 15 || t.length === 25 || t.length === 20) {
                     for(let i=0; i<t.length; i+=5) allNumbers.push(t.slice(i, i+5));
-                } else if (t.length === 16 || t.length === 24) {
+                } else if (t.length === 16 || t.length === 24 || t.length === 12) {
                     for(let i=0; i<t.length; i+=4) allNumbers.push(t.slice(i, i+4));
-                } else if (t.length === 9) {
+                } else if (t.length === 9 || t.length === 18) {
                     for(let i=0; i<t.length; i+=3) allNumbers.push(t.slice(i, i+3));
                 } else if (t.length === 8) {
                     for(let i=0; i<t.length; i+=2) allNumbers.push(t.slice(i, i+2));
@@ -895,6 +737,12 @@
 
             let p = runCoreMath(masterInputEl.value, resultsInputEl.value, pObj);
 
+            let loDetailStr = Object.entries(p.loHitsDetail).map(([n, h]) => h > 1 ? `${n}(x${h})` : n).join(' ');
+            let deDetailStr = Object.keys(p.deHitsDetail).join(' ');
+            let c3DetailStr = Object.keys(p.c3HitsDetail).join(' ');
+            let x2DetailStr = Object.keys(p.x2HitsDetail).join(' ');
+            let x3DetailStr = Object.keys(p.x3HitsDetail).join(' ');
+
             let html = `
             <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                 <h3 class="font-black text-indigo-800 text-lg border-b pb-2 mb-3">TÓM TẮT LỆNH</h3>
@@ -913,11 +761,11 @@
                     <div>
                         <h4 class="font-bold text-green-600 mb-2 border-b pb-1">🟢 TRÚNG THƯỞNG</h4>
                         <div class="space-y-1 text-[15px]">
-                            ${p.sLoTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Lô: <b>${p.sLoTrung}đ</b></span> <span>${formatVND(p.wLo)}</span></div>` : ''}
-                            ${p.sDeTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${p.sDeTrung}n</b></span> <span>${formatVND(p.wDe)}</span></div>` : ''}
-                            ${p.s3CTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>3 Càng: <b>${p.s3CTrung}n</b></span> <span>${formatVND(p.w3C)}</span></div>` : ''}
-                            ${p.sX2Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 2: <b>${p.sX2Trung}n</b></span> <span>${formatVND(p.wX2)}</span></div>` : ''}
-                            ${p.sX3Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 3: <b>${p.sX3Trung}n</b></span> <span>${formatVND(p.wX3)}</span></div>` : ''}
+                            ${p.sLoTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Lô: <b>${p.sLoTrung}đ</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${loDetailStr}]</span></span> <span>${formatVND(p.wLo)}</span></div>` : ''}
+                            ${p.sDeTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${p.sDeTrung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${deDetailStr}]</span></span> <span>${formatVND(p.wDe)}</span></div>` : ''}
+                            ${p.s3CTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>3 Càng: <b>${p.s3CTrung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${c3DetailStr}]</span></span> <span>${formatVND(p.w3C)}</span></div>` : ''}
+                            ${p.sX2Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 2: <b>${p.sX2Trung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${x2DetailStr}]</span></span> <span>${formatVND(p.wX2)}</span></div>` : ''}
+                            ${p.sX3Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 3: <b>${p.sX3Trung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${x3DetailStr}]</span></span> <span>${formatVND(p.wX3)}</span></div>` : ''}
                             ${p.win===0 && p.cost>0 ? '<span class="text-gray-400 italic">Trượt hết...</span>' : ''}
                         </div>
                     </div>
@@ -965,7 +813,9 @@
             goToDetail(activeCustomer);
         });
 
-        // 4. XUẤT TIN NHẮN TỪ TAB 3 ĐÚNG CHUẨN FORM YÊU CẦU
+        // ==========================================
+        // 4. CHUẨN HÓA MẪU TIN NHẮN TỪ TAB 3
+        // ==========================================
         function exportMessageForCustomer(name) {
             const dInput = document.getElementById('sessionDate');
             if(!dInput) return;
@@ -973,7 +823,6 @@
             let d = dateKey.split('-'); let dateStr = `${d[2]}-${d[1]}-${d[0]}`; 
             
             let rawInput = (creditData[name] && creditData[name].inputs && creditData[name].inputs[dateKey]) ? creditData[name].inputs[dateKey] : '';
-            // 2. Lấy kết quả đã lưu trong bộ nhớ của ngày đó
             let rawResults = (creditData['__results__'] && creditData['__results__'][dateKey]) ? creditData['__results__'][dateKey] : '';
             
             let baseCfg = creditData['__default_config__'] || defaultConfig;
@@ -986,7 +835,6 @@
 
             let p = runCoreMath(rawInput, rawResults, pObj);
 
-            // Hàm format định dạng số tiền
             let fn = (val) => {
                 if (val === 0) return '0n';
                 return (val/1000).toLocaleString('vi-VN') + 'n';
@@ -1027,12 +875,11 @@
             let bracketOldDebt = oldDebtVND < 0 ? `(${fs(oldDebtVND)})` : `${fs(oldDebtVND)}`;
             msg += `Tong: ${fs(p.netCost)} + ${bracketOldDebt} = ${fs(finalTotal)}n.`;
 
-            // Mở khung chứa tin nhắn
             const txt = document.getElementById('messageOutput'); 
-            const modal = document.getElementById('messageModal');
-            if(txt && modal) {
+            const container = document.getElementById('messageOutputContainer');
+            if(txt && container) {
                 txt.value = msg; 
-                modal.classList.remove('hidden'); 
+                container.classList.remove('hidden'); 
                 txt.select(); 
                 document.execCommand('copy'); 
             }
