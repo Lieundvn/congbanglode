@@ -119,7 +119,7 @@
                 <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
                     <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
-                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Đã nâng cấp: Đầu, Đít, Tổng, Kép, Kép Lệch tự động chia số.</div>
+                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Tự động bung: Đầu, Đít, Tổng, Kép, Kép Lệch.</div>
                 </div>
                 <div class="flex flex-col h-full">
                     <div class="flex justify-between items-center mb-1">
@@ -128,12 +128,7 @@
                             🔍 Mở KQXS Đúng Ngày
                         </button>
                     </div>
-                    <textarea id="results-input" rows="6" class="w-full p-3 border rounded mono shadow-inner mb-2" placeholder="Bấm nút 'Mở KQXS Đúng Ngày' ở trên, bôi đen copy kết quả rồi dán vào đây..."></textarea>
-                    
-                    <label class="font-bold text-sm text-gray-600 mb-1">🔍 Bảng KQXS Minh Ngọc Trực Tiếp:</label>
-                    <iframe srcdoc='<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0; font-family: Arial, sans-serif; background:#fff;"><script src="https://www.minhngoc.net/jquery/jquery-1.7.2.js"><\/script><link rel="stylesheet" href="https://www.minhngoc.net/style/bangketqua_mini.css"/><div id="box_kqxs_minhngoc"><script>bgcolor="#ffffff";titlecolor="#4f46e5";dbcolor="#e60000";fsize="14px";kqwidth="100%";<\/script><script src="https://www.minhngoc.net/getkqxs/mien-bac.js"><\/script></div></body></html>' 
-                            class="w-full flex-grow border rounded shadow-inner min-h-[350px]">
-                    </iframe>
+                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Bấm nút 'Mở KQXS Đúng Ngày' ở trên, copy kết quả rồi dán vào đây. Máy sẽ tự động chặt các số dính liền nhau (VD: 5481705087 -> 54817 và 05087)."></textarea>
                 </div>
             </div>
 
@@ -283,10 +278,13 @@
             }
         }
 
+        // ==========================================
+        // MỞ TRANG WEB XSMB THEO ĐÚNG NGÀY ĐÃ CHỌN
+        // ==========================================
         function openXSMB() {
             let dateVal = document.getElementById('sessionDate')?.value;
             if(!dateVal) { alert("Vui lòng chọn ngày trước!"); return; }
-            let parts = dateVal.split('-');
+            let parts = dateVal.split('-'); // parts = [yyyy, mm, dd]
             let url = `https://xoso.com.vn/xsmb-${parts[2]}-${parts[1]}-${parts[0]}.html`;
             window.open(url, 'XSMB', 'width=500,height=700');
         }
@@ -535,30 +533,46 @@
         }
 
         // ==========================================
-        // ENGINE TÍNH LÔ ĐỀ VÀ XUẤT RÚT GỌN
+        // ENGINE TÍNH LÔ ĐỀ VÀ BÓC TÁCH KẾT QUẢ DÍNH SỐ
         // ==========================================
         const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND', minimumFractionDigits:0 }).format(amount||0);
         
         document.getElementById('results-input')?.addEventListener('input', function() { 
-            if (this.value.includes('.') || this.value.includes(',')) this.value = this.value.replace(/[.,]/g, ' '); 
             setTimeout(calculateAndRender, 300); 
         });
 
-        // BỘ QUÉT KẾT QUẢ SIÊU CHUẨN, LỌC DÍNH SỐ CHỐNG SÓT NHÁY
         function parseResultsText(rawResults) {
             if(!rawResults || rawResults.trim()==='') return { deResult:null, de3CResult:null, loHitCounts:{} };
-            // Chỉ giữ lại số và khoảng trắng. 
-            let cleaned = rawResults.replace(/[^\d]/g, ' ');
-            let tokens = cleaned.trim().split(/\s+/).filter(t=>t.length >= 2);
+            const cleaned = rawResults.replace(/[^\d\s]/g, ' ');
+            const tokens = cleaned.trim().split(/\s+/).filter(t=>t.length > 0);
             if(tokens.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
             
-            // Tìm Giải Đặc Biệt (Là số đầu tiên có độ dài >= 4 chữ số, thường MB là 5 số)
-            let gdb = tokens.find(t => t.length >= 4) || tokens[0] || ''; 
+            // XỬ LÝ LỖI COPY BỊ DÍNH LIỀN SỐ THÀNH CỤC DÀI (Vd: 5481705087)
+            let allNumbers = [];
+            tokens.forEach(t => {
+                if (t.length === 1) return; // Bỏ qua STT giải (1, 2, 3...)
+                
+                if (t.length === 10 || t.length === 30) {
+                    for(let i=0; i<t.length; i+=5) allNumbers.push(t.slice(i, i+5));
+                } else if (t.length === 16 || t.length === 24) {
+                    for(let i=0; i<t.length; i+=4) allNumbers.push(t.slice(i, i+4));
+                } else if (t.length === 9) {
+                    for(let i=0; i<t.length; i+=3) allNumbers.push(t.slice(i, i+3));
+                } else if (t.length === 8) {
+                    for(let i=0; i<t.length; i+=2) allNumbers.push(t.slice(i, i+2));
+                } else {
+                    allNumbers.push(t);
+                }
+            });
+
+            if(allNumbers.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
+
+            const gdb = allNumbers.find(t => t.length >= 4) || allNumbers[0] || ''; 
             const deResult = gdb.slice(-2); 
             const de3CResult = gdb.slice(-3);
             
             const loHitCounts = {}; 
-            tokens.forEach(num=>{ 
+            allNumbers.forEach(num => { 
                 const lo = num.slice(-2); 
                 if(lo.length===2) loHitCounts[lo] = (loHitCounts[lo]||0)+1; 
             });
@@ -577,12 +591,7 @@
             const data = { lo: {}, de: {}, '3c': {}, x2: {}, x3: {} };
             const keys = ['ba càng đề', 'đề ba càng', 'ba càng', 'ba cang', '3 càng', '3 cang', '3cang', 'bacang', 'bc', '3c', 'lô xiên 2', 'xien 2', 'xiên 2', 'xien2', 'xiên2', 'xi2', 'x2', 'lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3', 'lo', 'lô', 'l', 'de', 'đề', 'đe', 'dê', 'đê', 'đ', 'd'];
             
-            let pInput = rawInput.replace(/\n/g, '||');
-            pInput = pInput.replace(/([a-zđ₫nk])\./gi, '$1||');
-            pInput = pInput.replace(/\.\s+/g, '||');
-            pInput = pInput.replace(/[.,]/g, ' ');
-            pInput = pInput.replace(/((?:x|X|×|\*)\s*\d+\s*[a-zA-Zđ₫nk]*)\s+/gi, '$1||');
-            pInput = pInput.replace(new RegExp(`(\\b(?:${keys.join('|')})\\s+)`, 'gi'), '||$1');
+            let pInput = rawInput.replace(/\n/g, '||').replace(/([a-zđ₫nk])\./gi, '$1||').replace(/\.\s+/g, '||').replace(/[.,]/g, ' ').replace(/((?:x|X|×|\*)\s*\d+\s*[a-zA-Zđ₫nk]*)\s+/gi, '$1||').replace(new RegExp(`(\\b(?:${keys.join('|')})\\s+)`, 'gi'), '||$1');
             
             const withTypeRegex = new RegExp(`^(${keys.join('|')})\\s+(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
             const noTypeRegex = new RegExp(`^(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
@@ -683,7 +692,6 @@
             let sLoGhi=0, sDeGhi=0, s3CGhi=0, sX2Ghi=0, sX3Ghi=0;
             let sLoTrung=0, sDeTrung=0, s3CTrung=0, sX2Trung=0, sX3Trung=0;
             
-            // LƯU TRỮ CHI TIẾT TỪNG CON TRÚNG ĐỂ HIỂN THỊ
             let loHitsDetail = {}, deHitsDetail = {}, c3HitsDetail = {}, x2HitsDetail = {}, x3HitsDetail = {};
 
             for(let q in pData.lo) { 
@@ -736,7 +744,6 @@
 
             let totalCost = cLo+cDe+c3C+cX2+cX3; let totalWin = wLo+wDe+w3C+wX2+wX3; let profit = totalWin - totalCost;
 
-            // XỬ LÝ CHUỖI HIỂN THỊ CHI TIẾT NHÁY (GIÚP ANH NHÌN RÕ RÀNG NHẤT)
             let loDetailStr = Object.entries(loHitsDetail).map(([n, h]) => h > 1 ? `${n}(x${h}nháy)` : n).join(', ');
             let deDetailStr = Object.keys(deHitsDetail).join(', ');
             let c3DetailStr = Object.keys(c3HitsDetail).join(', ');
@@ -828,7 +835,6 @@
             }
         });
 
-        // ĐỊNH DẠNG XUẤT TIN NHẮN CHUẨN FORM (CÓ HIỆN CHI TIẾT SỐ TRÚNG)
         document.getElementById('exportMessage')?.addEventListener('click', () => {
             if(!currentCalcData) return; 
             const dInput = document.getElementById('sessionDate');
@@ -840,7 +846,6 @@
             let fs = (val) => { let sign = val < 0 ? '-' : ''; return sign + (Math.abs(val)/1000).toLocaleString('vi-VN'); };
             let p = currentCalcData;
 
-            // Xây dựng chuỗi hiển thị số trúng cho tin nhắn
             let loDet = Object.entries(p.loHitsDetail).map(([n,h]) => h>1 ? `${n}(x${h})` : n).join(', ');
             let deDet = Object.keys(p.deHitsDetail).join(', ');
             let c3Det = Object.keys(p.c3HitsDetail).join(', ');
