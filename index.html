@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý & Tính Lô Đề (Cloud)</title>
+    <title>Thống Hệ Quản Lý Tín Dụng & Lô Đề (Cloud)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         body { background-color: #f3f4f6; font-family: Arial, sans-serif; }
         .mono { font-family: ui-monospace, monospace; }
-        .tab-container { margin-top: 10px; margin-bottom: 20px; }
+        .tab-container { margin-bottom: 20px; }
         .tab { overflow: hidden; border: 1px solid #ccc; background-color: #e9ecef; border-radius: 5px 5px 0 0; }
         .tab button { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 20px; font-size: 16px; font-weight: bold; transition: 0.3s; }
         .tab button:hover { background-color: #ddd; }
@@ -40,7 +40,7 @@
     <div id="loadingScreen">Đang tải sổ sách từ Cloud... ☁️</div>
     <div id="cloudStatus">Đã đồng bộ Cloud ☁️</div>
 
-    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">Hệ Thống Quản Lý Tín Dụng & Lô Đề</h2>
+    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4"> Cộng Bảng MR: LIÊU</h2>
 
     <div class="flex justify-center items-center gap-3 mb-6">
         <label class="font-bold text-indigo-800 text-lg">Ngày chốt sổ:</label>
@@ -87,7 +87,7 @@
             </div>
 
             <div class="mb-4 flex gap-2">
-                <button id="toggleConfig" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm">Hiện Cấu Hình Giá Của Khách</button>
+                <button id="toggleConfig" onclick="toggleConfigPanel()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm">Hiện Cấu Hình Giá Của Khách</button>
             </div>
 
             <div id="config-panel" class="mb-6 p-4 rounded-lg bg-gray-50 border border-gray-200 hidden">
@@ -120,10 +120,21 @@
                 <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
                     <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
+                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Tự động bung: Đầu, Đít, Tổng, Kép, Kép Lệch.</div>
                 </div>
                 <div class="flex flex-col h-full">
-                    <label class="font-bold mb-1 block text-gray-700">2. Nhập bảng kết quả (27 giải):</label>
-                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Dán 27 giải vào đây..."></textarea>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="font-bold text-gray-700">2. Kết quả XSMB (Lưu theo ngày):</label>
+                        <div class="flex gap-2">
+                            <button id="btnAutoFetch" onclick="autoFetchKQXS()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded shadow transition-colors flex items-center gap-1">
+                                ⚡ TỰ ĐỘNG LẤY KQXS
+                            </button>
+                            <button onclick="openXSMB()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded shadow transition-colors flex items-center gap-1" title="Mở web tự copy tay nếu lỗi">
+                                🔍 Copy Thủ Công
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Bấm nút '⚡ TỰ ĐỘNG LẤY KQXS' ở trên. Hệ thống sẽ tự động gắp đúng 27 giải, loại bỏ hoàn toàn tiền thưởng và số rác!"></textarea>
                 </div>
             </div>
 
@@ -169,20 +180,24 @@
                     <thead>
                         <tr id="headerRow">
                             <th style="text-align:left;">Tên Khách Hàng</th>
-                            <th>Nợ Cũ (VNĐ)</th>
+                            <th>Nợ Cũ (Sửa / Gạch Nợ)</th>
                             <th class="today-col" id="colTodayHeader">Hôm nay</th>
                             <th class="col-total">Tổng Cộng (VNĐ)</th>
-                            <th class="bg-emerald-100 text-emerald-800">Xuất TN</th>
+                            <th class="bg-emerald-100 text-emerald-800 border-emerald-300">Xuất TN</th>
                         </tr>
                     </thead>
                     <tbody id="chiTietBody"></tbody>
                 </table>
             </div>
-            
-            <div id="messageOutputContainer" class="mt-6 hidden">
-                <h4 class="font-bold text-emerald-700 mb-2">Nội dung tin nhắn (Đã copy sẵn, anh dán sang Zalo nhé):</h4>
-                <textarea id="messageOutput" rows="8" class="w-full p-4 border-2 border-emerald-500 rounded mono bg-emerald-50 text-emerald-900 font-bold text-sm" readonly></textarea>
-            </div>
+        </div>
+    </div>
+
+    <div id="messageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[10000] flex justify-center items-center p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-lg shadow-2xl relative">
+            <h3 class="text-xl font-bold text-emerald-600 mb-2">Đã tự động copy nội dung bên dưới!</h3>
+            <p class="text-sm text-gray-500 mb-4">Anh có thể dán (Paste) ngay sang Zalo cho khách.</p>
+            <textarea id="messageOutput" rows="12" class="w-full p-3 border-2 border-emerald-500 rounded mono bg-emerald-50 text-emerald-900 font-bold text-sm outline-none" readonly></textarea>
+            <button onclick="document.getElementById('messageModal').classList.add('hidden')" class="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Đóng Lại</button>
         </div>
     </div>
 
@@ -212,16 +227,20 @@
         
         function migrateData() {
             let needsSave = false;
-            // 2. KHỞI TẠO BỘ NHỚ KẾT QUẢ XỔ SỐ THEO NGÀY
+            // KHỞI TẠO BỘ NHỚ KẾT QUẢ VÀ CẤU HÌNH GỐC
+            if (!creditData['__default_config__']) {
+                creditData['__default_config__'] = { ...defaultConfig };
+                needsSave = true;
+            }
             if (!creditData['__results__']) {
                 creditData['__results__'] = {};
                 needsSave = true;
             }
             for (let name in creditData) {
-                if (name === '__results__') continue;
+                if (name === '__default_config__' || name === '__results__') continue;
                 if (!creditData[name].debts) {
                     let oldDebts = { ...creditData[name] };
-                    creditData[name] = { debts: oldDebts, config: { ...defaultConfig }, inputs: {} };
+                    creditData[name] = { debts: oldDebts, config: { ...creditData['__default_config__'] }, inputs: {} };
                     needsSave = true;
                 }
                 if (!creditData[name].inputs) {
@@ -289,8 +308,133 @@
             }
         }
 
+        // ==========================================
+        // CƠ CHẾ TỰ ĐỘNG KÉO KẾT QUẢ XSMB (LỌC BẮN TỈA & VƯỢT TƯỜNG LỬA)
+        // ==========================================
+        async function autoFetchKQXS() {
+            const dateVal = document.getElementById('sessionDate')?.value;
+            if(!dateVal) { alert("Vui lòng chọn ngày chốt sổ trước!"); return; }
+            
+            const btn = document.getElementById('btnAutoFetch');
+            const resInput = document.getElementById('results-input');
+            
+            btn.innerHTML = "⏳ ĐANG LẤY...";
+            btn.disabled = true;
+            resInput.value = "Đang tải và lọc kết quả. Xin chờ vài giây (nếu mạng nghẽn sẽ tự đổi trạm)...";
+            
+            let parts = dateVal.split('-'); 
+            let d = parseInt(parts[2]), m = parseInt(parts[1]), y = parts[0];
+            let dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            
+            let url1 = `https://xoso.com.vn/xsmb-${dStr}.html`;
+            let url2 = `https://xskt.com.vn/xsmb/ngay-${d}-${m}-${y}`;
+            
+            const cb = Date.now();
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url1 + '?t=' + cb)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url2 + '?t=' + cb)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url1)}`
+            ];
+            
+            let htmlContent = null;
+
+            for (let i = 0; i < proxies.length; i++) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000); 
+                    
+                    let response = await fetch(proxies[i], { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    
+                    if (response.ok) {
+                        let text = await response.text();
+                        if (text && text.includes('<html') && (text.includes('KQCS') || text.includes('table-result'))) {
+                            htmlContent = text;
+                            break; 
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`Trạm Proxy ${i+1} chậm/lỗi, chuyển trạm...`);
+                }
+            }
+            
+            if(htmlContent) {
+                let parser = new DOMParser();
+                let doc = parser.parseFromString(htmlContent, "text/html");
+                let numbers = [];
+
+                let spans = doc.querySelectorAll('table.table-result span[data-val]');
+                if (spans.length >= 27) {
+                    spans.forEach(s => {
+                        let num = s.getAttribute('data-val').trim().replace(/\D/g, '');
+                        if(num.length >= 2 && num.length <= 5) numbers.push(num);
+                    });
+                }
+
+                if (numbers.length < 27) {
+                    numbers = [];
+                    let ems = doc.querySelectorAll('table#KQCS em');
+                    if (ems.length >= 27) {
+                        ems.forEach(e => {
+                            let num = e.innerText.replace(/\D/g, '');
+                            if(num.length >= 2 && num.length <= 5) numbers.push(num);
+                        });
+                    }
+                }
+
+                if (numbers.length < 27) {
+                    numbers = [];
+                    let vgs = doc.querySelectorAll('table.table-result span[class^="v-g"]');
+                    if (vgs.length >= 27) {
+                        vgs.forEach(e => {
+                            let num = e.innerText.replace(/\D/g, '');
+                            if(num.length >= 2 && num.length <= 5) numbers.push(num);
+                        });
+                    }
+                }
+                
+                if(numbers.length >= 27) {
+                    numbers = numbers.slice(0, 27);
+                    let finalString = numbers.join('\n');
+                    
+                    resInput.value = finalString;
+
+                    // LƯU KẾT QUẢ TỰ ĐỘNG VÀO BỘ NHỚ THEO NGÀY
+                    if (!creditData['__results__']) creditData['__results__'] = {};
+                    creditData['__results__'][dateVal] = finalString;
+                    debouncedCloudSave();
+
+                    if(document.getElementById('TinhToan').style.display === 'block') {
+                        calculateAndRender();
+                    }
+                    alert("✅ Bắn tỉa thành công chuẩn 27 giải!");
+                } else {
+                    resInput.value = "";
+                    alert("⚠️ Chưa quay xong kết quả hoặc web lỗi. Vui lòng bấm 'Copy Thủ Công' để copy tay!");
+                    openXSMB();
+                }
+            } else {
+                resInput.value = "";
+                alert("⚠️ Lỗi cáp quang mạng (Cả 3 trạm đều từ chối kết nối). Xin anh bấm 'Copy Thủ Công' để lấy số chữa cháy nhé!");
+            }
+            
+            btn.innerHTML = "⚡ TỰ ĐỘNG LẤY KQXS";
+            btn.disabled = false;
+        }
+
+        function openXSMB() {
+            let dateVal = document.getElementById('sessionDate')?.value;
+            if(!dateVal) { alert("Vui lòng chọn ngày trước!"); return; }
+            let parts = dateVal.split('-'); 
+            let url = `https://xoso.com.vn/xsmb-${parts[2]}-${parts[1]}-${parts[0]}.html`;
+            window.open(url, 'XSMB', 'width=500,height=700');
+        }
+
+        // ==========================================
+        // CÁC HÀM TÍNH TOÁN & CẬP NHẬT CÔNG NỢ
+        // ==========================================
         function calculateUserTotal(name) {
-            if (name === '__results__') return 0;
+            if (name === '__default_config__' || name === '__results__') return 0;
             let total = 0;
             if(creditData[name] && creditData[name].debts) {
                 for (let k in creditData[name].debts) total += parseFloat(creditData[name].debts[k]) || 0;
@@ -299,7 +443,7 @@
         }
 
         function calculateOldDebt(name) {
-            if (name === '__results__') return 0;
+            if (name === '__default_config__' || name === '__results__') return 0;
             let old = 0;
             const currentDate = document.getElementById('sessionDate')?.value;
             if(creditData[name] && creditData[name].debts) {
@@ -310,19 +454,36 @@
             return old;
         }
 
+        function updateOldDebt(name, value) {
+            let num = parseFloat(value);
+            if(isNaN(num)) num = 0;
+            
+            let currentOld = calculateOldDebt(name);
+            let diff = num - currentOld;
+            
+            if(diff !== 0) {
+                creditData[name].debts['GachNo_DieuChinh'] = (creditData[name].debts['GachNo_DieuChinh'] || 0) + diff;
+                saveData(); 
+                let title = document.getElementById('chiTietTitle');
+                let currentFilter = (title && title.innerText.includes('Tất cả')) ? null : name;
+                renderChiTiet(currentFilter); 
+                renderTongHop();
+            }
+        }
+
         function populateCustomerSelector() {
             const sel = document.getElementById('customerSelector');
             if (!sel) return;
             sel.innerHTML = '<option value="">-- Chọn khách hàng --</option>';
-            Object.keys(creditData).filter(n => n !== '__results__').forEach(name => sel.innerHTML += `<option value="${name}">${name}</option>`);
-            if (creditData[activeCustomer]) sel.value = activeCustomer;
+            Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__').forEach(name => sel.innerHTML += `<option value="${name}">${name}</option>`);
+            if (creditData[activeCustomer] && activeCustomer !== '__default_config__' && activeCustomer !== '__results__') sel.value = activeCustomer;
         }
 
         function renderQuickSelectContacts() {
             const container = document.getElementById('quickSelectContacts');
             if (!container) return;
             container.innerHTML = '';
-            Object.keys(creditData).filter(n => n !== '__results__').forEach(name => {
+            Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__').forEach(name => {
                 const tag = document.createElement('span');
                 tag.className = 'bg-white border border-indigo-300 text-indigo-700 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-indigo-600 hover:text-white font-semibold transition shadow-sm';
                 tag.textContent = name;
@@ -339,14 +500,17 @@
         function applyCustomerConfig(name) {
             const noteEl = document.getElementById('configCustomerNote');
             if (!noteEl) return;
-            let cfg = defaultConfig;
+            
+            let baseDefault = creditData['__default_config__'] || defaultConfig;
+            let cfg = baseDefault;
+            
             if (name && creditData[name] && creditData[name].config) {
                 cfg = creditData[name].config;
                 noteEl.innerText = `(Đang áp dụng cấu hình của: ${name})`;
                 noteEl.className = "text-sm text-indigo-700 font-bold mb-2";
             } else {
-                noteEl.innerText = `(Cấu hình mặc định)`;
-                noteEl.className = "text-sm text-gray-500 italic mb-2";
+                noteEl.innerText = `(Cấu hình Mặc Định - Áp dụng chung)`;
+                noteEl.className = "text-sm text-red-600 font-bold mb-2";
             }
             for (let domId in configMap) {
                 const inputEl = document.getElementById(domId);
@@ -380,7 +544,7 @@
             switchCustomerContext(e.target.value);
         });
 
-        // KHI ĐỔI NGÀY LÀ ĐỔI LUÔN BẢNG KẾT QUẢ BÊN DƯỚI TƯƠNG ỨNG
+        // BẮT SỰ KIỆN KHI ĐỔI NGÀY LÀ ĐỔI LUÔN BẢNG KẾT QUẢ
         document.getElementById('sessionDate')?.addEventListener('change', () => {
             updateDateHeaders();
             
@@ -406,7 +570,7 @@
             setTimeout(calculateAndRender, 300);
         });
 
-        // 2. KHI ANH GÕ HAY DÁN KẾT QUẢ, NÓ LƯU THẲNG VÀO NGÀY ĐÓ TRÊN CLOUD
+        // LƯU KẾT QUẢ XỔ SỐ VÀO BỘ NHỚ THEO NGÀY KHI ANH GÕ TAY / COPY DÁN
         document.getElementById('results-input')?.addEventListener('input', function() { 
             if (this.value.includes('.') || this.value.includes(',')) this.value = this.value.replace(/[.,]/g, ' '); 
             
@@ -418,24 +582,46 @@
             setTimeout(calculateAndRender, 300); 
         });
 
+        // HIỂN THỊ CẤU HÌNH BẰNG ONCLICK TRỰC TIẾP (FIX LỖI NÚT KHÔNG BẤM ĐƯỢC)
+        function toggleConfigPanel() {
+            const p = document.getElementById('config-panel');
+            if(p) {
+                p.classList.toggle('hidden');
+                const btn = document.getElementById('toggleConfig');
+                if(btn) btn.textContent = p.classList.contains('hidden') ? 'Hiện Cấu Hình Giá Của Khách' : 'Ẩn Cấu Hình Giá';
+            }
+        }
+
+        // LƯU CẤU HÌNH VÀO KHÁCH HOẶC LÀM MẶC ĐỊNH VĨNH VIỄN
         document.querySelectorAll('.config-input').forEach(input => {
             input.addEventListener('input', () => {
-                if (activeCustomer && creditData[activeCustomer]) {
-                    for (let domId in configMap) {
-                        const el = document.getElementById(domId);
-                        if(el) creditData[activeCustomer].config[configMap[domId]] = parseFloat(el.value) || 0;
-                    }
-                    debouncedCloudSave(); 
+                let targetConfig = null;
+                const currentCust = document.getElementById('customerSelector').value;
+
+                if (currentCust && creditData[currentCust]) {
+                    targetConfig = creditData[currentCust].config;
+                } else {
+                    if (!creditData['__default_config__']) creditData['__default_config__'] = { ...defaultConfig };
+                    targetConfig = creditData['__default_config__'];
                 }
+
+                for (let domId in configMap) {
+                    const el = document.getElementById(domId);
+                    if(el) targetConfig[configMap[domId]] = parseFloat(el.value) || 0;
+                }
+                debouncedCloudSave(); 
                 calculateAndRender(); 
             });
         });
 
+        // ==========================================
+        // GIAO DIỆN QUẢN LÝ NGƯỜI DÙNG
+        // ==========================================
         function renderTongHop() {
             const tbody = document.getElementById('tongHopBody'); 
             if(!tbody) return;
             tbody.innerHTML = '';
-            let names = Object.keys(creditData).filter(n => n !== '__results__');
+            let names = Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__');
             if(names.length === 0) tbody.innerHTML = '<tr><td colspan="2">Chưa có dữ liệu.</td></tr>';
             else names.forEach(name => {
                 let total = calculateUserTotal(name);
@@ -452,9 +638,12 @@
             let nameInput = document.getElementById('newUserName'); 
             if(!nameInput) return;
             let name = nameInput.value.trim();
-            if(!name || name === '__results__') return alert("Vui lòng nhập tên hợp lệ!"); 
-            if(creditData[name]) return alert("Khách đã tồn tại!");
-            creditData[name] = { debts: {}, config: { ...defaultConfig }, inputs: {} }; 
+            if(!name) return alert("Vui lòng nhập tên!"); 
+            if(name === '__default_config__' || name === '__results__' || creditData[name]) return alert("Khách đã tồn tại!");
+            
+            let baseDefault = creditData['__default_config__'] || defaultConfig;
+            creditData[name] = { debts: {}, config: { ...baseDefault }, inputs: {} }; 
+            
             saveData(); nameInput.value = ""; renderTongHop(); goToDetail(name);
         }
         
@@ -465,7 +654,7 @@
         function renameUser(oldName) {
             let newName = prompt(`Tên mới thay thế cho "${oldName}":`, oldName);
             if (newName && newName.trim() && newName.trim() !== oldName) {
-                newName = newName.trim(); if (creditData[newName] || newName === '__results__') return alert("Tên đã tồn tại!");
+                newName = newName.trim(); if (creditData[newName] || newName === '__default_config__' || newName === '__results__') return alert("Tên đã tồn tại!");
                 creditData[newName] = creditData[oldName]; delete creditData[oldName]; saveData(); renderTongHop(); goToDetail(newName);
             }
         }
@@ -486,7 +675,7 @@
             
             tbody.innerHTML = ''; actionBtns.innerHTML = ''; 
 
-            let names = Object.keys(creditData).filter(n => n !== '__results__');
+            let names = Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__');
             if (filterName) {
                 names = names.filter(n => n === filterName); title.innerText = `Đang xem: ${filterName}`;
                 actionBtns.innerHTML = `<button class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded mr-2" onclick="renameUser('${filterName}')">✏️ Đổi Tên</button>
@@ -516,28 +705,13 @@
                 let totalColor = total > 0 ? 'text-green-600' : (total < 0 ? 'text-red-600' : '');
                 tr.innerHTML += `<td class="col-total ${totalColor}">${(total === 0) ? '0' : (total * 1000).toLocaleString('vi-VN')}</td>`;
                 
-                // 3. THÊM NÚT XUẤT TIN NHẮN TẠI ĐÂY (TAB 3)
+                // 3. NÚT XUẤT TIN NHẮN TẠI TAB 3
                 tr.innerHTML += `<td class="bg-emerald-50 border-emerald-200">
-                    <button onclick="exportMessageForCustomer('${name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-3 rounded shadow text-sm w-full flex items-center justify-center">📋 Xuất</button>
+                    <button onclick="exportMessageForCustomer('${name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-3 rounded shadow text-sm w-full flex items-center justify-center">📋 Xuất TN</button>
                 </td>`;
 
                 tbody.appendChild(tr);
             });
-        }
-
-        function updateOldDebt(name, value) {
-            let num = parseFloat(value);
-            if(isNaN(num)) num = 0;
-            let currentOld = calculateOldDebt(name);
-            let diff = num - currentOld;
-            if(diff !== 0) {
-                creditData[name].debts['GachNo_DieuChinh'] = (creditData[name].debts['GachNo_DieuChinh'] || 0) + diff;
-                saveData(); 
-                let title = document.getElementById('chiTietTitle');
-                let currentFilter = (title && title.innerText.includes('Tất cả')) ? null : name;
-                renderChiTiet(currentFilter); 
-                renderTongHop();
-            }
         }
 
         function updateRecord(name, dateKey, value) {
@@ -571,11 +745,12 @@
             let allNumbers = [];
             tokens.forEach(t => {
                 if (t.length === 1) return; 
-                if (t.length === 10 || t.length === 30 || t.length === 15 || t.length === 25 || t.length === 20) {
+                
+                if (t.length === 10 || t.length === 30) {
                     for(let i=0; i<t.length; i+=5) allNumbers.push(t.slice(i, i+5));
-                } else if (t.length === 16 || t.length === 24 || t.length === 12) {
+                } else if (t.length === 16 || t.length === 24) {
                     for(let i=0; i<t.length; i+=4) allNumbers.push(t.slice(i, i+4));
-                } else if (t.length === 9 || t.length === 18) {
+                } else if (t.length === 9) {
                     for(let i=0; i<t.length; i+=3) allNumbers.push(t.slice(i, i+3));
                 } else if (t.length === 8) {
                     for(let i=0; i<t.length; i+=2) allNumbers.push(t.slice(i, i+2));
@@ -653,56 +828,10 @@
                 } else if (type === '3c') {
                     nums = numStr.split(/[^\d]+/).filter(n => n.match(/^\d{3}$/));
                 } else {
-                    let segments = numStr.split(/[\s]+/);
-                    let currentMode = null;
-                    for (let i = 0; i < segments.length; i++) {
-                        let seg = segments[i].toLowerCase();
-                        if(!seg) continue;
-                        
-                        if (/^(đầu|dau)$/.test(seg)) { currentMode = 'dau'; continue; }
-                        if (/^(đít|dit|đuôi|duoi)$/.test(seg)) { currentMode = 'dit'; continue; }
-                        if (/^(tổng|tong)$/.test(seg)) { currentMode = 'tong'; continue; }
-                        if (/^(kép|kep)$/.test(seg)) {
-                            if (segments[i+1] && /^(lệch|lech)$/.test(segments[i+1].toLowerCase())) {
-                                ['05','50','16','61','27','72','38','83','49','94'].forEach(n => nums.push(n));
-                                i++; 
-                            } else {
-                                ['00','11','22','33','44','55','66','77','88','99'].forEach(n => nums.push(n));
-                            }
-                            continue;
-                        }
-
-                        let matchPrefix = seg.match(/^(đầu|dau|đít|dit|đuôi|duoi|tổng|tong)(\d+)$/);
-                        if (matchPrefix) {
-                            let p = matchPrefix[1], vStr = matchPrefix[2];
-                            let m = /đầu|dau/.test(p) ? 'dau' : (/đít|dit|đuôi|duoi/.test(p) ? 'dit' : 'tong');
-                            vStr.split('').forEach(d => {
-                                let v = parseInt(d);
-                                for(let j=0; j<=9; j++) {
-                                    if(m==='dau') nums.push(v.toString() + j.toString());
-                                    else if(m==='dit') nums.push(j.toString() + v.toString());
-                                    else { for(let k=0; k<=9; k++) if((j+k)%10 === v) nums.push(j.toString() + k.toString()); }
-                                }
-                            });
-                            continue;
-                        }
-
-                        if (/^\d+$/.test(seg)) {
-                            if (currentMode) {
-                                seg.split('').forEach(d => {
-                                    let v = parseInt(d);
-                                    for(let j=0; j<=9; j++) {
-                                        if(currentMode==='dau') nums.push(v.toString() + j.toString());
-                                        else if(currentMode==='dit') nums.push(j.toString() + v.toString());
-                                        else { for(let k=0; k<=9; k++) if((j+k)%10 === v) nums.push(j.toString() + k.toString()); }
-                                    }
-                                });
-                            } else {
-                                if (seg.length === 2) nums.push(seg);
-                                else if (seg.length === 3 && seg[0] === seg[2]) { nums.push(seg.slice(0,2)); nums.push(seg.slice(1,3)); }
-                            }
-                        }
-                    }
+                    numStr.split(/[^\d]+/).forEach(n => { 
+                        if (n.length === 2) nums.push(n); 
+                        else if (n.length === 3 && n[0] === n[2]) { nums.push(n.slice(0, 2)); nums.push(n.slice(1, 3)); } 
+                    }); 
                 }
                 
                 if (nums.length === 0) return;
@@ -711,7 +840,6 @@
             return data;
         }
 
-        // TÍNH TOÁN NGẦM KHÔNG ẢNH HƯỞNG GIAO DIỆN (ĐỂ XUẤT HÓA ĐƠN)
         function runCoreMath(rawInput, rawResults, p) {
             const resData = parseResultsText(rawResults); 
             const pData = parseBets(rawInput);
@@ -845,7 +973,7 @@
             let d = dateKey.split('-'); let dateStr = `${d[2]}-${d[1]}-${d[0]}`; 
             
             let rawInput = (creditData[name] && creditData[name].inputs && creditData[name].inputs[dateKey]) ? creditData[name].inputs[dateKey] : '';
-            // Lấy kết quả đã lưu trong bộ nhớ của ngày đó
+            // 2. Lấy kết quả đã lưu trong bộ nhớ của ngày đó
             let rawResults = (creditData['__results__'] && creditData['__results__'][dateKey]) ? creditData['__results__'][dateKey] : '';
             
             let baseCfg = creditData['__default_config__'] || defaultConfig;
@@ -896,19 +1024,17 @@
             msg += `No cu: ${fs(oldDebtVND)}n\n`;
 
             let finalTotal = oldDebtVND + p.netCost;
-            // Xử lý logic hiển thị dấu ngoặc đơn của Nợ cũ trong phép tính tổng
             let bracketOldDebt = oldDebtVND < 0 ? `(${fs(oldDebtVND)})` : `${fs(oldDebtVND)}`;
             msg += `Tong: ${fs(p.netCost)} + ${bracketOldDebt} = ${fs(finalTotal)}n.`;
 
-            // Mở khung chứa tin nhắn và dán vào
+            // Mở khung chứa tin nhắn
             const txt = document.getElementById('messageOutput'); 
-            const container = document.getElementById('messageOutputContainer');
-            if(txt && container) {
+            const modal = document.getElementById('messageModal');
+            if(txt && modal) {
                 txt.value = msg; 
-                container.classList.remove('hidden'); 
+                modal.classList.remove('hidden'); 
                 txt.select(); 
                 document.execCommand('copy'); 
-                alert('✅ Đã tính toán xong và copy tin nhắn vào bộ nhớ. Anh có thể xem trước ở ngay bên dưới bảng!');
             }
         }
 
