@@ -27,45 +27,42 @@
         .day-input { width: 100px; padding: 8px; text-align: right; border: 1px solid #ccc; border-radius: 3px; font-size: 15px; font-weight: bold; outline: none; transition: 0.2s;}
         .day-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3); }
         .col-total { font-weight: bold; font-size: 16px;}
-        .col-old-debt { font-weight: bold; }
-        .today-col { background-color: #e0e7ff !important; border-bottom: 2px solid #4f46e5; }
-        textarea:focus { outline: none; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5); border-color: #6366f1; }
         
         #cloudStatus { position: fixed; bottom: 10px; right: 10px; background: #10b981; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: none; z-index: 9999;}
-        #loadingScreen { position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9998; display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; color: #4f46e5; }
+        #loadingScreen { position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9998; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; color: #4f46e5; }
     </style>
 </head>
 <body class="p-2 md:p-4">
 
-    <div id="loadingScreen">Đang tải dữ liệu từ Cloud... ☁️</div>
+    <div id="loadingScreen">
+        <span>Đang kết nối Cloud... ☁️</span>
+        <span class="text-sm font-normal text-gray-500 mt-2">Vui lòng chờ trong giây lát</span>
+    </div>
     <div id="cloudStatus">Đã đồng bộ ☁️</div>
 
     <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">Hệ Thống Quản Lý Tín Dụng & Lô Đề</h2>
 
     <div class="flex justify-center items-center gap-3 mb-6">
         <label class="font-bold text-indigo-800 text-lg">Ngày chốt sổ:</label>
-        <input id="sessionDate" type="date" class="p-2 border border-indigo-400 rounded font-bold shadow-inner" />
+        <input id="sessionDate" type="date" class="p-2 border border-indigo-400 rounded font-bold shadow-inner text-indigo-700" onchange="handleDateChange()" />
     </div>
 
     <div class="max-w-6xl mx-auto tab-container">
         <div class="tab">
-            <button class="tablinks active" id="btnTabTongHop" onclick="openTab(event, 'TongHop')">1. Sổ Khách (Tổng Nợ)</button>
-            <button class="tablinks" id="btnTabTinhToan" onclick="openTab(event, 'TinhToan')">2. Tính Toán & Vào Sổ</button>
-            <button class="tablinks" id="btnTabChiTiet" onclick="openTab(event, 'ChiTiet')">3. Sổ Chi Tiết</button>
+            <button class="tablinks active" onclick="openTab(event, 'TongHop')">1. Sổ Khách (Tổng Nợ)</button>
+            <button class="tablinks" onclick="openTab(event, 'TinhToan')">2. Tính Toán & Vào Sổ</button>
+            <button class="tablinks" onclick="openTab(event, 'ChiTiet')">3. Sổ Chi Tiết</button>
         </div>
 
         <div id="TongHop" class="tabcontent" style="display: block;">
             <div class="flex flex-wrap gap-2 mb-4">
-                <input type="text" id="newUserName" class="p-2 border rounded shadow-sm w-64" placeholder="Nhập tên khách hàng mới...">
+                <input type="text" id="newUserName" class="p-2 border rounded shadow-sm w-64" placeholder="Tên khách mới...">
                 <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="addNewUser()">+ Thêm Khách Hàng</button>
             </div>
             <div class="table-responsive">
                 <table class="debt-table">
                     <thead>
-                        <tr>
-                            <th style="text-align: left;">Tên Khách Hàng</th>
-                            <th>Tổng Nợ Hiện Tại (VNĐ)</th>
-                        </tr>
+                        <tr><th style="text-align: left;">Tên Khách Hàng</th><th>Tổng Nợ Hiện Tại (VNĐ)</th></tr>
                     </thead>
                     <tbody id="tongHopBody"></tbody>
                 </table>
@@ -76,7 +73,7 @@
             <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg mb-4 flex flex-wrap items-center gap-4 shadow-sm">
                 <div class="w-full">
                     <label class="block font-bold text-indigo-800 mb-1">CHỌN KHÁCH HÀNG:</label>
-                    <select id="customerSelector" class="w-full p-2 border border-indigo-300 rounded font-bold text-lg shadow-inner"></select>
+                    <select id="customerSelector" onchange="switchCustomerContext(this.value)" class="w-full p-2 border border-indigo-300 rounded font-bold text-lg shadow-inner"></select>
                 </div>
             </div>
 
@@ -84,7 +81,7 @@
                 <div class="flex justify-between items-center mb-3">
                     <p id="configCustomerNote" class="text-sm font-bold text-indigo-700">Cấu hình giá và trả thưởng:</p>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="isCompanyConfig" class="sr-only peer">
+                        <input type="checkbox" id="isCompanyConfig" onchange="handleConfigChange()" class="sr-only peer">
                         <div class="w-9 h-5 bg-gray-300 rounded-full peer peer-checked:bg-red-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
                         <span class="ml-2 text-sm font-bold text-red-700 uppercase">Khách này là CÔNG TY</span>
                     </label>
@@ -93,21 +90,21 @@
                     <div class="bg-white p-3 rounded border">
                         <label class="block text-xs font-bold text-red-600 uppercase mb-1">Giá Đánh (đ/n)</label>
                         <div class="grid grid-cols-5 gap-1">
-                            <input id="pricePerDiem" type="number" placeholder="Lô" class="border p-1 text-center text-sm rounded">
-                            <input id="pricePerDeUnit" type="number" placeholder="Đề" class="border p-1 text-center text-sm rounded">
-                            <input id="pricePer3CUnit" type="number" placeholder="3C" class="border p-1 text-center text-sm rounded">
-                            <input id="pricePerX2Unit" type="number" placeholder="X2" class="border p-1 text-center text-sm rounded">
-                            <input id="pricePerX3Unit" type="number" placeholder="X3" class="border p-1 text-center text-sm rounded">
+                            <input id="pricePerDiem" type="number" oninput="handleConfigChange()" placeholder="Lô" class="border p-1 text-center text-sm rounded">
+                            <input id="pricePerDeUnit" type="number" oninput="handleConfigChange()" placeholder="Đề" class="border p-1 text-center text-sm rounded">
+                            <input id="pricePer3CUnit" type="number" oninput="handleConfigChange()" placeholder="3C" class="border p-1 text-center text-sm rounded">
+                            <input id="pricePerX2Unit" type="number" oninput="handleConfigChange()" placeholder="X2" class="border p-1 text-center text-sm rounded">
+                            <input id="pricePerX3Unit" type="number" oninput="handleConfigChange()" placeholder="X3" class="border p-1 text-center text-sm rounded">
                         </div>
                     </div>
                     <div class="bg-white p-3 rounded border">
                         <label class="block text-xs font-bold text-green-600 uppercase mb-1">Trả thưởng (Tỷ lệ)</label>
                         <div class="grid grid-cols-5 gap-1">
-                            <input id="lottoPayout" type="number" class="border p-1 text-center text-sm rounded">
-                            <input id="dePayout" type="number" class="border p-1 text-center text-sm rounded">
-                            <input id="payoutRatio3C" type="number" class="border p-1 text-center text-sm rounded">
-                            <input id="payoutRatioX2" type="number" class="border p-1 text-center text-sm rounded">
-                            <input id="payoutRatioX3" type="number" class="border p-1 text-center text-sm rounded">
+                            <input id="lottoPayout" type="number" oninput="handleConfigChange()" class="border p-1 text-center text-sm rounded">
+                            <input id="dePayout" type="number" oninput="handleConfigChange()" class="border p-1 text-center text-sm rounded">
+                            <input id="payoutRatio3C" type="number" oninput="handleConfigChange()" class="border p-1 text-center text-sm rounded">
+                            <input id="payoutRatioX2" type="number" oninput="handleConfigChange()" class="border p-1 text-center text-sm rounded">
+                            <input id="payoutRatioX3" type="number" oninput="handleConfigChange()" class="border p-1 text-center text-sm rounded">
                         </div>
                     </div>
                 </div>
@@ -115,26 +112,26 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="font-bold mb-1 block text-gray-700 uppercase text-xs">Lệnh cược:</label>
-                    <textarea id="master-input" rows="8" class="w-full p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white" placeholder="Nhập tin nhắn khách..."></textarea>
+                    <label class="font-bold mb-1 block text-gray-700 uppercase text-xs">Lệnh cược lẻ:</label>
+                    <textarea id="master-input" oninput="handleInputBet()" rows="8" class="w-full p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white" placeholder="Nhập phơi khách..."></textarea>
                 </div>
                 <div>
-                    <label class="font-bold mb-1 block text-gray-700 uppercase text-xs">Kết quả (Bộ nhớ theo ngày):</label>
-                    <textarea id="results-input" rows="8" class="w-full p-3 border rounded mono shadow-inner" placeholder="Dán 27 giải vào đây..."></textarea>
+                    <label class="font-bold mb-1 block text-gray-700 uppercase text-xs">Kết quả (Lưu theo ngày):</label>
+                    <textarea id="results-input" oninput="handleInputResult()" rows="8" class="w-full p-3 border rounded mono shadow-inner" placeholder="Dán 27 giải vào đây..."></textarea>
                 </div>
             </div>
 
-            <button id="calculate-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded shadow-lg text-lg mb-4">PHÂN TÍCH & TÍNH TOÁN</button>
+            <button onclick="calculateAndRender()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded shadow-lg text-lg mb-4">PHÂN TÍCH & TÍNH TOÁN</button>
 
             <div id="results-container" class="mb-4"></div>
 
             <div class="bg-gray-100 border rounded-lg p-4 mb-4 shadow-sm">
                 <div class="flex justify-between text-lg"><span class="font-bold">Tổng Nhận:</span> <span id="totalCostOutput" class="font-mono text-red-600">0₫</span></div>
                 <div class="flex justify-between text-lg"><span class="font-bold">Tổng Trúng:</span> <span id="totalWinningsOutput" class="font-mono text-green-600">0₫</span></div>
-                <div class="flex justify-between text-2xl mt-2 border-top pt-2"><span class="font-black">CHỐT:</span> <span id="totalProfitOutput" class="font-black">0₫</span></div>
+                <div class="flex justify-between text-2xl mt-2 border-t-2 pt-2"><span class="font-black">CHỐT HÔM NAY:</span> <span id="totalProfitOutput" class="font-black">0₫</span></div>
             </div>
 
-            <button id="saveToDebtButton" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg text-xl shadow-xl">✍️ CHỐT & VÀO SỔ CÔNG NỢ</button>
+            <button onclick="saveToDebt()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg text-xl shadow-xl">✍️ CHỐT & VÀO SỔ CÔNG NỢ</button>
         </div>
 
         <div id="ChiTiet" class="tabcontent">
@@ -150,16 +147,18 @@
                             <th>Nợ Cũ (Sửa)</th>
                             <th class="today-col" id="colTodayHeader">Hôm nay</th>
                             <th class="col-total">Tổng Cộng</th>
-                            <th class="bg-emerald-100">Xuất TN</th>
+                            <th class="bg-emerald-100 text-emerald-800">Xuất TN</th>
                         </tr>
                     </thead>
                     <tbody id="chiTietBody"></tbody>
                 </table>
             </div>
             
-            <div id="copyNotice" class="hidden mt-4 p-3 bg-emerald-600 text-white font-bold text-center rounded animate-pulse">✅ Đã copy tin nhắn hóa đơn chuẩn form!</div>
+            <div id="copyNotice" class="hidden mt-4 p-3 bg-blue-600 text-white font-bold text-center rounded">✅ Đã Copy tin nhắn!</div>
         </div>
     </div>
+
+    <textarea id="hiddenCopyArea" style="position: absolute; left: -9999px;"></textarea>
 
     <script>
         // --- CẤU HÌNH SUPABASE ---
@@ -168,57 +167,91 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjbmRycWllYnZkeW5xcm1rYW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3OTA1MDQsImV4cCI6MjA5MTM2NjUwNH0.DZnXTSuGDkgwB8-vZvND7e7XhzTrXrqfVgKeydfYe_c';
         const sb = createClient(supabaseUrl, supabaseKey);
 
-        let creditData = {}; 
+        const defaultConfig = { lo: 22500, de: 1000, c3: 1000, x2: 1000, x3: 1000, payLo: 80000, payDe: 80000, pay3C: 400, payX2: 10, payX3: 40, isCompany: false };
+        let creditData = { '__results__': {}, '__default_config__': { ...defaultConfig } }; 
         let activeCustomer = '';
-        const basePrice = { lo: 22500, de: 1000, c3: 1000, x2: 1000, x3: 1000, payLo: 80000, payDe: 80000, pay3C: 400, payX2: 10, payX3: 40, isCompany: false };
-
-        function debounce(fn, delay) { let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), delay); }; }
+        let currentCalcData = null;
 
         // --- ĐỒNG BỘ DỮ LIỆU ---
+        async function loadDataFromSupabase() {
+            try {
+                const { data, error } = await sb.from('nhat_ky_cong_no').select('du_lieu').eq('id', 1).single();
+                if (!error && data && data.du_lieu) {
+                    creditData = data.du_lieu;
+                    if(!creditData['__results__']) creditData['__results__'] = {};
+                    if(!creditData['__default_config__']) creditData['__default_config__'] = { ...defaultConfig };
+                }
+                document.getElementById('loadingScreen').style.display = 'none';
+                handleDateChange();
+                renderTongHop();
+                renderQuickSelectContacts();
+            } catch (err) { console.error("Lỗi nạp cloud:", err); }
+        }
+
         async function syncData() {
             const status = document.getElementById('cloudStatus');
             status.style.display = 'block';
-            const { error } = await sb.from('nhat_ky_cong_no').update({ du_lieu: creditData }).eq('id', 1);
-            if(!error) setTimeout(() => status.style.display = 'none', 2000);
+            await sb.from('nhat_ky_cong_no').update({ du_lieu: creditData }).eq('id', 1);
+            setTimeout(() => status.style.display = 'none', 2000);
         }
         const debouncedSave = debounce(syncData, 1000);
 
-        // --- XỬ LÝ SỰ KIỆN GIAO DIỆN ---
+        // --- XỬ LÝ GIAO DIỆN ---
         document.getElementById('sessionDate').value = new Date().toLocaleDateString('en-CA');
 
         function handleDateChange() {
             const d = document.getElementById('sessionDate').value;
-            document.getElementById('results-input').value = creditData['__results__']?.[d] || '';
+            const resInput = document.getElementById('results-input');
+            resInput.value = creditData['__results__']?.[d] || '';
+            
+            updateDateHeaders();
             switchCustomerContext(activeCustomer);
             renderChiTiet();
             calculateAndRender();
         }
 
-        document.getElementById('sessionDate').onchange = handleDateChange;
-
-        document.getElementById('results-input').oninput = function() {
+        function handleInputResult() {
             const d = document.getElementById('sessionDate').value;
-            if(!creditData['__results__']) creditData['__results__'] = {};
-            creditData['__results__'][d] = this.value;
+            creditData['__results__'][d] = document.getElementById('results-input').value;
             debouncedSave();
             calculateAndRender();
-        };
+        }
 
-        document.getElementById('master-input').oninput = function() {
+        function handleInputBet() {
             const d = document.getElementById('sessionDate').value;
             if(activeCustomer && creditData[activeCustomer]) {
-                creditData[activeCustomer].inputs[d] = this.value;
+                creditData[activeCustomer].inputs[d] = document.getElementById('master-input').value;
                 debouncedSave();
             }
-        };
+        }
 
-        // --- HÀM TÍNH TOÁN (LÀM TRÒN NHÀ CÁI) ---
+        function handleConfigChange() {
+            let target = (activeCustomer && creditData[activeCustomer]) ? creditData[activeCustomer].config : creditData['__default_config__'];
+            target.lo = parseFloat(document.getElementById('pricePerDiem').value) || 0;
+            target.de = parseFloat(document.getElementById('pricePerDeUnit').value) || 0;
+            target.c3 = parseFloat(document.getElementById('pricePer3CUnit').value) || 0;
+            target.x2 = parseFloat(document.getElementById('pricePerX2Unit').value) || 0;
+            target.x3 = parseFloat(document.getElementById('pricePerX3Unit').value) || 0;
+            target.payLo = parseFloat(document.getElementById('lottoPayout').value) || 0;
+            target.payDe = parseFloat(document.getElementById('dePayout').value) || 0;
+            target.pay3C = parseFloat(document.getElementById('payoutRatio3C').value) || 0;
+            target.payX2 = parseFloat(document.getElementById('payoutRatioX2').value) || 0;
+            target.payX3 = parseFloat(document.getElementById('payoutRatioX3').value) || 0;
+            target.isCompany = document.getElementById('isCompanyConfig').checked;
+            debouncedSave();
+            if(target.isCompany) switchCustomerContext(activeCustomer);
+            else calculateAndRender();
+        }
+
+        // --- TÍNH TOÁN CỐT LÕI ---
         function runCoreMath(input, result, p) {
             const resClean = result.replace(/[^\d\s]/g, ' ');
             const tokens = resClean.trim().split(/\s+/).filter(t => t.length >= 2);
             let allNums = [];
             tokens.forEach(t => {
-                if (t.length >= 8) { for(let i=0; i<t.length; i+=Math.floor(t.length/2)) allNums.push(t.slice(i, i+5)); }
+                if (t.length === 10 || t.length === 30) { for(let i=0; i<t.length; i+=5) allNums.push(t.slice(i, i+5)); }
+                else if (t.length === 16 || t.length === 24) { for(let i=0; i<t.length; i+=4) allNums.push(t.slice(i, i+4)); }
+                else if (t.length === 8) { for(let i=0; i<t.length; i+=2) allNums.push(t.slice(i, i+2)); }
                 else allNums.push(t);
             });
             const deRes = (allNums.find(t=>t.length>=4)||allNums[0]||'').slice(-2);
@@ -226,14 +259,28 @@
 
             let sLoG=0, sDeG=0, sLoW=0, sDeW=0;
             let detailW = {};
+            const keys = ['lo', 'lô', 'de', 'đề'];
+            let pInput = input.toLowerCase().replace(/\n/g, '||').replace(new RegExp(`(\\b(?:${keys.join('|')})\\s+)`, 'gi'), '||$1');
+            
+            let lastType = 'lo';
+            pInput.split('||').forEach(line => {
+                let str = line.trim(); if(!str) return;
+                let type = null;
+                if(str.startsWith('lo') || str.startsWith('lô')) type = 'lo';
+                else if(str.startsWith('de') || str.startsWith('đề')) type = 'de';
+                else type = lastType;
+                lastType = type;
 
-            const lines = input.toLowerCase().split('\n');
-            lines.forEach(line => {
-                let match = line.match(/(.+?)\s*(?:x|X|×|\*)\s*(\d+)/);
+                let match = str.match(/(.+?)\s*(?:x|X|×|\*)\s*(\d+)/);
                 if(match) {
-                    let nums = match[1].match(/\d+/g) || [];
+                    let numStr = match[1].replace(/kép lệch|kep lech/g, ' 05 50 16 61 27 72 38 83 49 94 ');
+                    numStr = numStr.replace(/kép bằng|kep bang|kép|kep/g, ' 00 11 22 33 44 55 66 77 88 99 ');
+                    numStr = numStr.replace(/(đầu|dau)\s*(\d)/g, (m,p1,p2)=>{ let r=[]; for(let i=0;i<=9;i++) r.push(p2+i); return ' '+r.join(' ')+' '; });
+                    numStr = numStr.replace(/(đít|dit)\s*(\d)/g, (m,p1,p2)=>{ let r=[]; for(let i=0;i<=9;i++) r.push(i+p2); return ' '+r.join(' ')+' '; });
+                    
+                    let nums = numStr.match(/\d+/g) || [];
                     let qty = parseInt(match[2]);
-                    if(line.includes('de') || line.includes('đề')) {
+                    if(type === 'de') {
                         sDeG += nums.length * qty;
                         nums.forEach(n => { if(n.slice(-2) === deRes) sDeW += qty; });
                     } else {
@@ -246,6 +293,7 @@
                 }
             });
 
+            // LÀM TRÒN NHÀ CÁI: Đánh LÊN, Trúng XUỐNG
             let cost = Math.ceil((sLoG * p.lo + sDeG * p.de)/1000)*1000;
             let win = Math.floor((sLoW * p.payLo + sDeW * p.payDe)/1000)*1000;
             return { cost, win, net: win - cost, sLoG, sDeG, sLoW, sDeW, detailW };
@@ -254,162 +302,134 @@
         function calculateAndRender() {
             const input = document.getElementById('master-input').value;
             const result = document.getElementById('results-input').value;
-            const p = creditData[activeCustomer]?.config || basePrice;
+            const p = (activeCustomer && creditData[activeCustomer]) ? creditData[activeCustomer].config : creditData['__default_config__'];
             const calc = runCoreMath(input, result, p);
             currentCalcData = calc;
 
-            let loDet = Object.entries(calc.detailW).map(([n,h])=>h>1?`${n}(x${h})`:n).join(' ');
             document.getElementById('totalCostOutput').innerText = formatVND(calc.cost);
             document.getElementById('totalWinningsOutput').innerText = formatVND(calc.win);
             document.getElementById('totalProfitOutput').innerText = formatVND(Math.abs(calc.net));
             document.getElementById('totalProfitOutput').style.color = calc.net >= 0 ? 'green' : 'red';
             
+            let loDet = Object.entries(calc.detailW).map(([n,h])=>h>1?`${n}(x${h})`:n).join(' ');
             document.getElementById('results-container').innerHTML = calc.win > 0 ? 
-                `<div class="bg-green-50 p-3 rounded border border-green-200 text-sm"><b>Trúng Lô:</b> ${calc.sLoW}đ [${loDet}]</div>` : '';
+                `<div class="bg-green-100 p-3 rounded border border-green-300 font-bold text-green-800">✅ Trúng Thưởng: Lô [${loDet}]</div>` : '';
         }
 
-        // --- XUẤT TIN NHẮN TỪ TAB 3 ---
+        // --- XUẤT TIN NHẮN THEO MẪU CHUẨN ---
         function exportTN(name) {
             const d = document.getElementById('sessionDate').value;
             const input = creditData[name]?.inputs?.[d] || '';
             const result = creditData['__results__']?.[d] || '';
-            const p = creditData[name]?.config || basePrice;
+            const p = creditData[name]?.config || creditData['__default_config__'];
             const c = runCoreMath(input, result, p);
 
             const parts = d.split('-');
+            const fn = (v) => (v/1000).toLocaleString('vi-VN') + 'n';
+            const fs = (v) => (v === 0 ? '0' : (v < 0 ? '-' : '') + (Math.abs(v)/1000).toLocaleString('vi-VN'));
+
             let msg = `Ngay: ${parts[2]}-${parts[1]}-${parts[0]}\n`;
-            if(c.sLoG > 0) msg += `Lo: ${c.sLoG}d = ${(c.sLoG * p.lo / 1000).toLocaleString()}n\n`;
-            if(c.sDeG > 0) msg += `De: ${c.sDeG}n = ${(c.sDeG * p.de / 1000).toLocaleString()}n\n`;
-            if(c.sLoW > 0) msg += `Th lo: ${c.sLoW}d [${Object.keys(c.detailW).join(' ')}] = ${(c.sLoW * p.payLo / 1000).toLocaleString()}n\n`;
-            if(c.sDeW > 0) msg += `Th de: ${c.sDeW}n = ${(c.sDeW * p.payDe / 1000).toLocaleString()}n\n`;
+            if(c.sLoG > 0) msg += `Lo: ${c.sLoG}d = ${fn(c.sLoG * p.lo)}\n`;
+            if(c.sDeG > 0) msg += `De: ${c.sDeG}n = ${fn(c.sDeG * p.de)}\n`;
+            if(c.sLoW > 0) msg += `Th lo: ${c.sLoW}d [${Object.keys(c.detailW).join(' ')}] = ${fn(c.sLoW * p.payLo)}\n`;
+            if(c.sDeW > 0) msg += `Th de: ${c.sDeW}n = ${fn(c.sDeW * p.payDe)}\n`;
             
-            msg += `Hom nay : ${c.net >= 0 ? `(duong) ${(c.net/1000).toLocaleString()}` : `(am) ${(Math.abs(c.net)/1000).toLocaleString()}`}n\n`;
+            msg += `Hom nay : ${c.net >= 0 ? `(duong) ${fn(c.net)}` : `(am) ${fn(Math.abs(c.net))}`}\n`;
             
             let oldD = 0;
             for(let k in creditData[name].debts) if(k !== d) oldD += creditData[name].debts[k];
-            msg += `No cu: ${oldD >= 0 ? '' : '-'}${Math.abs(oldD).toLocaleString()}n\n`;
+            msg += `No cu: ${fs(oldD * 1000)}n\n`;
             
-            let final = oldD + (c.net/1000);
-            msg += `Tong: ${c.net/1000 >= 0 ? '' : '-'}${Math.abs(c.net/1000).toLocaleString()} + (${oldD >= 0 ? '' : '-'}${Math.abs(oldD).toLocaleString()}) = ${final >= 0 ? '' : '-'}${Math.abs(final).toLocaleString()}n.`;
+            let final = (oldD * 1000) + c.net;
+            msg += `Tong: ${fs(c.net)} + (${fs(oldD * 1000)}) = ${fs(final)}n.`;
 
             const area = document.getElementById('hiddenCopyArea');
             area.value = msg; area.select(); document.execCommand('copy');
             
             const notice = document.getElementById('copyNotice');
             notice.classList.remove('hidden');
-            setTimeout(() => notice.classList.add('hidden'), 2500);
+            setTimeout(() => notice.classList.add('hidden'), 2000);
         }
 
-        // --- CÁC HÀM KHỞI TẠO KHÁC ---
+        // --- TIỆN ÍCH ---
         function switchCustomerContext(name) {
             const d = document.getElementById('sessionDate').value;
-            if(activeCustomer && creditData[activeCustomer]) creditData[activeCustomer].inputs[d] = document.getElementById('master-input').value;
+            const inputEl = document.getElementById('master-input');
+            if (activeCustomer && creditData[activeCustomer]) creditData[activeCustomer].inputs[d] = inputEl.value;
+
             activeCustomer = name;
             document.getElementById('lblActiveUser').innerText = name || "KHÁCH VÃNG LAI";
-            const input = document.getElementById('master-input');
             
-            if(name && creditData[name]) {
-                if(creditData[name].config?.isCompany) {
-                    let total = "";
-                    for(let k in creditData) if(k!=='__results__' && k!=='__default_config__' && k!==name && !creditData[k].config?.isCompany) total += (creditData[k].inputs?.[d] || "") + "\n";
-                    input.value = total.trim();
-                } else {
-                    input.value = creditData[name].inputs?.[d] || '';
-                }
-                applyCustomerConfig(name);
-            } else { input.value = ''; }
+            if (name && creditData[name]) {
+                if (creditData[name].config.isCompany) {
+                    let totalPhơi = "";
+                    for(let k in creditData) if(k.indexOf('__')!==0 && k!==name && !creditData[k].config.isCompany) totalPhơi += (creditData[k].inputs[d] || "") + "\n";
+                    inputEl.value = totalPhơi.trim();
+                } else { inputEl.value = creditData[name].inputs[d] || ''; }
+                
+                const cfg = creditData[name].config;
+                document.getElementById('pricePerDiem').value = cfg.lo;
+                document.getElementById('pricePerDeUnit').value = cfg.de;
+                document.getElementById('pricePer3CUnit').value = cfg.c3;
+                document.getElementById('pricePerX2Unit').value = cfg.x2;
+                document.getElementById('pricePerX3Unit').value = cfg.x3;
+                document.getElementById('lottoPayout').value = cfg.payLo;
+                document.getElementById('dePayout').value = cfg.payDe;
+                document.getElementById('payoutRatio3C').value = cfg.pay3C;
+                document.getElementById('payoutRatioX2').value = cfg.payX2;
+                document.getElementById('payoutRatioX3').value = cfg.payX3;
+                document.getElementById('isCompanyConfig').checked = cfg.isCompany;
+            }
             calculateAndRender();
         }
 
-        function applyCustomerConfig(name) {
-            const cfg = creditData[name]?.config || creditData['__default_config__'] || basePrice;
-            document.getElementById('pricePerDiem').value = cfg.lo;
-            document.getElementById('pricePerDeUnit').value = cfg.de;
-            document.getElementById('pricePer3CUnit').value = cfg.c3;
-            document.getElementById('pricePerX2Unit').value = cfg.x2;
-            document.getElementById('pricePerX3Unit').value = cfg.x3;
-            document.getElementById('lottoPayout').value = cfg.payLo;
-            document.getElementById('dePayout').value = cfg.payDe;
-            document.getElementById('payoutRatio3C').value = cfg.pay3C;
-            document.getElementById('payoutRatioX2').value = cfg.payX2;
-            document.getElementById('payoutRatioX3').value = cfg.payX3;
-            document.getElementById('isCompanyConfig').checked = cfg.isCompany || false;
-        }
-
         function renderTongHop() {
-            const body = document.getElementById('tongHopBody'); body.innerHTML = '';
-            for(let name in creditData) {
-                if(name.startsWith('__')) continue;
-                let total = 0; for(let k in creditData[name].debts) total += creditData[name].debts[k];
+            const tbody = document.getElementById('tongHopBody'); tbody.innerHTML = '';
+            for(let n in creditData) {
+                if(n.indexOf('__')===0) continue;
+                let total = 0; for(let k in creditData[n].debts) total += creditData[n].debts[k];
                 let tr = document.createElement('tr');
-                tr.innerHTML = `<td class="col-name" onclick="goToDetail('${name}')">${name}</td><td class="font-bold ${total>=0?'text-green-600':'text-red-600'}">${(total*1000).toLocaleString()} đ</td>`;
-                body.appendChild(tr);
+                tr.innerHTML = `<td class="col-name" onclick="goToDetail('${n}')">${n}</td><td class="font-bold ${total>=0?'text-green-600':'text-red-600'}">${(total*1000).toLocaleString()} đ</td>`;
+                tbody.appendChild(tr);
             }
-            populateSelectors();
-        }
-
-        function populateSelectors() {
             const sel = document.getElementById('customerSelector'); sel.innerHTML = '<option value="">-- Chọn khách --</option>';
-            const quick = document.getElementById('quickSelectContacts'); quick.innerHTML = '';
-            for(let name in creditData) {
-                if(name.startsWith('__')) continue;
-                sel.innerHTML += `<option value="${name}">${name}</option>`;
-                let span = document.createElement('span');
-                span.className = "bg-white border px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-indigo-600 hover:text-white";
-                span.innerText = name; span.onclick = () => { sel.value = name; switchCustomerContext(name); };
-                quick.appendChild(span);
-            }
+            for(let n in creditData) if(n.indexOf('__')!==0) sel.innerHTML += `<option value="${n}">${n}</option>`;
         }
 
         function renderChiTiet() {
-            const body = document.getElementById('chiTietBody'); body.innerHTML = '';
+            const tbody = document.getElementById('chiTietBody'); tbody.innerHTML = '';
             const d = document.getElementById('sessionDate').value;
-            for(let name in creditData) {
-                if(name.startsWith('__')) continue;
-                let old = 0; for(let k in creditData[name].debts) if(k!==d) old += creditData[name].debts[k];
-                let today = creditData[name].debts[d] || 0;
+            for(let n in creditData) {
+                if(n.indexOf('__')===0) continue;
+                let old = 0; for(let k in creditData[n].debts) if(k!==d) old += creditData[n].debts[k];
+                let today = creditData[n].debts[d] || 0;
                 let tr = document.createElement('tr');
-                tr.innerHTML = `<td class="font-bold text-left">${name}</td>
+                tr.innerHTML = `<td class="font-bold text-left">${n}</td>
                     <td>${(old*1000).toLocaleString()}</td>
-                    <td><input type="number" value="${today}" onchange="updateDebt('${name}','${d}',this.value)" class="day-input"></td>
+                    <td><input type="number" value="${today}" onchange="updateDebt('${n}',this.value)" class="day-input"></td>
                     <td class="font-bold">${((old+today)*1000).toLocaleString()}</td>
-                    <td><button onclick="exportTN('${name}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs">Xuất TN</button></td>`;
-                body.appendChild(tr);
+                    <td><button onclick="exportTN('${n}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs">Xuất TN</button></td>`;
+                tbody.appendChild(tr);
             }
         }
 
-        function updateDebt(name, day, val) {
-            creditData[name].debts[day] = parseFloat(val) || 0;
-            debouncedSave(); renderTongHop();
+        function updateDebt(n, v) { creditData[n].debts[document.getElementById('sessionDate').value] = parseFloat(v) || 0; debouncedSave(); renderTongHop(); }
+        function saveToDebt() { if(!activeCustomer || !currentCalcData) return; creditData[activeCustomer].debts[document.getElementById('sessionDate').value] = currentCalcData.net / 1000; syncData(); renderTongHop(); renderChiTiet(); alert("✅ Đã chốt!"); }
+        function addNewUser() { let n = document.getElementById('newUserName').value.trim(); if(!n || creditData[n]) return; creditData[n] = { debts: {}, config: {...creditData['__default_config__']}, inputs: {} }; syncData(); document.getElementById('newUserName').value=''; renderTongHop(); }
+        function debounce(f, d) { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>f(...a), d); }; }
+        function openTab(e, n) { let c = document.getElementsByClassName("tabcontent"), l = document.getElementsByClassName("tablinks"); for(let i=0;i<c.length;i++) c[i].style.display="none"; for(let i=0;i<l.length;i++) l[i].className=l[i].className.replace(" active",""); document.getElementById(n).style.display="block"; if(e) e.currentTarget.className+=" active"; }
+        function goToDetail(n) { openTab(null, 'ChiTiet'); renderChiTiet(n); }
+        function renderQuickSelectContacts() {
+            const container = document.getElementById('quickSelectContacts'); container.innerHTML = '';
+            for(let n in creditData) if(n.indexOf('__')!==0) {
+                let s = document.createElement('span'); s.className="bg-white border px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-indigo-600 hover:text-white";
+                s.innerText = n; s.onclick = () => { document.getElementById('customerSelector').value = n; switchCustomerContext(n); };
+                container.appendChild(s);
+            }
         }
+        function formatVND(v) { return new Intl.NumberFormat('vi-VN').format(v) + ' đ'; }
 
-        function saveToDebt() {
-            if(!activeCustomer || !currentCalcData) return;
-            const d = document.getElementById('sessionDate').value;
-            creditData[activeCustomer].debts[d] = currentCalcData.net / 1000;
-            syncData(); renderTongHop(); renderChiTiet();
-            alert("✅ Đã lưu vào sổ!");
-        }
-
-        function addNewUser() {
-            let n = document.getElementById('newUserName').value.trim();
-            if(!n || creditData[n]) return;
-            creditData[n] = { debts: {}, config: {...(creditData['__default_config__']||basePrice)}, inputs: {} };
-            syncData(); document.getElementById('newUserName').value = ''; renderTongHop();
-        }
-
-        function openTab(evt, name) {
-            let content = document.getElementsByClassName("tabcontent");
-            for (let i = 0; i < content.length; i++) content[i].style.display = "none";
-            let links = document.getElementsByClassName("tablinks");
-            for (let i = 0; i < links.length; i++) links[i].className = links[i].className.replace(" active", "");
-            document.getElementById(name).style.display = "block";
-            if(evt) evt.currentTarget.className += " active";
-        }
-
-        function goToDetail(name) { document.getElementById('btnTabChiTiet').click(); renderChiTiet(); }
-        
-        loadDataFromSupabase();
+        window.onload = loadDataFromSupabase;
     </script>
 </body>
 </html>
