@@ -119,7 +119,7 @@
                 <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
                     <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
-                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Tự động bung: Đầu, Đít, Tổng, Kép, Kép Lệch.</div>
+                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Tự động bung: Đầu, Đít, Tổng, Kép, Kép Lệch, 3 Càng. Tự động tránh dính chữ tiền (VD: x10d 50x10d).</div>
                 </div>
                 <div class="flex flex-col h-full">
                     <div class="flex justify-between items-center mb-1">
@@ -284,7 +284,7 @@
         }
 
         // ==========================================
-        // CƠ CHẾ BẮT TỈA CHÍNH XÁC KẾT QUẢ XSMB
+        // TỰ ĐỘNG KÉO KẾT QUẢ XSMB (SIÊU LỌC 27 SỐ)
         // ==========================================
         async function autoFetchKQXS() {
             const dateVal = document.getElementById('sessionDate')?.value;
@@ -293,30 +293,34 @@
             const btn = document.getElementById('btnAutoFetch');
             const resInput = document.getElementById('results-input');
             
-            btn.innerText = "⏳ Đang lấy...";
+            btn.innerHTML = "⏳ ĐANG LẤY...";
             btn.disabled = true;
-            resInput.value = "Đang tải và lọc kết quả... Xin chờ vài giây...";
+            resInput.value = "Hệ thống đang tải và bóc tách kết quả xổ số miền Bắc. Vui lòng chờ 3-5 giây...";
             
             let parts = dateVal.split('-'); // yyyy, mm, dd
             let d = parseInt(parts[2]), m = parseInt(parts[1]), y = parts[0];
-            let dStr = parts[2] + '-' + parts[1] + '-' + parts[0];
+            let dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
             
-            let urls = [
-                `https://xskt.com.vn/xsmb/ngay-${d}-${m}-${y}`,
-                `https://xoso.com.vn/xsmb-${dStr}.html`
-            ];
+            let url1 = `https://xoso.com.vn/xsmb-${dStr}.html`;
+            let url2 = `https://xskt.com.vn/xsmb/ngay-${d}-${m}-${y}`;
             
             const proxies = [
-                `https://api.allorigins.win/get?url=${encodeURIComponent(urls[0])}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urls[0])}`,
-                `https://api.allorigins.win/get?url=${encodeURIComponent(urls[1])}`
+                `https://api.allorigins.win/get?url=${encodeURIComponent(url1)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url1)}`,
+                `https://api.allorigins.win/get?url=${encodeURIComponent(url2)}`
             ];
             
             let htmlContent = null;
 
             for (let i = 0; i < proxies.length; i++) {
                 try {
-                    let response = await fetch(proxies[i]);
+                    // Đặt Timeout 5 giây để không bị treo
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    
+                    let response = await fetch(proxies[i], { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    
                     if (response.ok) {
                         if (proxies[i].includes('allorigins')) {
                             let data = await response.json();
@@ -324,11 +328,10 @@
                         } else {
                             htmlContent = await response.text();
                         }
-                        // Chỉ cần web trả về nội dung là phá vòng lặp
-                        if (htmlContent && htmlContent.includes('<html')) break;
+                        if (htmlContent && htmlContent.length > 1000) break;
                     }
                 } catch (e) {
-                    console.warn(`Proxy ${i+1} failed, trying next...`);
+                    console.warn(`Proxy ${i+1} timeout or failed.`);
                 }
             }
             
@@ -337,77 +340,44 @@
                 let doc = parser.parseFromString(htmlContent, "text/html");
                 let numbers = [];
 
-                // CHIẾN THUẬT 1: Lấy chuẩn xác thẻ <em> từ xskt.com.vn (Chống lọt số thống kê)
-                let xsktTable = doc.querySelector('table#KQCS') || doc.querySelector('table#MB0') || doc.querySelector('table.kqxs');
-                if (xsktTable) {
-                    let ems = xsktTable.querySelectorAll('em');
+                // XOSO.COM.VN: Nhắm thẳng thẻ span chứa class kết quả
+                let spans = doc.querySelectorAll('span[data-val], span[class^="v-g"]');
+                if (spans.length >= 27) {
+                    spans.forEach(s => {
+                        let num = s.innerText.replace(/\D/g, '');
+                        if(num.length >= 2 && num.length <= 5) numbers.push(num);
+                    });
+                }
+
+                // XSKT.COM.VN: Nhắm thẳng bảng kqcs, lấy thẻ em
+                if (numbers.length < 27) {
+                    numbers = [];
+                    let ems = doc.querySelectorAll('table#KQCS em, table#MB0 em');
                     if (ems.length >= 27) {
-                        ems.forEach(node => {
-                            let num = node.innerText.replace(/\D/g, '');
-                            if (num.length >= 2 && num.length <= 5) numbers.push(num);
-                        });
-                    }
-                }
-
-                // CHIẾN THUẬT 2: Lấy từ xoso.com.vn bằng class v-g* đặc trưng
-                if (numbers.length < 27) {
-                    numbers = [];
-                    let xosoNodes = doc.querySelectorAll('table.table-result span[class^="v-g"], table.table-result span[data-val]');
-                    if (xosoNodes.length >= 27) {
-                        xosoNodes.forEach(node => {
-                            let num = node.innerText.replace(/\D/g, '');
-                            if (num.length >= 2 && num.length <= 5) numbers.push(num);
-                        });
-                    }
-                }
-
-                // CHIẾN THUẬT 3: Fallback quét bảng, loại trừ cột Đầu Đuôi
-                if (numbers.length < 27) {
-                    numbers = [];
-                    let table = doc.querySelector('table.table-result') || xsktTable || doc.querySelector('table');
-                    if (table) {
-                        let trs = table.querySelectorAll('tr');
-                        trs.forEach(tr => {
-                            // Lọc bỏ rác
-                            if (tr.innerText.includes('Mã') || tr.innerText.includes('Ký hiệu')) return;
-                            let tds = Array.from(tr.querySelectorAll('td'));
-                            if (tds.length > 1) {
-                                // Lấy từ ô thứ 2 trở đi để tránh chữ "Giải ĐB", "Giải 1"...
-                                for (let j = 1; j < tds.length; j++) {
-                                    let td = tds[j];
-                                    // Bỏ qua các ô chứa id loto (thống kê)
-                                    if (td.id.includes('loto') || td.className.includes('loto')) continue;
-                                    let txt = td.innerText.trim();
-                                    // Bỏ qua nếu có chữ cái
-                                    if (/[a-zA-Z]/.test(txt) && !txt.includes('-')) continue;
-                                    let segments = txt.split(/[\s-]/);
-                                    segments.forEach(seg => {
-                                        let cleanNum = seg.replace(/\D/g, '');
-                                        if (cleanNum.length >= 2 && cleanNum.length <= 5) numbers.push(cleanNum);
-                                    });
-                                }
-                            }
+                        ems.forEach(e => {
+                            let num = e.innerText.replace(/\D/g, '');
+                            if(num.length >= 2 && num.length <= 5) numbers.push(num);
                         });
                     }
                 }
                 
-                // Mấu chốt: CẮT ĐÚNG 27 GIẢI, vứt hết tất cả các rác phía sau
+                // Mấu chốt: CẮT ĐÚNG 27 GIẢI, vứt bỏ toàn bộ số thống kê đằng sau
                 if(numbers.length >= 27) {
                     numbers = numbers.slice(0, 27);
                     resInput.value = numbers.join('\n');
                     calculateAndRender();
-                    alert("✅ Đã tự động lấy thành công chuẩn 27 giải KQXS!");
+                    alert("✅ Lấy thành công chuẩn 27 giải!");
                 } else {
                     resInput.value = "";
-                    alert("⚠️ Ngày này chưa có kết quả (chưa quay) hoặc web lỗi. Vui lòng bấm 'Copy Thủ Công'!");
+                    alert("⚠️ Chưa quay xong kết quả hoặc web đổi cấu trúc. Vui lòng bấm 'Copy Thủ Công' để copy tay!");
                     openXSMB();
                 }
             } else {
                 resInput.value = "";
-                alert("⚠️ Đường truyền Proxy đang bị quá tải. Vui lòng bấm nút 'Copy Thủ Công' để mở web lấy số nhé!");
+                alert("⚠️ Lỗi mạng (Trạm trung chuyển từ chối kết nối). Xin anh bấm 'Copy Thủ Công' màu xanh bên cạnh để lấy số chữa cháy nhé!");
             }
             
-            btn.innerText = "⚡ TỰ ĐỘNG LẤY KQXS";
+            btn.innerHTML = "⚡ TỰ ĐỘNG LẤY KQXS";
             btn.disabled = false;
         }
 
@@ -455,6 +425,9 @@
             }
         }
 
+        // ==========================================
+        // QUẢN LÝ NGỮ CẢNH (CHUYỂN ĐỔI KHÁCH HÀNG)
+        // ==========================================
         function populateCustomerSelector() {
             const sel = document.getElementById('customerSelector');
             if (!sel) return;
@@ -674,12 +647,10 @@
 
         function parseResultsText(rawResults) {
             if(!rawResults || rawResults.trim()==='') return { deResult:null, de3CResult:null, loHitCounts:{} };
-            // Lọc dính liền bằng khoảng trắng
             let cleaned = rawResults.replace(/[^\d\s]/g, ' ');
             let tokens = cleaned.trim().split(/\s+/).filter(t=>t.length > 0);
             if(tokens.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
             
-            // Băm nhỏ chuỗi dài dựa trên luật giải thưởng nếu copy bị dính
             let allNumbers = [];
             tokens.forEach(t => {
                 if (t.length === 1) return; 
