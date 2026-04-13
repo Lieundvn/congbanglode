@@ -133,7 +133,7 @@
                             </button>
                         </div>
                     </div>
-                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Bấm nút '⚡ TỰ ĐỘNG LẤY KQXS' ở trên. Hệ thống sẽ tự động tìm và điền 27 giải vào đây cho anh!"></textarea>
+                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Bấm nút '⚡ TỰ ĐỘNG LẤY KQXS' ở trên. Hệ thống sẽ tự động tìm và điền đúng 27 giải vào đây cho anh!"></textarea>
                 </div>
             </div>
 
@@ -284,7 +284,7 @@
         }
 
         // ==========================================
-        // CƠ CHẾ TỰ ĐỘNG KÉO KẾT QUẢ XSMB (3 LỚP BẢO VỆ)
+        // CƠ CHẾ TỰ ĐỘNG KÉO KẾT QUẢ XSMB (ĐÃ SỬA LỖI DÍNH SỐ)
         // ==========================================
         async function autoFetchKQXS() {
             const dateVal = document.getElementById('sessionDate')?.value;
@@ -302,7 +302,6 @@
             
             let targetUrl = `https://xskt.com.vn/xsmb/ngay-${d}-${m}-${y}`; 
             
-            // Hệ thống 3 trạm trung chuyển dự phòng (Proxy Fallback)
             const proxies = [
                 `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
@@ -321,7 +320,7 @@
                         } else {
                             htmlContent = await response.text();
                         }
-                        if (htmlContent && htmlContent.includes('KQCS')) break; // Thành công và lấy đúng trang
+                        if (htmlContent && (htmlContent.includes('KQCS') || htmlContent.includes('table'))) break;
                     }
                 } catch (e) {
                     console.warn(`Trạm trung chuyển ${i+1} lỗi, thử trạm tiếp theo...`);
@@ -331,28 +330,47 @@
             if(htmlContent) {
                 let parser = new DOMParser();
                 let doc = parser.parseFromString(htmlContent, "text/html");
-                let table = doc.getElementById('KQCS') || doc.querySelector('table'); 
+                
+                // Nhắm thẳng vào bảng Kết Quả (Bỏ qua bảng thống kê Lô/Đầu Đuôi)
+                let table = doc.getElementById('MB0') || doc.getElementById('KQCS') || doc.querySelector('table.result') || doc.querySelector('table'); 
                 
                 if(table) {
-                    let tds = table.querySelectorAll('td');
                     let numbers = [];
-                    tds.forEach(td => {
-                        let txt = td.innerText.trim();
-                        // Tách khoảng trắng hoặc gạch ngang
-                        let segments = txt.split(/\s|-/);
-                        segments.forEach(p => {
-                            let cleanNum = p.replace(/\D/g, ''); // Xóa mọi ký tự không phải số
-                            if(cleanNum.length >= 2) numbers.push(cleanNum); // Lấy số dài >= 2
-                        });
+                    
+                    // CÁCH 1: Nhắm thẳng vào thẻ <em> (Web xổ số thường bôi đậm số trúng bằng thẻ này)
+                    let ems = table.querySelectorAll('em');
+                    ems.forEach(em => {
+                        let cleanNum = em.innerText.replace(/\D/g, '');
+                        if(cleanNum.length >= 2) numbers.push(cleanNum);
                     });
                     
+                    // CÁCH 2: Nếu web đổi cấu trúc (Không dùng <em> nữa), duyệt qua từng ô <td>
+                    if(numbers.length < 27) {
+                        numbers = [];
+                        let tds = table.querySelectorAll('td');
+                        tds.forEach(td => {
+                            // LỌC BỎ rác: Bỏ qua cột Đầu/Đuôi (thường có id/class chứa chữ 'loto')
+                            if(td.id.includes('loto') || td.className.includes('loto')) return;
+                            
+                            let txt = td.innerText.trim();
+                            let segments = txt.split(/\s|-/);
+                            segments.forEach(p => {
+                                let cleanNum = p.replace(/\D/g, '');
+                                // Chỉ lấy số có độ dài từ 2 đến 5 (Đúng chuẩn XSMB)
+                                if(cleanNum.length >= 2 && cleanNum.length <= 5) numbers.push(cleanNum);
+                            });
+                        });
+                    }
+                    
+                    // CHẶT ĐÚNG 27 SỐ ĐẦU TIÊN (Tránh các số thống kê ở cuối bảng)
                     if(numbers.length >= 27) {
+                        numbers = numbers.slice(0, 27);
                         resInput.value = numbers.join('\n');
                         calculateAndRender();
-                        alert("✅ Đã tự động lấy thành công 27 giải KQXS!");
+                        alert("✅ Đã tự động lấy thành công đúng 27 giải KQXS!");
                     } else {
                         resInput.value = "";
-                        alert("⚠️ Ngày này chưa có kết quả (chưa quay) hoặc web đổi cấu trúc. Vui lòng lấy số thủ công!");
+                        alert("⚠️ Ngày này chưa có kết quả hoặc web đổi cấu trúc. Vui lòng copy tay!");
                         openXSMB(); 
                     }
                 } else {
@@ -623,7 +641,7 @@
         }
 
         // ==========================================
-        // ENGINE TÍNH LÔ ĐỀ VÀ BÓC TÁCH KẾT QUẢ DÍNH SỐ
+        // ENGINE TÍNH LÔ ĐỀ 
         // ==========================================
         const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND', minimumFractionDigits:0 }).format(amount||0);
         
@@ -631,17 +649,17 @@
             setTimeout(calculateAndRender, 300); 
         });
 
+        // HÀM CHỈNH LẠI: NẾU COPY TAY VẪN TỰ ĐỘNG CHẶT CÁC SỐ BỊ DÍNH LẠI VỚI NHAU
         function parseResultsText(rawResults) {
             if(!rawResults || rawResults.trim()==='') return { deResult:null, de3CResult:null, loHitCounts:{} };
-            // Lọc dính liền bằng khoảng trắng
+            
             let cleaned = rawResults.replace(/[^\d\s]/g, ' ');
             let tokens = cleaned.trim().split(/\s+/).filter(t=>t.length > 0);
             if(tokens.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
             
-            // XỬ LÝ LỖI DÍNH SỐ (Băm nhỏ chuỗi dài dựa trên luật giải thưởng)
             let allNumbers = [];
             tokens.forEach(t => {
-                if (t.length === 1) return; // Bỏ qua STT giải
+                if (t.length === 1) return; 
                 if (t.length === 10 || t.length === 30 || t.length === 15) {
                     for(let i=0; i<t.length; i+=5) allNumbers.push(t.slice(i, i+5));
                 } else if (t.length === 16 || t.length === 24 || t.length === 12) {
@@ -657,7 +675,6 @@
 
             if(allNumbers.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
 
-            // Giải đặc biệt luôn ưu tiên tìm giải dài >= 4 đầu tiên
             const gdb = allNumbers.find(t => t.length >= 4) || allNumbers[0] || ''; 
             const deResult = gdb.slice(-2); 
             const de3CResult = gdb.slice(-3);
