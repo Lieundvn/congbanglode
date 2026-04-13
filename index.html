@@ -953,7 +953,7 @@
             let x3Det = Object.keys(p.x3HitsDetail).join(', ');
 
             let msg = `Ngay: ${dateStr}\n`;
-            msg += `E nhan cua ${name || 'A'}\n`;
+            msg += `nhan $\n`;
             
             if (p.sLoGhi > 0) msg += `Lo: ${p.sLoGhi}d = ${fn(p.cLo)}\n`;
             if (p.sDeGhi > 0) msg += `De: ${p.sDeGhi}n = ${fn(p.cDe)}\n`;
@@ -968,9 +968,9 @@
             if (p.sX3Trung > 0) msg += `Th x3: ${p.sX3Trung}n [${x3Det}] = ${fn(p.wX3)}\n`;
 
             let profitStr = p.netCost > 0 ? `(duong) ${fn(p.netCost)}` : (p.netCost < 0 ? `(am) ${fn(Math.abs(p.netCost))}` : `0n`);
-            msg += `Hom nay ${name || 'A'}: ${profitStr}\n`;
+            msg += `Hom nay: ${profitStr}\n`;
 
-            let oldDebtVND = calculateOldDebt(name) * 1000;
+            let oldDebtVND = calculateOldDebt * 1000;
             msg += `No cu: ${fs(oldDebtVND)}n\n`;
 
             let finalTotal = oldDebtVND + p.netCost;
