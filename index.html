@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cộng bảng Mr Liêu (Cloud)</title>
+    <title>Hệ Thống Quản Lý & Tính Lô Đề (Cloud)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
@@ -40,11 +40,11 @@
     <div id="loadingScreen">Đang tải sổ sách từ Cloud... ☁️</div>
     <div id="cloudStatus">Đã đồng bộ Cloud ☁️</div>
 
-    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">công bảng Mr Liêu </h2>
+    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">Cộng bảng</h2>
 
     <div class="flex justify-center items-center gap-3 mb-6">
         <label class="font-bold text-indigo-800 text-lg">Ngày chốt sổ:</label>
-        <input id="sessionDate" type="date" class="p-2 border border-indigo-400 rounded font-bold shadow-inner" />
+        <input id="sessionDate" type="date" onchange="handleDateChange()" class="p-2 border border-indigo-400 rounded font-bold shadow-inner" />
     </div>
 
     <div class="max-w-6xl mx-auto tab-container">
@@ -59,7 +59,6 @@
                 <input type="text" id="newUserName" class="p-2 border rounded shadow-sm w-64" placeholder="Nhập tên khách hàng mới...">
                 <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="addNewUser()">+ Thêm Khách Hàng</button>
             </div>
-            <p class="text-sm text-gray-500 italic mb-2">* Số <b>Âm (Màu đỏ)</b>: Khách nợ mình | Số <b>Dương (Màu xanh)</b>: Mình nợ khách.</p>
             <div class="table-responsive">
                 <table class="debt-table">
                     <thead>
@@ -76,49 +75,47 @@
         <div id="TinhToan" class="tabcontent">
             <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg mb-4 flex flex-wrap items-center gap-4 shadow-sm">
                 <div class="w-full">
-                    <label class="block font-bold text-indigo-800 mb-1">CHỌN KHÁCH HÀNG (Để lưu tin nhắn & cài giá):</label>
-                    <select id="customerSelector" class="w-full p-2 border border-indigo-300 rounded font-bold text-lg shadow-inner"></select>
+                    <label class="block font-bold text-indigo-800 mb-1">CHỌN KHÁCH HÀNG:</label>
+                    <select id="customerSelector" onchange="handleCustomerChange(this.value)" class="w-full p-2 border border-indigo-300 rounded font-bold text-lg shadow-inner"></select>
                 </div>
             </div>
 
             <div class="mb-4">
-                <span class="font-bold text-gray-700 text-sm mr-2">Bấm chọn nhanh:</span>
-                <div id="quickSelectContacts" class="inline-flex flex-wrap gap-2"></div>
+                <div id="quickSelectContacts" class="flex flex-wrap gap-2"></div>
             </div>
 
             <div class="mb-4 flex gap-2">
-                <button id="toggleConfig" onclick="toggleConfigPanel()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm shadow">Hiện Cấu Hình Giá Của Khách</button>
+                <button id="toggleConfig" onclick="toggleConfigPanel()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm">Hiện Cấu Hình Giá</button>
             </div>
 
             <div id="config-panel" class="mb-6 p-4 rounded-lg bg-gray-50 border border-gray-200 hidden">
                 <div class="flex justify-between items-center mb-3">
                     <p id="configCustomerNote" class="text-sm text-gray-500 italic">(Cấu hình mặc định)</p>
                     <label class="relative inline-flex items-center cursor-pointer bg-red-50 py-1 px-3 rounded border border-red-200 shadow-sm">
-                        <input type="checkbox" id="isCompanyConfig" class="sr-only peer config-input">
+                        <input type="checkbox" id="isCompanyConfig" onchange="handleConfigInput()" class="sr-only peer">
                         <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[6px] after:left-[14px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
                         <span class="ml-2 text-sm font-bold text-red-700 uppercase">Khách này là CÔNG TY</span>
                     </label>
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-white p-4 rounded border border-red-200 shadow-sm">
-                        <h3 class="font-bold mb-2 text-red-600">Giá Đánh (Tự lưu cho khách này)</h3>
+                        <h3 class="font-bold mb-2 text-red-600">Giá Đánh</h3>
                         <div class="grid gap-2 text-sm">
-                            <label class="flex justify-between items-center">Lô (VNĐ/đ): <input id="pricePerDiem" type="number" class="config-input border p-1 w-24 text-right"></label>
-                            <label class="flex justify-between items-center">Đề (VNĐ/n): <input id="pricePerDeUnit" type="number" class="config-input border p-1 w-24 text-right"></label>
-                            <label class="flex justify-between items-center">3 Càng (VNĐ/n): <input id="pricePer3CUnit" type="number" class="config-input border p-1 w-24 text-right"></label>
-                            <label class="flex justify-between items-center">Xiên 2 (VNĐ/n): <input id="pricePerX2Unit" type="number" class="config-input border p-1 w-24 text-right"></label>
-                            <label class="flex justify-between items-center">Xiên 3 (VNĐ/n): <input id="pricePerX3Unit" type="number" class="config-input border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">Lô: <input id="pricePerDiem" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">Đề: <input id="pricePerDeUnit" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">3 Càng: <input id="pricePer3CUnit" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">Xiên 2: <input id="pricePerX2Unit" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">Xiên 3: <input id="pricePerX3Unit" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
                         </div>
                     </div>
                     <div class="bg-white p-4 rounded border border-green-200 shadow-sm">
-                        <h3 class="font-bold mb-2 text-green-600">Trả Thưởng (Tự lưu cho khách này)</h3>
+                        <h3 class="font-bold mb-2 text-green-600">Trả Thưởng</h3>
                         <div class="grid gap-2 text-sm">
-                            <label class="flex justify-between items-center">Lô (VNĐ/đ): <input id="lottoPayout" type="number" class="config-input border p-1 w-24 text-right"></label>
-                            <label class="flex justify-between items-center">Đề (VNĐ/n): <input id="dePayout" type="number" class="config-input border p-1 w-24 text-right"></label>
-                            <label class="flex justify-between items-center">3C (Tỷ lệ): <input id="payoutRatio3C" type="number" class="config-input border p-1 w-24 text-right"></label>
-                            <label class="flex justify-between items-center">X2 (Tỷ lệ): <input id="payoutRatioX2" type="number" class="config-input border p-1 w-24 text-right"></label>
-                            <label class="flex justify-between items-center">X3 (Tỷ lệ): <input id="payoutRatioX3" type="number" class="config-input border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">Lô: <input id="lottoPayout" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">Đề: <input id="dePayout" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">3C: <input id="payoutRatio3C" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">X2: <input id="payoutRatioX2" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">X3: <input id="payoutRatioX3" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
                         </div>
                     </div>
                 </div>
@@ -127,26 +124,22 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
-                    <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
+                    <textarea id="master-input" oninput="handleMasterInput()" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách lẻ tại đây..."></textarea>
                 </div>
                 <div class="flex flex-col h-full">
                     <div class="flex justify-between items-center mb-1">
                         <label class="font-bold text-gray-700">2. Kết quả XSMB (Lưu theo ngày):</label>
                         <div class="flex gap-2">
-                            <button id="btnAutoFetch" onclick="autoFetchKQXS()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded shadow transition-colors flex items-center gap-1">
-                                ⚡ TỰ ĐỘNG LẤY KQXS
-                            </button>
-                            <button onclick="openXSMB()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded shadow transition-colors flex items-center gap-1" title="Mở web tự copy tay nếu lỗi">
-                                🔍 Copy Thủ Công
-                            </button>
+                            <button id="btnAutoFetch" onclick="autoFetchKQXS()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded shadow">⚡ TỰ ĐỘNG LẤY KQXS</button>
+                            <button onclick="openXSMB()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded shadow">🔍 Copy Thủ Công</button>
                         </div>
                     </div>
-                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Dán kết quả vào đây..."></textarea>
+                    <textarea id="results-input" oninput="handleResultsInput()" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Dán 27 giải vào đây..."></textarea>
                 </div>
             </div>
 
             <div class="mb-6 flex flex-wrap gap-2 justify-center">
-                <button id="calculate-button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded shadow-lg text-lg">PHÂN TÍCH & TÍNH TOÁN</button>
+                <button id="calculate-button" onclick="calculateAndRender()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded shadow-lg text-lg">PHÂN TÍCH & TÍNH TOÁN</button>
             </div>
 
             <div id="results-container" class="mb-4"></div>
@@ -165,9 +158,9 @@
                     <span class="text-2xl md:text-3xl font-bold text-gray-800">CHỐT HÔM NAY:</span>
                     <span id="totalProfitOutput" class="text-2xl md:text-3xl font-bold font-mono">0₫</span>
                 </div>
-                </div>
+            </div>
 
-            <button id="saveToDebtButton" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-xl flex items-center justify-center gap-2 transition-all mb-4">
+            <button id="saveToDebtButton" onclick="saveToDebt()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-xl flex items-center justify-center gap-2 transition-all mb-4">
                 ✍️ CHỐT SỐ & LƯU VÀO CÔNG NỢ
             </button>
         </div>
@@ -177,10 +170,7 @@
                 <button class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded shadow" onclick="renderChiTiet()">Hiển thị tất cả sổ</button>
                 <div id="userActionButtons"></div>
             </div>
-            
             <h3 id="chiTietTitle" class="text-xl font-bold text-indigo-700 mb-1">Đang hiển thị: Tất cả khách hàng</h3>
-            <p class="text-sm text-gray-500 italic mb-4">* Chú ý: Dấu <b>âm (-)</b> là Khách nợ mình, Dấu <b>dương (+)</b> là Mình nợ khách.</p>
-            
             <div class="table-responsive">
                 <table class="debt-table">
                     <thead>
@@ -198,11 +188,11 @@
         </div>
     </div>
 
-    <textarea id="hiddenCopyTextarea" style="position: absolute; left: -9999px;"></textarea>
+    <textarea id="hiddenCopyArea" style="position: absolute; left: -9999px;"></textarea>
 
     <script>
         // ==========================================
-        // KHỞI TẠO SUPABASE
+        // KHỞI TẠO DỮ LIỆU & SUPABASE
         // ==========================================
         const { createClient } = supabase;
         const supabaseUrl = 'https://rcndrqiebvdynqrmkamm.supabase.co';
@@ -213,720 +203,330 @@
         let activeCustomer = '';
         let currentCalcData = null; 
 
-        const defaultConfig = {
-            lo: 22500, de: 1000, c3: 1000, x2: 1000, x3: 1000,
-            payLo: 80000, payDe: 80000, pay3C: 400, payX2: 10, payX3: 40,
-            isCompany: false
-        };
-        const configMap = {
-            pricePerDiem: 'lo', pricePerDeUnit: 'de', pricePer3CUnit: 'c3', pricePerX2Unit: 'x2', pricePerX3Unit: 'x3',
-            lottoPayout: 'payLo', dePayout: 'payDe', payoutRatio3C: 'pay3C', payoutRatioX2: 'payX2', payoutRatioX3: 'payX3',
-            isCompanyConfig: 'isCompany'
-        };
-
         function debounce(fn, delay) { let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), delay); }; }
         
-        function migrateData() {
-            let needsSave = false;
-            if (!creditData['__default_config__']) {
-                creditData['__default_config__'] = { ...defaultConfig };
-                needsSave = true;
-            }
-            if (!creditData['__results__']) {
-                creditData['__results__'] = {};
-                needsSave = true;
-            }
-            for (let name in creditData) {
-                if(name === '__default_config__' || name === '__results__') continue;
-                if (!creditData[name].debts) {
-                    let oldDebts = { ...creditData[name] };
-                    creditData[name] = { debts: oldDebts, config: { ...creditData['__default_config__'] }, inputs: {} };
-                    needsSave = true;
-                }
-                if (!creditData[name].inputs) {
-                    creditData[name].inputs = {};
-                    needsSave = true;
-                }
-            }
-            if (needsSave) saveData();
-        }
-
+        // ==========================================
+        // TẢI & LƯU CLOUD
+        // ==========================================
         async function loadDataFromSupabase() {
             const { data, error } = await sb.from('nhat_ky_cong_no').select('du_lieu').eq('id', 1).single();
             if (!error && data && data.du_lieu) {
                 creditData = data.du_lieu;
-                migrateData(); 
+                // Khởi tạo vùng nhớ rỗng nếu chưa có
+                if (!creditData['__results__']) creditData['__results__'] = {};
+                if (!creditData['__default_config__']) creditData['__default_config__'] = { ...defaultConfig };
             }
-            const loader = document.getElementById('loadingScreen');
-            if(loader) loader.style.display = 'none';
-            renderTongHop();
-            renderQuickSelectContacts();
+            document.getElementById('loadingScreen').style.display = 'none';
             
-            const todayStr = document.getElementById('sessionDate').value;
-            const resInput = document.getElementById('results-input');
-            if (creditData['__results__'] && creditData['__results__'][todayStr]) {
-                resInput.value = creditData['__results__'][todayStr];
-            } else {
-                resInput.value = '';
+            // Nạp KQXS của ngày hiện tại
+            const dateKey = document.getElementById('sessionDate').value;
+            if (creditData['__results__'] && creditData['__results__'][dateKey]) {
+                document.getElementById('results-input').value = creditData['__results__'][dateKey];
             }
 
+            renderTongHop();
+            renderQuickSelectContacts();
             switchCustomerContext(""); 
-            document.getElementById('btnTabTongHop')?.click();
         }
 
         async function saveData() {
             const status = document.getElementById('cloudStatus');
-            if(status) {
-                status.style.display = 'block'; status.innerText = 'Đang đồng bộ... ⏳'; status.style.background = '#f59e0b';
-            }
+            status.style.display = 'block'; status.innerText = 'Đang đồng bộ... ⏳'; status.style.background = '#f59e0b';
             const { error } = await sb.from('nhat_ky_cong_no').update({ du_lieu: creditData }).eq('id', 1);
             if(!error) {
-                if(status) { status.innerText = 'Đã đồng bộ Cloud ☁️'; status.style.background = '#10b981'; }
-                setTimeout(() => { if(status) status.style.display = 'none'; }, 3000);
-            } else {
-                if(status) { status.innerText = 'Lỗi kết nối ❌'; status.style.background = '#ef4444'; }
+                status.innerText = 'Đã đồng bộ Cloud ☁️'; status.style.background = '#10b981';
+                setTimeout(() => { status.style.display = 'none'; }, 3000);
             }
         }
         const debouncedCloudSave = debounce(saveData, 2000);
 
-        let todayKey = new Date().toLocaleDateString('en-CA');
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            const sessionDateEl = document.getElementById('sessionDate');
-            if (sessionDateEl) sessionDateEl.value = todayKey;
+        // ==========================================
+        // XỬ LÝ SỰ KIỆN GIAO DIỆN
+        // ==========================================
+        function handleDateChange() {
             updateDateHeaders();
-        });
-
-        function updateDateHeaders() {
-            let dateVal = document.getElementById('sessionDate')?.value;
-            if(!dateVal) return;
-            let d = new Date(dateVal);
-            if(!isNaN(d)) {
-                const header = document.getElementById('colTodayHeader');
-                if (header) header.innerHTML = `Hôm nay<br>(${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')})`;
-            }
-        }
-
-        async function autoFetchKQXS() {
-            const dateVal = document.getElementById('sessionDate')?.value;
-            if(!dateVal) { alert("Vui lòng chọn ngày chốt sổ trước!"); return; }
-            
-            const btn = document.getElementById('btnAutoFetch');
+            const dateKey = document.getElementById('sessionDate').value;
             const resInput = document.getElementById('results-input');
-            
-            btn.innerHTML = "⏳ ĐANG LẤY...";
-            btn.disabled = true;
-            resInput.value = "Đang kết nối tải KQXS. Xin chờ 3-5 giây để đổi Proxy nếu mạng nghẽn...";
-            
-            let parts = dateVal.split('-'); 
-            let dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
-            let dIntStr = `${parseInt(parts[2])}-${parseInt(parts[1])}-${parts[0]}`; 
-            
-            let url1 = `https://xoso.me/xsmb-${dStr}.html`;
-            let url2 = `https://xskt.com.vn/xsmb/ngay-${dIntStr}`;
-            
-            const cb = Date.now();
-            const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(url1 + '?t=' + cb)}`,
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(url2 + '?t=' + cb)}`
-            ];
-            
-            let htmlContent = null;
-
-            for (let i = 0; i < proxies.length; i++) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 6000);
-                    let response = await fetch(proxies[i], { signal: controller.signal });
-                    clearTimeout(timeoutId);
-                    if (response.ok) {
-                        let text = await response.text();
-                        if (text && text.includes('<html')) {
-                            htmlContent = text;
-                            break;
-                        }
-                    }
-                } catch (e) {
-                    console.warn(`Proxy failed, trying next...`);
-                }
-            }
-            
-            if(htmlContent) {
-                let parser = new DOMParser();
-                let doc = parser.parseFromString(htmlContent, "text/html");
-                let numbers = [];
-
-                let spans = doc.querySelectorAll('table.table-result span[data-val], table span[data-val]');
-                if (spans.length >= 27) {
-                    spans.forEach(s => numbers.push(s.getAttribute('data-val').trim().replace(/\D/g, '')));
-                }
-
-                if (numbers.length < 27) {
-                    numbers = [];
-                    let ems = doc.querySelectorAll('table#KQCS em, table#MB0 em');
-                    if (ems.length >= 27) {
-                        ems.forEach(e => numbers.push(e.innerText.trim().replace(/\D/g, '')));
-                    }
-                }
-
-                numbers = numbers.filter(n => n.length >= 2 && n.length <= 5);
-                
-                if(numbers.length >= 27) {
-                    numbers = numbers.slice(0, 27);
-                    let finalString = numbers.join('\n');
-                    resInput.value = finalString;
-                    if (!creditData['__results__']) creditData['__results__'] = {};
-                    creditData['__results__'][dateVal] = finalString;
-                    debouncedCloudSave();
-                    if(document.getElementById('TinhToan').style.display === 'block') calculateAndRender();
-                } else {
-                    resInput.value = "";
-                    alert("⚠️ Chưa có kết quả ngày này!");
-                    openXSMB();
-                }
-            } else {
-                resInput.value = "";
-                alert("⚠️ Lỗi mạng, xin anh copy tay!");
-            }
-            btn.innerHTML = "⚡ TỰ ĐỘNG LẤY KQXS";
-            btn.disabled = false;
+            resInput.value = (creditData['__results__'] && creditData['__results__'][dateKey]) ? creditData['__results__'][dateKey] : '';
+            switchCustomerContext(activeCustomer);
+            renderChiTiet();
+            calculateAndRender();
         }
 
-        function openXSMB() {
-            let dateVal = document.getElementById('sessionDate')?.value;
-            if(!dateVal) return;
-            let parts = dateVal.split('-'); 
-            let url = `https://xoso.me/xsmb-${parts[2]}-${parts[1]}-${parts[0]}.html`;
-            window.open(url, 'XSMB', 'width=500,height=700');
+        function handleCustomerChange(name) {
+            switchCustomerContext(name);
         }
 
-        function calculateUserTotal(name) {
-            if(name === '__default_config__' || name === '__results__') return 0;
-            let total = 0;
-            if(creditData[name] && creditData[name].debts) {
-                for (let k in creditData[name].debts) {
-                    if(k !== 'GachNo_DieuChinh') total += parseFloat(creditData[name].debts[k]) || 0;
-                }
-                total += parseFloat(creditData[name].debts['GachNo_DieuChinh']) || 0;
-            }
-            return total;
-        }
-
-        function calculateOldDebt(name) {
-            if (name === '__default_config__' || name === '__results__') return 0;
-            let old = 0;
-            const currentDate = document.getElementById('sessionDate')?.value;
-            if(creditData[name] && creditData[name].debts) {
-                for (let k in creditData[name].debts) {
-                    if (k !== currentDate && k !== 'GachNo_DieuChinh') old += parseFloat(creditData[name].debts[k]) || 0;
-                }
-                old += parseFloat(creditData[name].debts['GachNo_DieuChinh']) || 0;
-            }
-            return old;
-        }
-
-        function updateOldDebt(name, value) {
-            let num = parseFloat(value);
-            if(isNaN(num)) num = 0;
-            let currentOld = calculateOldDebt(name);
-            let diff = num - currentOld;
-            if(diff !== 0) {
-                creditData[name].debts['GachNo_DieuChinh'] = (creditData[name].debts['GachNo_DieuChinh'] || 0) + diff;
-                saveData(); 
-                let title = document.getElementById('chiTietTitle');
-                let currentFilter = (title && title.innerText.includes('Tất cả')) ? null : name;
-                renderChiTiet(currentFilter); 
-                renderTongHop();
+        function handleMasterInput() {
+            const dateKey = document.getElementById('sessionDate').value;
+            if (activeCustomer && creditData[activeCustomer]) {
+                creditData[activeCustomer].inputs[dateKey] = document.getElementById('master-input').value;
+                debouncedCloudSave();
             }
         }
 
-        function populateCustomerSelector() {
-            const sel = document.getElementById('customerSelector');
-            if (!sel) return;
-            sel.innerHTML = '<option value="">-- Chọn khách hàng --</option>';
-            Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__').forEach(name => sel.innerHTML += `<option value="${name}">${name}</option>`);
-            if (creditData[activeCustomer] && activeCustomer !== '__default_config__' && activeCustomer !== '__results__') sel.value = activeCustomer;
+        function handleResultsInput() {
+            const dateKey = document.getElementById('sessionDate').value;
+            creditData['__results__'][dateKey] = document.getElementById('results-input').value;
+            debouncedCloudSave();
+            calculateAndRender();
         }
 
-        function renderQuickSelectContacts() {
-            const container = document.getElementById('quickSelectContacts');
-            if (!container) return;
-            container.innerHTML = '';
-            Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__').forEach(name => {
-                const tag = document.createElement('span');
-                tag.className = 'bg-white border border-indigo-300 text-indigo-700 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-indigo-600 hover:text-white font-semibold transition shadow-sm';
-                tag.textContent = name;
-                tag.onclick = () => {
-                    const sel = document.getElementById('customerSelector');
-                    if (sel) sel.value = name;
-                    switchCustomerContext(name);
-                    document.getElementById('master-input')?.focus();
-                };
-                container.appendChild(tag);
+        function toggleConfigPanel() {
+            const panel = document.getElementById('config-panel');
+            panel.classList.toggle('hidden');
+            document.getElementById('toggleConfig').innerText = panel.classList.contains('hidden') ? 'Hiện Cấu Hình Giá' : 'Ẩn Cấu Hình';
+        }
+
+        function handleConfigInput() {
+            let target = (activeCustomer && creditData[activeCustomer]) ? creditData[activeCustomer].config : creditData['__default_config__'];
+            target.lo = parseFloat(document.getElementById('pricePerDiem').value) || 0;
+            target.de = parseFloat(document.getElementById('pricePerDeUnit').value) || 0;
+            target.c3 = parseFloat(document.getElementById('pricePer3CUnit').value) || 0;
+            target.x2 = parseFloat(document.getElementById('pricePerX2Unit').value) || 0;
+            target.x3 = parseFloat(document.getElementById('pricePerX3Unit').value) || 0;
+            target.payLo = parseFloat(document.getElementById('lottoPayout').value) || 0;
+            target.payDe = parseFloat(document.getElementById('dePayout').value) || 0;
+            target.pay3C = parseFloat(document.getElementById('payoutRatio3C').value) || 0;
+            target.payX2 = parseFloat(document.getElementById('payoutRatioX2').value) || 0;
+            target.payX3 = parseFloat(document.getElementById('payoutRatioX3').value) || 0;
+            target.isCompany = document.getElementById('isCompanyConfig').checked;
+            
+            debouncedCloudSave();
+            if (document.getElementById('isCompanyConfig').id === 'isCompanyConfig') switchCustomerContext(activeCustomer);
+            else calculateAndRender();
+        }
+
+        // ==========================================
+        // TÍNH TOÁN CỐT LÕI (LÀM TRÒN NHÀ CÁI)
+        // ==========================================
+        function runCoreMath(rawInput, rawResults, p) {
+            const cleaned = rawResults.replace(/[^\d\s]/g, ' ');
+            const tokens = cleaned.trim().split(/\s+/).filter(t=>t.length > 0);
+            let allNumbers = [];
+            tokens.forEach(t => {
+                if (t.length === 1) return;
+                if (t.length === 10 || t.length === 30 || t.length === 15) { for(let i=0; i<t.length; i+=5) allNumbers.push(t.slice(i, i+5)); }
+                else if (t.length === 16 || t.length === 24) { for(let i=0; i<t.length; i+=4) allNumbers.push(t.slice(i, i+4)); }
+                else if (t.length === 8) { for(let i=0; i<t.length; i+=2) allNumbers.push(t.slice(i, i+2)); }
+                else { allNumbers.push(t); }
             });
-        }
+            const deResult = (allNumbers.find(t=>t.length>=4)||allNumbers[0]||'').slice(-2);
+            const de3CResult = (allNumbers.find(t=>t.length>=4)||allNumbers[0]||'').slice(-3);
+            const loHitCounts = {}; allNumbers.forEach(n => { const l = n.slice(-2); if(l.length===2) loHitCounts[l] = (loHitCounts[l]||0)+1; });
 
-        function applyCustomerConfig(name) {
-            const noteEl = document.getElementById('configCustomerNote');
-            if (!noteEl) return;
-            let cfg = creditData['__default_config__'] || defaultConfig;
-            if (name && creditData[name] && creditData[name].config) {
-                cfg = creditData[name].config;
-                noteEl.innerText = `(Đang áp dụng cấu hình của: ${name})`;
-                noteEl.className = "text-sm text-indigo-700 font-bold mb-2";
-            } else {
-                noteEl.innerText = `(Cấu hình Mặc Định)`;
-                noteEl.className = "text-sm text-red-500 font-bold mb-2";
-            }
-            for (let domId in configMap) {
-                const el = document.getElementById(domId);
-                if (el) {
-                    if (el.type === 'checkbox') el.checked = cfg[configMap[domId]] === true;
-                    else el.value = cfg[configMap[domId]];
+            const data = { lo: {}, de: {}, '3c': {}, x2: {}, x3: {} };
+            const keys = ['ba càng đề', 'đề ba càng', 'ba càng', '3 càng', 'xiên 2', 'xiên 3', 'lo', 'lô', 'de', 'đề'];
+            let pInput = rawInput.replace(/\n/g, '||').replace(/([a-zđ₫nk])\./gi, '$1||').replace(new RegExp(`(\\b(?:${keys.join('|')})\\s+)`, 'gi'), '||$1');
+            
+            let lastType = null;
+            pInput.split('||').forEach(line => {
+                let str = line.toLowerCase().trim(); if(!str) return;
+                let type = null;
+                if (str.startsWith('lo') || str.startsWith('lô')) type = 'lo';
+                else if (str.startsWith('de') || str.startsWith('đề')) type = 'de';
+                else if (str.includes('càng')) type = '3c';
+                else if (str.includes('x2') || str.includes('xiên 2')) type = 'x2';
+                else if (str.includes('x3') || str.includes('xiên 3')) type = 'x3';
+                else type = lastType;
+                if(!type) return; lastType = type;
+
+                let match = str.match(/(.+?)\s*(?:x|X|×|\*)\s*(\d+)/);
+                if (match) {
+                    let numStr = match[1].replace(/[^\d\s kép lệc bằng đầu đít tổng]/g, '');
+                    let qty = parseInt(match[2]);
+                    // Xử lý Đầu/Đít/Tổng/Kép
+                    numStr = numStr.replace(/kép lệch|kep lech/g, ' 05 50 16 61 27 72 38 83 49 94 ');
+                    numStr = numStr.replace(/kép bằng|kep bang|kép|kep/g, ' 00 11 22 33 44 55 66 77 88 99 ');
+                    numStr = numStr.replace(/(đầu|dau)\s*(\d)/g, (m,p1,p2)=>{ let r=[]; for(let i=0;i<=9;i++) r.push(p2+i); return ' '+r.join(' ')+' '; });
+                    numStr = numStr.replace(/(đít|dit|đuôi|duoi)\s*(\d)/g, (m,p1,p2)=>{ let r=[]; for(let i=0;i<=9;i++) r.push(i+p2); return ' '+r.join(' ')+' '; });
+                    numStr = numStr.replace(/(tổng|tong)\s*(\d)/g, (m,p1,p2)=>{ let v=parseInt(p2), r=[]; for(let i=0;i<=9;i++) for(let j=0;j<=9;j++) if((i+j)%10===v) r.push(i.toString()+j.toString()); return ' '+r.join(' ')+' '; });
+                    
+                    let nums = numStr.match(/\d+/g) || [];
+                    if (!data[type][qty]) data[type][qty] = []; data[type][qty].push(...nums);
                 }
-            }
+            });
+
+            let sLoGhi=0, sDeGhi=0, s3CGhi=0, sX2Ghi=0, sX3Ghi=0;
+            let sLoTrung=0, sDeTrung=0, s3CTrung=0, sX2Trung=0, sX3Trung=0;
+            let loHitsDetail = {}, deHitsDetail = {};
+
+            for(let q in data.lo){ let qty=parseFloat(q); sLoGhi+=data.lo[q].length*qty; data.lo[q].forEach(n=>{ let h=loHitCounts[n]||0; if(h>0){ sLoTrung+=h*qty; loHitsDetail[n]=(loHitsDetail[n]||0)+h; } }); }
+            for(let q in data.de){ let qty=parseFloat(q); sDeGhi+=data.de[q].length*qty; data.de[q].forEach(n=>{ if(n===deResult){ sDeTrung+=qty; deHitsDetail[n]=1; } }); }
+            for(let q in data['3c']){ let qty=parseFloat(q); s3CGhi+=data['3c'][q].length*qty; data['3c'][q].forEach(n=>{ if(n===de3CResult) s3CTrung+=qty; }); }
+            // Làm tròn hàng nghìn: Nhận làm tròn LÊN, Trúng làm tròn XUỐNG
+            let cLo = Math.ceil((sLoGhi*p.lo)/1000)*1000, wLo = Math.floor((sLoTrung*p.payLo)/1000)*1000;
+            let cDe = Math.ceil((sDeGhi*p.de)/1000)*1000, wDe = Math.floor((sDeTrung*p.payDe)/1000)*1000;
+            let c3C = Math.ceil((s3CGhi*p.c3)/1000)*1000, w3C = Math.floor((s3CTrung*(1000*p.pay3C))/1000)*1000;
+
+            let totalCost = cLo+cDe+c3C; let totalWin = wLo+wDe+w3C;
+            return { cost: totalCost, win: totalWin, netCost: totalWin - totalCost, sLoGhi, sDeGhi, s3CGhi, cLo, cDe, c3C, wLo, wDe, w3C, loHitsDetail, deHitsDetail, sLoTrung, sDeTrung };
         }
 
-        function switchCustomerContext(newCustomer) {
-            const dateKey = document.getElementById('sessionDate')?.value;
+        function calculateAndRender() {
+            const rawInput = document.getElementById('master-input').value;
+            const rawResults = document.getElementById('results-input').value;
+            const p = (activeCustomer && creditData[activeCustomer]) ? creditData[activeCustomer].config : creditData['__default_config__'];
+            
+            const calc = runCoreMath(rawInput, rawResults, p);
+            currentCalcData = calc;
+
+            let loDet = Object.entries(calc.loHitsDetail).map(([n,h])=>h>1?`${n}(x${h})`:n).join(' ');
+            let html = `<div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm"><div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><h4 class="font-bold text-red-600 mb-2">🔴 NHẬN ĐÁNH</h4><div class="text-sm">
+                    ${calc.sLoGhi>0?`<div class="flex justify-between"><span>Lô: <b>${calc.sLoGhi}đ</b></span> <span>${formatVND(calc.cLo)}</span></div>`:''}
+                    ${calc.sDeGhi>0?`<div class="flex justify-between"><span>Đề: <b>${calc.sDeGhi}n</b></span> <span>${formatVND(calc.cDe)}</span></div>`:''}
+                </div></div>
+                <div><h4 class="font-bold text-green-600 mb-2">🟢 TRÚNG THƯỞNG</h4><div class="text-sm">
+                    ${calc.sLoTrung>0?`<div class="flex justify-between"><span>Lô: <b>${calc.sLoTrung}đ</b> <span class="text-xs text-blue-600">[${loDet}]</span></span> <span>${formatVND(calc.wLo)}</span></div>`:''}
+                    ${calc.sDeTrung>0?`<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${calc.sDeTrung}n</b></span> <span>${formatVND(calc.wDe)}</span></div>`:''}
+                </div></div>
+            </div></div>`;
+            document.getElementById('results-container').innerHTML = html;
+            document.getElementById('totalCostOutput').textContent = formatVND(calc.cost);
+            document.getElementById('totalWinningsOutput').textContent = formatVND(calc.win);
+            document.getElementById('totalProfitOutput').textContent = formatVND(Math.abs(calc.netCost));
+            document.getElementById('totalProfitOutput').className = `text-2xl md:text-3xl font-bold font-mono ${calc.netCost >= 0 ? 'text-green-600' : 'text-red-600'}`;
+        }
+
+        // ==========================================
+        // XUẤT TIN NHẮN (TAB 3)
+        // ==========================================
+        function exportMessageForCustomer(name) {
+            const dateKey = document.getElementById('sessionDate').value;
+            const d = dateKey.split('-'); const dateStr = `${d[2]}-${d[1]}-${d[0]}`;
+            const rawInput = (creditData[name] && creditData[name].inputs[dateKey]) ? creditData[name].inputs[dateKey] : '';
+            const rawResults = (creditData['__results__'] && creditData['__results__'][dateKey]) ? creditData['__results__'][dateKey] : '';
+            const p = (creditData[name] && creditData[name].config) ? creditData[name].config : (creditData['__default_config__'] || defaultConfig);
+
+            const c = runCoreMath(rawInput, rawResults, p);
+            const fn = (v) => (v/1000).toLocaleString('vi-VN') + 'n';
+            const fs = (v) => (v === 0 ? '0' : (v < 0 ? '-' : '') + (Math.abs(v)/1000).toLocaleString('vi-VN'));
+            const loDet = Object.keys(c.loHitsDetail).join(' ');
+
+            let msg = `Ngay: ${dateStr}\n`;
+            if (c.sLoGhi > 0) msg += `Lo: ${c.sLoGhi}d = ${fn(c.cLo)}\n`;
+            if (c.sDeGhi > 0) msg += `De: ${c.sDeGhi}n = ${fn(c.cDe)}\n`;
+            if (c.sLoTrung > 0) msg += `Th lo: ${c.sLoTrung}d [${loDet}] = ${fn(c.wLo)}\n`;
+            if (c.sDeTrung > 0) msg += `Th de: ${c.sDeTrung}n = ${fn(c.wDe)}\n`;
+            
+            msg += `Hom nay : ${c.netCost >= 0 ? `(duong) ${fn(c.netCost)}` : `(am) ${fn(Math.abs(c.netCost))}`}\n`;
+            
+            const oldDebtVND = calculateOldDebt(name) * 1000;
+            msg += `No cu: ${fs(oldDebtVND)}n\n`;
+            
+            const finalTotal = oldDebtVND + c.netCost;
+            msg += `Tong: ${fs(c.netCost)} + (${fs(oldDebtVND)}) = ${fs(finalTotal)}n.`;
+
+            // COPY & HIỆN THÔNG BÁO TẠM
+            const dummy = document.getElementById('hiddenCopyArea'); dummy.value = msg; dummy.select(); document.execCommand('copy');
+            const container = document.getElementById('messageOutputContainer');
+            document.getElementById('messageOutput').value = msg;
+            container.classList.remove('hidden');
+        }
+
+        // ==========================================
+        // CÁC HÀM QUẢN LÝ NGƯỜI DÙNG & TIỆN ÍCH
+        // ==========================================
+        const defaultConfig = { lo: 22500, de: 1000, c3: 1000, x2: 1000, x3: 1000, payLo: 80000, payDe: 80000, pay3C: 400, payX2: 10, payX3: 40, isCompany: false };
+
+        function switchCustomerContext(name) {
+            const dateKey = document.getElementById('sessionDate').value;
             const inputEl = document.getElementById('master-input');
+            if (activeCustomer && creditData[activeCustomer]) creditData[activeCustomer].inputs[dateKey] = inputEl.value;
 
-            if (activeCustomer && creditData[activeCustomer] && dateKey && inputEl) {
-                creditData[activeCustomer].inputs[dateKey] = inputEl.value;
-            }
-
-            activeCustomer = newCustomer;
-            const lbl = document.getElementById('lblActiveUser');
-            if (lbl) lbl.innerText = activeCustomer || "Khách Vãng Lai";
-
-            if (activeCustomer && creditData[activeCustomer] && dateKey && inputEl) {
-                let cfg = creditData[activeCustomer].config || {};
-                let isComp = cfg.isCompany === true;
-                
-                if (isComp) {
-                    let aggregatedText = '';
-                    for (let n in creditData) {
-                        if (n !== '__default_config__' && n !== '__results__' && n !== activeCustomer && !creditData[n].config.isCompany) {
-                            if (creditData[n].inputs && creditData[n].inputs[dateKey] && creditData[n].inputs[dateKey].trim() !== '') {
-                                aggregatedText += creditData[n].inputs[dateKey].trim() + '\n\n';
-                            }
+            activeCustomer = name;
+            document.getElementById('lblActiveUser').innerText = activeCustomer || "Khách Vãng Lai";
+            
+            if (activeCustomer && creditData[activeCustomer]) {
+                const cfg = creditData[activeCustomer].config;
+                if (cfg.isCompany) {
+                    let totalText = "";
+                    for(let n in creditData){
+                        if(n!=='__results__' && n!=='__default_config__' && n!==activeCustomer && !creditData[n].config.isCompany){
+                            let txt = creditData[n].inputs[dateKey];
+                            if(txt && txt.trim()) totalText += txt.trim() + "\n\n";
                         }
                     }
-                    inputEl.value = aggregatedText.trim();
-                    creditData[activeCustomer].inputs[dateKey] = inputEl.value;
+                    inputEl.value = totalText.trim();
                 } else {
                     inputEl.value = creditData[activeCustomer].inputs[dateKey] || '';
                 }
                 applyCustomerConfig(activeCustomer);
-            } else if (inputEl) {
-                inputEl.value = '';
-                applyCustomerConfig('');
-            }
-            calculateAndRender();
-        }
-
-        document.getElementById('customerSelector')?.addEventListener('change', (e) => {
-            switchCustomerContext(e.target.value);
-        });
-
-        document.getElementById('sessionDate')?.addEventListener('change', () => {
-            updateDateHeaders();
-            const dateKey = document.getElementById('sessionDate').value;
-            const resInput = document.getElementById('results-input');
-            if (creditData['__results__'] && creditData['__results__'][dateKey]) {
-                resInput.value = creditData['__results__'][dateKey];
             } else {
-                resInput.value = '';
+                inputEl.value = ''; applyCustomerConfig('');
             }
-            switchCustomerContext(activeCustomer);
-            renderChiTiet(); 
             calculateAndRender();
-        });
-
-        document.getElementById('master-input')?.addEventListener('input', () => {
-            const dateKey = document.getElementById('sessionDate')?.value;
-            if (activeCustomer && creditData[activeCustomer] && dateKey) {
-                creditData[activeCustomer].inputs[dateKey] = document.getElementById('master-input').value;
-                debouncedCloudSave(); 
-            }
-            setTimeout(calculateAndRender, 300);
-        });
-
-        document.getElementById('results-input')?.addEventListener('input', function() { 
-            const dateKey = document.getElementById('sessionDate').value;
-            if (!creditData['__results__']) creditData['__results__'] = {};
-            creditData['__results__'][dateKey] = this.value;
-            debouncedCloudSave();
-            setTimeout(calculateAndRender, 300); 
-        });
-
-        function toggleConfigPanel() {
-            const p = document.getElementById('config-panel');
-            if(p) {
-                p.classList.toggle('hidden');
-                const btn = document.getElementById('toggleConfig');
-                if(btn) btn.textContent = p.classList.contains('hidden') ? 'Hiện Cấu Hình Giá Của Khách' : 'Ẩn Cấu Hình Giá';
-            }
         }
-
-        document.querySelectorAll('.config-input').forEach(input => {
-            input.addEventListener('change', (e) => {
-                let targetConfig = null;
-                const currentCust = document.getElementById('customerSelector').value;
-                if (currentCust && creditData[currentCust]) {
-                    targetConfig = creditData[currentCust].config;
-                } else {
-                    if (!creditData['__default_config__']) creditData['__default_config__'] = { ...defaultConfig };
-                    targetConfig = creditData['__default_config__'];
-                }
-                for (let domId in configMap) {
-                    const el = document.getElementById(domId);
-                    if(el) {
-                        if (el.type === 'checkbox') targetConfig[configMap[domId]] = el.checked;
-                        else targetConfig[configMap[domId]] = parseFloat(el.value) || 0;
-                    }
-                }
-                debouncedCloudSave(); 
-                if(e.target.id === 'isCompanyConfig') switchCustomerContext(currentCust);
-                else calculateAndRender(); 
-            });
-        });
 
         function renderTongHop() {
-            const tbody = document.getElementById('tongHopBody'); 
-            if(!tbody) return;
-            tbody.innerHTML = '';
-            let names = Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__');
-            if(names.length === 0) tbody.innerHTML = '<tr><td colspan="2">Chưa có dữ liệu.</td></tr>';
-            else names.forEach(name => {
+            const tbody = document.getElementById('tongHopBody'); tbody.innerHTML = '';
+            Object.keys(creditData).filter(n=>n!=='__results__' && n!=='__default_config__').forEach(name => {
                 let total = calculateUserTotal(name);
-                let colorClass = total > 0 ? 'text-green-600' : (total < 0 ? 'text-red-600' : 'text-gray-800');
                 let tr = document.createElement('tr');
-                tr.innerHTML = `<td class="col-name" onclick="goToDetail('${name}')">${name}</td><td class="col-total ${colorClass}">${(total * 1000).toLocaleString('vi-VN')} đ</td>`;
+                tr.innerHTML = `<td class="col-name" onclick="goToDetail('${name}')">${name}</td><td class="${total>=0?'text-green-600':'text-red-600'} font-bold">${(total*1000).toLocaleString('vi-VN')} đ</td>`;
                 tbody.appendChild(tr);
             });
             populateCustomerSelector();
-            renderQuickSelectContacts();
-        }
-
-        function addNewUser() {
-            let nameInput = document.getElementById('newUserName'); 
-            if(!nameInput) return;
-            let name = nameInput.value.trim();
-            if(!name || name === '__default_config__' || name === '__results__' || creditData[name]) return alert("Vui lòng nhập tên hợp lệ!"); 
-            let baseDefault = creditData['__default_config__'] || defaultConfig;
-            creditData[name] = { debts: {}, config: { ...baseDefault }, inputs: {} }; 
-            saveData(); nameInput.value = ""; renderTongHop(); goToDetail(name);
-        }
-        
-        document.getElementById('newUserName')?.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') addNewUser();
-        });
-
-        function renameUser(oldName) {
-            let newName = prompt(`Tên mới thay thế cho "${oldName}":`, oldName);
-            if (newName && newName.trim() && newName.trim() !== oldName) {
-                newName = newName.trim(); if (creditData[newName] || newName === '__default_config__' || newName === '__results__') return alert("Tên đã tồn tại!");
-                creditData[newName] = creditData[oldName]; delete creditData[oldName]; saveData(); renderTongHop(); goToDetail(newName);
-            }
-        }
-
-        function deleteUser(name) {
-            if(confirm(`⚠️ CHÚ Ý: Xóa toàn bộ sổ của "${name}"?`)) {
-                delete creditData[name]; 
-                if(activeCustomer === name) switchCustomerContext('');
-                saveData(); renderTongHop(); document.getElementById('btnTabTongHop')?.click(); 
-            }
         }
 
         function renderChiTiet(filterName = null) {
-            const tbody = document.getElementById('chiTietBody'); 
-            const title = document.getElementById('chiTietTitle');
-            const actionBtns = document.getElementById('userActionButtons');
-            if(!tbody || !title || !actionBtns) return;
-            tbody.innerHTML = ''; actionBtns.innerHTML = ''; 
-            let names = Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__');
-            if (filterName) {
-                names = names.filter(n => n === filterName); title.innerText = `Đang xem: ${filterName}`;
-                actionBtns.innerHTML = `<button class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded mr-2" onclick="renameUser('${filterName}')">✏️ Đổi Tên</button>
-                                        <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded" onclick="deleteUser('${filterName}')">🗑️ Xóa</button>`;
-            } else title.innerText = `Đang xem: Tất cả`;
-
+            const tbody = document.getElementById('chiTietBody'); tbody.innerHTML = '';
+            let names = Object.keys(creditData).filter(n=>n!=='__results__' && n!=='__default_config__');
+            if(filterName) names = names.filter(n=>n===filterName);
             names.forEach(name => {
-                let tr = document.createElement('tr'); 
-                tr.innerHTML = `<td style="text-align:left; font-weight:bold; cursor:pointer;" onclick="switchCustomerContext('${name}'); document.getElementById('btnTabTinhToan').click();" class="hover:text-indigo-600">${name}</td>`;
-                let oldDebt = calculateOldDebt(name);
-                let oldColor = oldDebt > 0 ? 'text-green-600' : (oldDebt < 0 ? 'text-red-600' : '');
-                tr.innerHTML += `<td class="col-old-debt ${oldColor}">${(oldDebt === 0) ? '0' : (oldDebt * 1000).toLocaleString('vi-VN')}</td>`;
-                const currentDate = document.getElementById('sessionDate')?.value || todayKey;
-                let todayVal = creditData[name].debts[currentDate] || '';
-                let todayColor = todayVal > 0 ? 'text-green-600 font-bold' : (todayVal < 0 ? 'text-red-600 font-bold' : 'font-bold');
-                tr.innerHTML += `<td class="today-col"><input type="number" step="any" class="day-input ${todayColor}" value="${todayVal}" onchange="updateRecord('${name}', '${currentDate}', this.value)" placeholder="0"></td>`;
+                let tr = document.createElement('tr');
+                let old = calculateOldDebt(name);
+                let todayVal = creditData[name].debts[document.getElementById('sessionDate').value] || 0;
                 let total = calculateUserTotal(name);
-                let totalColor = total > 0 ? 'text-green-600' : (total < 0 ? 'text-red-600' : '');
-                tr.innerHTML += `<td class="col-total ${totalColor}">${(total === 0) ? '0' : (total * 1000).toLocaleString('vi-VN')}</td>`;
-                tr.innerHTML += `<td class="bg-emerald-50 border-emerald-200">
-                    <button id="btnExport-${name}" onclick="exportMessageForCustomer('${name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-3 rounded shadow text-sm w-full flex items-center justify-center">📋 Xuất TN</button>
-                </td>`;
+                tr.innerHTML = `<td onclick="switchCustomerContext('${name}'); openTab(null,'TinhToan')" class="cursor-pointer font-bold hover:text-blue-700 underline">${name}</td>
+                    <td>${(old*1000).toLocaleString('vi-VN')}</td>
+                    <td><input type="number" value="${todayVal}" onchange="updateRecord('${name}',this.value)" class="day-input"></td>
+                    <td class="font-bold">${(total*1000).toLocaleString('vi-VN')}</td>
+                    <td><button onclick="exportMessageForCustomer('${name}')" class="bg-emerald-600 text-white font-bold py-1 px-3 rounded text-xs shadow-sm">Xuất TN</button></td>`;
                 tbody.appendChild(tr);
             });
         }
 
-        function updateRecord(name, dateKey, value) {
-            let num = parseFloat(value);
-            if(isNaN(num) || num === 0) delete creditData[name].debts[dateKey]; else creditData[name].debts[dateKey] = num;
-            saveData(); let currentFilter = document.getElementById('chiTietTitle')?.innerText.includes('Tất cả') ? null : name;
-            renderChiTiet(currentFilter); renderTongHop();
-        }
-
-        function goToDetail(name) { document.getElementById('btnTabChiTiet')?.click(); renderChiTiet(name); }
-
-        function openTab(evt, tabName) {
-            let tabs = document.getElementsByClassName("tabcontent"); for (let i = 0; i < tabs.length; i++) tabs[i].style.display = "none";
-            let links = document.getElementsByClassName("tablinks"); for (let i = 0; i < links.length; i++) links[i].className = links[i].className.replace(" active", "");
-            const target = document.getElementById(tabName);
-            if(target) target.style.display = "block"; 
-            if(evt) evt.currentTarget.className += " active";
-        }
-
-        function parseResultsText(rawResults) {
-            if(!rawResults || rawResults.trim()==='') return { deResult:null, de3CResult:null, loHitCounts:{} };
-            const cleaned = rawResults.replace(/[^\d\s]/g, ' ');
-            const tokens = cleaned.trim().split(/\s+/).filter(t=>t.length > 0);
-            if(tokens.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
-            let allNumbers = [];
-            tokens.forEach(t => {
-                if (t.length === 1) return; 
-                if (t.length === 10 || t.length === 30 || t.length === 15) {
-                    for(let i=0; i<t.length; i+=5) allNumbers.push(t.slice(i, i+5));
-                } else if (t.length === 16 || t.length === 24 || t.length === 12) {
-                    for(let i=0; i<t.length; i+=4) allNumbers.push(t.slice(i, i+4));
-                } else if (t.length === 9 || t.length === 18) {
-                    for(let i=0; i<t.length; i+=3) allNumbers.push(t.slice(i, i+3));
-                } else if (t.length === 8) {
-                    for(let i=0; i<t.length; i+=2) allNumbers.push(t.slice(i, i+2));
-                } else { allNumbers.push(t); }
-            });
-            if(allNumbers.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
-            const gdb = allNumbers.find(t => t.length >= 4) || allNumbers[0] || ''; 
-            const deResult = gdb.slice(-2); 
-            const de3CResult = gdb.slice(-3);
-            const loHitCounts = {}; 
-            allNumbers.forEach(num => { 
-                const lo = num.slice(-2); 
-                if(lo.length===2) loHitCounts[lo] = (loHitCounts[lo]||0)+1; 
-            });
-            return { deResult, de3CResult, loHitCounts };
-        }
-
-        function normalizeType(rawType) {
-            const t = rawType.toLowerCase().trim();
-            if (['lo', 'lô', 'l'].includes(t)) return 'lo'; if (['de', 'đề', 'đe', 'dê', 'đê', 'đ', 'd'].includes(t)) return 'de';
-            if (['ba càng đề', 'đề ba càng', 'ba càng', 'ba cang', '3 càng', '3 cang', '3cang', 'bacang', 'bc', '3c'].includes(t)) return '3c';
-            if (['lô xiên 2', 'xien 2', 'xiên 2', 'xien2', 'xiên2', 'xi2', 'x2'].includes(t)) return 'x2';
-            if (['lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3'].includes(t)) return 'x3'; return null;
-        }
-
-        function parseBets(rawInput) {
-            const data = { lo: {}, de: {}, '3c': {}, x2: {}, x3: {} };
-            const keys = ['ba càng đề', 'đề ba càng', 'ba càng', 'ba cang', '3 càng', '3 cang', '3cang', 'bacang', 'bc', '3c', 'lô xiên 2', 'xien 2', 'xiên 2', 'xien2', 'xiên2', 'xi2', 'x2', 'lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3', 'lo', 'lô', 'l', 'de', 'đề', 'đe', 'dê', 'đê', 'đ', 'd'];
-            let pInput = rawInput.replace(/\n/g, '||').replace(/([a-zđ₫nk])\./gi, '$1||').replace(/\.\s+/g, '||').replace(/[.,]/g, ' ').replace(/((?:x|X|×|\*)\s*\d+\s*[a-zA-Zđ₫nk]*)\s+/gi, '$1||').replace(new RegExp(`(\\b(?:${keys.join('|')})\\s+)`, 'gi'), '||$1');
-            const withTypeRegex = new RegExp(`^(${keys.join('|')})\\s+(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
-            const noTypeRegex = new RegExp(`^(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
-            let lastType = null;
-            pInput.split('||').filter(l => l.trim() !== '').forEach((line, idx) => {
-                let match = line.trim().match(withTypeRegex), type, numStr, qty;
-                if (match) { type = normalizeType(match[1]); numStr = match[2]; qty = parseInt(match[3]); lastType = type; } 
-                else { match = line.trim().match(noTypeRegex); if (match && lastType) { type = lastType; numStr = match[1]; qty = parseInt(match[2]); } else return; }
-                let nums = [];
-                if (type === 'de' || type === 'lo') {
-                    let strL = numStr.toLowerCase();
-                    strL = strL.replace(/kép lệch|kep lech/g, ' 05 50 16 61 27 72 38 83 49 94 ');
-                    strL = strL.replace(/kép bằng|kep bang|kép|kep/g, ' 00 11 22 33 44 55 66 77 88 99 ');
-                    strL = strL.replace(/(đầu|dau)\s*(\d)/g, (m, p1, p2) => {
-                        let r = []; for(let i=0;i<=9;i++) r.push(p2+i); return ' ' + r.join(' ') + ' ';
-                    });
-                    strL = strL.replace(/(đít|dit|đuôi|duoi)\s*(\d)/g, (m, p1, p2) => {
-                        let r = []; for(let i=0;i<=9;i++) r.push(i+p2); return ' ' + r.join(' ') + ' ';
-                    });
-                    strL = strL.replace(/(tổng|tong)\s*(\d)/g, (m, p1, p2) => {
-                        let v = parseInt(p2); let r = [];
-                        for(let i=0;i<=9;i++) for(let j=0;j<=9;j++) if((i+j)%10===v) r.push(i.toString()+j.toString());
-                        return ' ' + r.join(' ') + ' ';
-                    });
-                    numStr = strL;
-                }
-                if (type === 'x2' || type === 'x3') {
-                    const allNums = numStr.match(/\d{2}/g) || []; const gs = (type === 'x2') ? 2 : 3;
-                    if(allNums.length % gs !== 0 || allNums.length === 0) return;
-                    for (let i = 0; i < allNums.length; i += gs) nums.push(allNums.slice(i, i + gs).join('-'));
-                } else if (type === '3c') { nums = numStr.split(/[^\d]+/).filter(n => n.match(/^\d{3}$/)); } 
-                else { numStr.split(/[^\d]+/).forEach(n => { if (n.length === 2) nums.push(n); else if (n.length === 3 && n[0] === n[2]) { nums.push(n.slice(0, 2)); nums.push(n.slice(1, 3)); } }); }
-                if (nums.length === 0) return;
-                if (!data[type][qty]) data[type][qty] = []; data[type][qty].push(...nums);
-            });
-            return data;
-        }
-
-        function runCoreMath(rawInput, rawResults, p) {
-            const resData = parseResultsText(rawResults); 
-            const pData = parseBets(rawInput);
-            let sLoGhi=0, sDeGhi=0, s3CGhi=0, sX2Ghi=0, sX3Ghi=0;
-            let sLoTrung=0, sDeTrung=0, s3CTrung=0, sX2Trung=0, sX3Trung=0;
-            let loHitsDetail = {}, deHitsDetail = {}, c3HitsDetail = {}, x2HitsDetail = {}, x3HitsDetail = {};
-            for(let q in pData.lo) { 
-                let qty=parseFloat(q); sLoGhi += pData.lo[q].length * qty; 
-                pData.lo[q].forEach(n=>{ 
-                    let hits = resData.loHitCounts[n]||0;
-                    if(hits>0){ sLoTrung += hits*qty; loHitsDetail[n] = (loHitsDetail[n]||0) + hits; } 
-                }); 
-            }
-            for(let q in pData.de) { let qty=parseFloat(q); sDeGhi += pData.de[q].length * qty; pData.de[q].forEach(n=>{ if(n===resData.deResult) { sDeTrung+=qty; deHitsDetail[n]=1; } }); }
-            for(let q in pData['3c']) { let qty=parseFloat(q); s3CGhi += pData['3c'][q].length * qty; pData['3c'][q].forEach(n=>{ if(n===resData.de3CResult) { s3CTrung+=qty; c3HitsDetail[n]=1; } }); }
-            for(let q in pData.x2) { let qty=parseFloat(q); sX2Ghi += pData.x2[q].length * qty; pData.x2[q].forEach(pair=>{ let [n1,n2]=pair.split('-'); if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0) { sX2Trung+=qty; x2HitsDetail[pair]=1; } }); }
-            for(let q in pData.x3) { let qty=parseFloat(q); sX3Ghi += pData.x3[q].length * qty; pData.x3[q].forEach(tri=>{ let [n1,n2,n3]=tri.split('-'); if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0 && (resData.loHitCounts[n3]||0)>0) { sX3Trung+=qty; x3HitsDetail[tri]=1; } }); }
-
-            let cLo = Math.ceil((sLoGhi*p.lo)/1000)*1000, wLo = Math.floor((sLoTrung*p.payLo)/1000)*1000;
-            let cDe = Math.ceil((sDeGhi*p.de)/1000)*1000, wDe = Math.floor((sDeTrung*p.payDe)/1000)*1000;
-            let c3C = Math.ceil((s3CGhi*p['3c'])/1000)*1000, w3C = Math.floor((s3CTrung*p.pay3C)/1000)*1000;
-            let cX2 = Math.ceil((sX2Ghi*p.x2)/1000)*1000, wX2 = Math.floor((sX2Trung*p.payX2)/1000)*1000;
-            let cX3 = Math.ceil((sX3Ghi*p.x3)/1000)*1000, wX3 = Math.floor((sX3Trung*p.payX3)/1000)*1000;
-
-            let totalCost = cLo+cDe+c3C+cX2+cX3; let totalWin = wLo+wDe+w3C+wX2+wX3; let profit = totalWin - totalCost;
-            return { cost: totalCost, win: totalWin, netCost: profit, sLoGhi, sDeGhi, s3CGhi, sX2Ghi, sX3Ghi, sLoTrung, sDeTrung, s3CTrung, sX2Trung, sX3Trung, cLo, cDe, c3C, cX2, cX3, wLo, wDe, w3C, wX2, wX3, loHitsDetail, deHitsDetail, c3HitsDetail, x2HitsDetail, x3HitsDetail };
-        }
-
-        function calculateAndRender() {
-            const masterInputEl = document.getElementById('master-input');
-            const resultsInputEl = document.getElementById('results-input');
-            if(!masterInputEl || !resultsInputEl) return;
-            const getValSafely = (id) => { const e = document.getElementById(id); return e ? e.value : 0; };
-            const pObj = { 
-                lo: parseFloat(getValSafely('pricePerDiem'))||0, de: parseFloat(getValSafely('pricePerDeUnit'))||0, '3c': parseFloat(getValSafely('pricePer3CUnit'))||0, x2: parseFloat(getValSafely('pricePerX2Unit'))||0, x3: parseFloat(getValSafely('pricePerX3Unit'))||0, 
-                payLo: parseFloat(getValSafely('lottoPayout'))||0, payDe: parseFloat(getValSafely('dePayout'))||0, pay3C: 1000 * (parseFloat(getValSafely('payoutRatio3C'))||0), payX2: 1000 * (parseFloat(getValSafely('payoutRatioX2'))||0), payX3: 1000 * (parseFloat(getValSafely('payoutRatioX3'))||0) 
-            };
-            let p = runCoreMath(masterInputEl.value, resultsInputEl.value, pObj);
-            let loDetailStr = Object.entries(p.loHitsDetail).map(([n, h]) => h > 1 ? `${n}(x${h})` : n).join(' ');
-            let deDetailStr = Object.keys(p.deHitsDetail).join(' ');
-            let c3DetailStr = Object.keys(p.c3HitsDetail).join(' ');
-            let x2DetailStr = Object.keys(p.x2HitsDetail).join(' ');
-            let x3DetailStr = Object.keys(p.x3HitsDetail).join(' ');
-
-            let html = `
-            <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                <h3 class="font-black text-indigo-800 text-lg border-b pb-2 mb-3">TÓM TẮT LỆNH</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="font-bold text-red-600 mb-2 border-b pb-1">🔴 NHẬN ĐÁNH</h4>
-                        <div class="space-y-1 text-[15px]">
-                            ${p.sLoGhi>0 ? `<div class="flex justify-between"><span>Lô: <b>${p.sLoGhi}đ</b></span> <span>${formatVND(p.cLo)}</span></div>` : ''}
-                            ${p.sDeGhi>0 ? `<div class="flex justify-between"><span>Đề: <b>${p.sDeGhi}n</b></span> <span>${formatVND(p.cDe)}</span></div>` : ''}
-                            ${p.s3CGhi>0 ? `<div class="flex justify-between"><span>3 Càng: <b>${p.s3CGhi}n</b></span> <span>${formatVND(p.c3C)}</span></div>` : ''}
-                            ${p.sX2Ghi>0 ? `<div class="flex justify-between"><span>Xiên 2: <b>${p.sX2Ghi}n</b></span> <span>${formatVND(p.cX2)}</span></div>` : ''}
-                            ${p.sX3Ghi>0 ? `<div class="flex justify-between"><span>Xiên 3: <b>${p.sX3Ghi}n</b></span> <span>${formatVND(p.cX3)}</span></div>` : ''}
-                            ${p.cost===0 ? '<span class="text-gray-400 italic">Chưa có lệnh...</span>' : ''}
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-green-600 mb-2 border-b pb-1">🟢 TRÚNG THƯỞNG</h4>
-                        <div class="space-y-1 text-[15px]">
-                            ${p.sLoTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Lô: <b>${p.sLoTrung}đ</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${loDetailStr}]</span></span> <span>${formatVND(p.wLo)}</span></div>` : ''}
-                            ${p.sDeTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${p.sDeTrung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${deDetailStr}]</span></span> <span>${formatVND(p.wDe)}</span></div>` : ''}
-                            ${p.s3CTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>3 Càng: <b>${p.s3CTrung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${c3DetailStr}]</span></span> <span>${formatVND(p.w3C)}</span></div>` : ''}
-                            ${p.sX2Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 2: <b>${p.sX2Trung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${x2DetailStr}]</span></span> <span>${formatVND(p.wX2)}</span></div>` : ''}
-                            ${p.sX3Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 3: <b>${p.sX3Trung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${x3DetailStr}]</span></span> <span>${formatVND(p.wX3)}</span></div>` : ''}
-                            ${p.win===0 && p.cost>0 ? '<span class="text-gray-400 italic">Trượt hết...</span>' : ''}
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-            const resContainer = document.getElementById('results-container');
-            if(resContainer) resContainer.innerHTML = html;
-            const costOut = document.getElementById('totalCostOutput');
-            if(costOut) costOut.textContent = formatVND(p.cost); 
-            const winOut = document.getElementById('totalWinningsOutput');
-            if(winOut) winOut.textContent = formatVND(p.win);
-            const pEl = document.getElementById('totalProfitOutput'); 
-            if(pEl) {
-                pEl.textContent = formatVND(Math.abs(p.netCost)); 
-                pEl.className = `text-2xl md:text-3xl font-bold font-mono ${p.netCost > 0 ? 'text-green-600' : (p.netCost < 0 ? 'text-red-600' : 'text-gray-700')}`;
-            }
-            currentCalcData = p; 
-        }
-
-        document.getElementById('calculate-button')?.addEventListener('click', calculateAndRender);
-
-        document.getElementById('saveToDebtButton')?.addEventListener('click', () => {
-            if(!activeCustomer) return;
-            if(!currentCalcData || (currentCalcData.cost === 0 && currentCalcData.win === 0)) return;
-            const rawDate = document.getElementById('sessionDate')?.value;
-            const amountToSave = currentCalcData.netCost / 1000;
-            if(!creditData[activeCustomer].debts[rawDate]) creditData[activeCustomer].debts[rawDate] = 0;
-            creditData[activeCustomer].debts[rawDate] += amountToSave;
+        function updateRecord(name, val) {
+            creditData[name].debts[document.getElementById('sessionDate').value] = parseFloat(val) || 0;
             saveData(); renderTongHop(); renderChiTiet();
-            alert(`✅ Chốt thành công cho "${activeCustomer}"!`);
-        });
-
-        function exportMessageForCustomer(name) {
-            const dInput = document.getElementById('sessionDate');
-            if(!dInput) return;
-            let dateKey = dInput.value;
-            let d = dateKey.split('-'); let dateStr = `${d[2]}-${d[1]}-${d[0]}`; 
-            let rawInput = (creditData[name] && creditData[name].inputs && creditData[name].inputs[dateKey]) ? creditData[name].inputs[dateKey] : '';
-            let rawResults = (creditData['__results__'] && creditData['__results__'][dateKey]) ? creditData['__results__'][dateKey] : '';
-            let baseCfg = creditData['__default_config__'] || defaultConfig;
-            let cfg = (creditData[name] && creditData[name].config) ? creditData[name].config : baseCfg;
-            let pObj = { 
-                lo: cfg.lo||0, de: cfg.de||0, '3c': cfg.c3||0, x2: cfg.x2||0, x3: cfg.x3||0, 
-                payLo: cfg.payLo||0, payDe: cfg.payDe||0, pay3C: 1000*(cfg.pay3C||0), payX2: 1000*(cfg.payX2||0), payX3: 1000*(cfg.payX3||0) 
-            };
-            let p = runCoreMath(rawInput, rawResults, pObj);
-            let fn = (val) => (val === 0) ? '0n' : (val/1000).toLocaleString('vi-VN') + 'n';
-            let fs = (val) => (val === 0) ? '0' : (val < 0 ? '-' : '') + (Math.abs(val)/1000).toLocaleString('vi-VN');
-
-            let loDet = Object.entries(p.loHitsDetail).map(([n,h]) => h>1 ? `${n}(x${h})` : n).join(' ');
-            let deDet = Object.keys(p.deHitsDetail).join(' ');
-            let c3Det = Object.keys(p.c3HitsDetail).join(' ');
-            let x2Det = Object.keys(p.x2HitsDetail).join(' ');
-            let x3Det = Object.keys(p.x3HitsDetail).join(' ');
-
-            let msg = `Ngay: ${dateStr}\n`;
-            if (p.sLoGhi > 0) msg += `Lo: ${p.sLoGhi}d = ${fn(p.cLo)}\n`;
-            if (p.sDeGhi > 0) msg += `De: ${p.sDeGhi}n = ${fn(p.cDe)}\n`;
-            if (p.s3CGhi > 0) msg += `3c: ${p.s3CGhi}n = ${fn(p.c3C)}\n`;
-            if (p.sX2Ghi > 0) msg += `X2: ${p.sX2Ghi}n = ${fn(p.cX2)}\n`;
-            if (p.sX3Ghi > 0) msg += `X3: ${p.sX3Ghi}n = ${fn(p.cX3)}\n`;
-            if (p.sLoTrung > 0) msg += `Th lo: ${p.sLoTrung}d [${loDet}] = ${fn(p.wLo)}\n`;
-            if (p.sDeTrung > 0) msg += `Th de: ${p.sDeTrung}n [${deDet}] = ${fn(p.wDe)}\n`;
-            if (p.s3CTrung > 0) msg += `Th 3c: ${p.s3CTrung}n [${c3Det}] = ${fn(p.w3C)}\n`;
-            if (p.sX2Trung > 0) msg += `Th x2: ${p.sX2Trung}n [${x2Det}] = ${fn(p.wX2)}\n`;
-            if (p.sX3Trung > 0) msg += `Th x3: ${p.sX3Trung}n [${x3Det}] = ${fn(p.wX3)}\n`;
-
-            let profitStr = p.netCost > 0 ? `(duong) ${fn(p.netCost)}` : (p.netCost < 0 ? `(am) ${fn(Math.abs(p.netCost))}` : `0n`);
-            msg += `Hom nay : ${profitStr}\n`;
-            let oldDebtVND = calculateOldDebt(name) * 1000;
-            msg += `No cu: ${fs(oldDebtVND)}n\n`;
-            let finalTotal = oldDebtVND + p.netCost;
-            let bracketOldDebt = oldDebtVND < 0 ? `(${fs(oldDebtVND)})` : `${fs(oldDebtVND)}`;
-            msg += `Tong: ${fs(p.netCost)} + ${bracketOldDebt} = ${fs(finalTotal)}n.`;
-
-            // COPY VÀO BỘ NHỚ VÀ ĐỔI CHỮ NÚT BẤM
-            const dummy = document.getElementById('hiddenCopyTextarea');
-            dummy.value = msg; dummy.select(); document.execCommand('copy');
-
-            const btn = document.getElementById(`btnExport-${name}`);
-            if(btn) {
-                const originalText = btn.innerHTML;
-                btn.innerHTML = "✅ Đã Copy!";
-                btn.classList.replace('bg-emerald-600', 'bg-blue-600');
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.classList.replace('bg-blue-600', 'bg-emerald-600');
-                }, 2000);
-            }
         }
 
-        window.onload = () => { loadDataFromSupabase(); };
+        function saveToDebt() {
+            if(!activeCustomer || !currentCalcData) return;
+            const dateKey = document.getElementById('sessionDate').value;
+            creditData[activeCustomer].debts[dateKey] = currentCalcData.netCost / 1000;
+            saveData(); renderTongHop(); renderChiTiet();
+            alert("✅ Đã chốt số vào công nợ!");
+        }
+
+        function addNewUser() {
+            let name = document.getElementById('newUserName').value.trim();
+            if(!name || creditData[name]) return;
+            creditData[name] = { debts: {}, config: { ...creditData['__default_config__'] }, inputs: {} };
+            saveData(); renderTongHop(); switchCustomerContext(name);
+        }
+
+        async function autoFetchKQXS() {
+            const dateVal = document.getElementById('sessionDate').value;
+            const btn = document.getElementById('btnAutoFetch'); btn.innerText = "⏳ Đang lấy...";
+            const url = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://xoso.me/xsmb-' + dateVal.split('-').reverse().join('-') + '.html')}`;
+            try {
+                const res = await fetch(url); const text = await res.text();
+                const doc = new DOMParser().parseFromString(text, "text/html");
+                let numbers = []; doc.querySelectorAll('span[data-val]').forEach(s => numbers.push(s.getAttribute('data-val')));
+                if(numbers.length >= 27) {
+                    let final = numbers.slice(0, 27).join('\n');
+                    document.getElementById('results-input').value = final;
+                    creditData['__results__'][dateVal] = final;
+                    debouncedCloudSave(); calculateAndRender();
+                } else { alert("Chưa có kết quả!"); }
+            } catch(e) { alert("Lỗi mạng!"); }
+            btn.innerText = "⚡ TỰ ĐỘNG LẤY KQXS";
+        }
+
+        window.onload = loadDataFromSupabase;
     </script>
 </body>
 </html>
