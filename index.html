@@ -119,11 +119,11 @@
                 <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
                     <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
-                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Tự động dịch chuẩn 100%: Kép Bằng, Kép Lệch, Đầu, Đít, Tổng.</div>
+                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Tự động bung: Đầu, Đít, Tổng, Kép, Kép Lệch.</div>
                 </div>
                 <div class="flex flex-col h-full">
                     <div class="flex justify-between items-center mb-1">
-                        <label class="font-bold text-gray-700">2. Kết quả XSMB (27 giải):</label>
+                        <label class="font-bold text-gray-700">2. Kết quả XSMB (Đã chống nhiễu số rác):</label>
                         <div class="flex gap-2">
                             <button id="btnAutoFetch" onclick="autoFetchKQXS()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded shadow transition-colors flex items-center gap-1">
                                 ⚡ TỰ ĐỘNG LẤY KQXS
@@ -133,7 +133,7 @@
                             </button>
                         </div>
                     </div>
-                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Bấm nút '⚡ TỰ ĐỘNG LẤY KQXS' ở trên. Nếu lỗi mạng, hãy bấm nút 'Copy Thủ Công' để lấy số tự dán."></textarea>
+                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Bấm nút '⚡ TỰ ĐỘNG LẤY KQXS' ở trên. Hệ thống sẽ tự động tìm và điền đúng 27 giải vào đây cho anh!"></textarea>
                 </div>
             </div>
 
@@ -284,7 +284,7 @@
         }
 
         // ==========================================
-        // CƠ CHẾ TỰ ĐỘNG KÉO KẾT QUẢ XSMB (Đã thêm Proxy dự phòng)
+        // CƠ CHẾ BẮT TỈA CHÍNH XÁC KẾT QUẢ XSMB
         // ==========================================
         async function autoFetchKQXS() {
             const dateVal = document.getElementById('sessionDate')?.value;
@@ -295,18 +295,21 @@
             
             btn.innerText = "⏳ Đang lấy...";
             btn.disabled = true;
-            resInput.value = "Hệ thống đang tự động tải kết quả xổ số miền Bắc. Xin chờ vài giây...";
+            resInput.value = "Đang tải và lọc kết quả... Xin chờ vài giây...";
             
             let parts = dateVal.split('-'); // yyyy, mm, dd
             let d = parseInt(parts[2]), m = parseInt(parts[1]), y = parts[0];
+            let dStr = parts[2] + '-' + parts[1] + '-' + parts[0];
             
-            let url1 = `https://xoso.com.vn/xsmb-${parts[2]}-${parts[1]}-${parts[0]}.html`;
-            let url2 = `https://xskt.com.vn/xsmb/ngay-${d}-${m}-${y}`;
+            let urls = [
+                `https://xskt.com.vn/xsmb/ngay-${d}-${m}-${y}`,
+                `https://xoso.com.vn/xsmb-${dStr}.html`
+            ];
             
             const proxies = [
-                `https://api.allorigins.win/get?url=${encodeURIComponent(url1)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url1)}`,
-                `https://api.allorigins.win/get?url=${encodeURIComponent(url2)}`
+                `https://api.allorigins.win/get?url=${encodeURIComponent(urls[0])}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urls[0])}`,
+                `https://api.allorigins.win/get?url=${encodeURIComponent(urls[1])}`
             ];
             
             let htmlContent = null;
@@ -321,7 +324,8 @@
                         } else {
                             htmlContent = await response.text();
                         }
-                        if (htmlContent && (htmlContent.includes('KQCS') || htmlContent.includes('table-result'))) break;
+                        // Chỉ cần web trả về nội dung là phá vòng lặp
+                        if (htmlContent && htmlContent.includes('<html')) break;
                     }
                 } catch (e) {
                     console.warn(`Proxy ${i+1} failed, trying next...`);
@@ -331,40 +335,76 @@
             if(htmlContent) {
                 let parser = new DOMParser();
                 let doc = parser.parseFromString(htmlContent, "text/html");
-                
-                let table = doc.querySelector('table.table-result') || doc.getElementById('MB0') || doc.getElementById('KQCS') || doc.querySelector('table'); 
-                
-                if(table) {
-                    let numbers = [];
-                    
-                    let tds = table.querySelectorAll('td, span');
-                    tds.forEach(node => {
-                        if(node.id && node.id.includes('loto')) return;
-                        if(node.className && node.className.includes('loto')) return;
-                        
-                        let txt = node.innerText.trim();
-                        let cleanNum = txt.replace(/\D/g, '');
-                        if(cleanNum.length >= 2 && cleanNum.length <= 5) {
-                            numbers.push(cleanNum);
-                        }
-                    });
-                    
-                    if(numbers.length >= 27) {
-                        numbers = numbers.slice(0, 27);
-                        resInput.value = numbers.join('\n');
-                        calculateAndRender();
-                        alert("✅ Đã tự động lấy thành công đúng 27 giải KQXS!");
-                    } else {
-                        resInput.value = "";
-                        alert("⚠️ Ngày này chưa có kết quả hoặc lỗi cấu trúc mạng. Vui lòng bấm 'Copy Thủ Công'!");
+                let numbers = [];
+
+                // CHIẾN THUẬT 1: Lấy chuẩn xác thẻ <em> từ xskt.com.vn (Chống lọt số thống kê)
+                let xsktTable = doc.querySelector('table#KQCS') || doc.querySelector('table#MB0') || doc.querySelector('table.kqxs');
+                if (xsktTable) {
+                    let ems = xsktTable.querySelectorAll('em');
+                    if (ems.length >= 27) {
+                        ems.forEach(node => {
+                            let num = node.innerText.replace(/\D/g, '');
+                            if (num.length >= 2 && num.length <= 5) numbers.push(num);
+                        });
                     }
+                }
+
+                // CHIẾN THUẬT 2: Lấy từ xoso.com.vn bằng class v-g* đặc trưng
+                if (numbers.length < 27) {
+                    numbers = [];
+                    let xosoNodes = doc.querySelectorAll('table.table-result span[class^="v-g"], table.table-result span[data-val]');
+                    if (xosoNodes.length >= 27) {
+                        xosoNodes.forEach(node => {
+                            let num = node.innerText.replace(/\D/g, '');
+                            if (num.length >= 2 && num.length <= 5) numbers.push(num);
+                        });
+                    }
+                }
+
+                // CHIẾN THUẬT 3: Fallback quét bảng, loại trừ cột Đầu Đuôi
+                if (numbers.length < 27) {
+                    numbers = [];
+                    let table = doc.querySelector('table.table-result') || xsktTable || doc.querySelector('table');
+                    if (table) {
+                        let trs = table.querySelectorAll('tr');
+                        trs.forEach(tr => {
+                            // Lọc bỏ rác
+                            if (tr.innerText.includes('Mã') || tr.innerText.includes('Ký hiệu')) return;
+                            let tds = Array.from(tr.querySelectorAll('td'));
+                            if (tds.length > 1) {
+                                // Lấy từ ô thứ 2 trở đi để tránh chữ "Giải ĐB", "Giải 1"...
+                                for (let j = 1; j < tds.length; j++) {
+                                    let td = tds[j];
+                                    // Bỏ qua các ô chứa id loto (thống kê)
+                                    if (td.id.includes('loto') || td.className.includes('loto')) continue;
+                                    let txt = td.innerText.trim();
+                                    // Bỏ qua nếu có chữ cái
+                                    if (/[a-zA-Z]/.test(txt) && !txt.includes('-')) continue;
+                                    let segments = txt.split(/[\s-]/);
+                                    segments.forEach(seg => {
+                                        let cleanNum = seg.replace(/\D/g, '');
+                                        if (cleanNum.length >= 2 && cleanNum.length <= 5) numbers.push(cleanNum);
+                                    });
+                                }
+                            }
+                        });
+                    }
+                }
+                
+                // Mấu chốt: CẮT ĐÚNG 27 GIẢI, vứt hết tất cả các rác phía sau
+                if(numbers.length >= 27) {
+                    numbers = numbers.slice(0, 27);
+                    resInput.value = numbers.join('\n');
+                    calculateAndRender();
+                    alert("✅ Đã tự động lấy thành công chuẩn 27 giải KQXS!");
                 } else {
                     resInput.value = "";
-                    alert("⚠️ Không tìm thấy bảng KQXS. Vui lòng dùng nút 'Copy Thủ Công'!");
+                    alert("⚠️ Ngày này chưa có kết quả (chưa quay) hoặc web lỗi. Vui lòng bấm 'Copy Thủ Công'!");
+                    openXSMB();
                 }
             } else {
                 resInput.value = "";
-                alert("⚠️ Đường truyền mạng Proxy đang bị quá tải. Anh vui lòng bấm nút 'Copy Thủ Công' để lấy số nhé!");
+                alert("⚠️ Đường truyền Proxy đang bị quá tải. Vui lòng bấm nút 'Copy Thủ Công' để mở web lấy số nhé!");
             }
             
             btn.innerText = "⚡ TỰ ĐỘNG LẤY KQXS";
@@ -415,9 +455,6 @@
             }
         }
 
-        // ==========================================
-        // QUẢN LÝ NGỮ CẢNH (CHUYỂN ĐỔI KHÁCH HÀNG)
-        // ==========================================
         function populateCustomerSelector() {
             const sel = document.getElementById('customerSelector');
             if (!sel) return;
@@ -587,6 +624,7 @@
                 let oldDebt = calculateOldDebt(name);
                 let oldColor = oldDebt > 0 ? 'text-green-600 font-bold' : (oldDebt < 0 ? 'text-red-600 font-bold' : 'font-bold');
                 
+                // Ô SỬA NỢ CŨ & GẠCH NỢ
                 tr.innerHTML += `<td class="col-old-debt bg-gray-50 border-r-2 border-l-2">
                     <div class="flex items-center justify-center gap-1">
                         <input type="number" step="any" class="day-input ${oldColor}" style="width:80px; padding:4px;" value="${oldDebt}" onchange="updateOldDebt('${name}', this.value)" title="Nhập số nợ mới để sửa nợ cũ">
@@ -630,15 +668,18 @@
         const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND', minimumFractionDigits:0 }).format(amount||0);
         
         document.getElementById('results-input')?.addEventListener('input', function() { 
+            if (this.value.includes('.') || this.value.includes(',')) this.value = this.value.replace(/[.,]/g, ' '); 
             setTimeout(calculateAndRender, 300); 
         });
 
         function parseResultsText(rawResults) {
             if(!rawResults || rawResults.trim()==='') return { deResult:null, de3CResult:null, loHitCounts:{} };
+            // Lọc dính liền bằng khoảng trắng
             let cleaned = rawResults.replace(/[^\d\s]/g, ' ');
             let tokens = cleaned.trim().split(/\s+/).filter(t=>t.length > 0);
             if(tokens.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
             
+            // Băm nhỏ chuỗi dài dựa trên luật giải thưởng nếu copy bị dính
             let allNumbers = [];
             tokens.forEach(t => {
                 if (t.length === 1) return; 
@@ -677,7 +718,6 @@
             if (['lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3'].includes(t)) return 'x3'; return null;
         }
 
-        // BỘ PHÂN TÍCH TIN NHẮN ĐÃ ĐƯỢC NÂNG CẤP ĐỂ HIỂU ĐÚNG CHỮ "KÉP BẰNG"
         function parseBets(rawInput) {
             const data = { lo: {}, de: {}, '3c': {}, x2: {}, x3: {} };
             const keys = ['ba càng đề', 'đề ba càng', 'ba càng', 'ba cang', '3 càng', '3 cang', '3cang', 'bacang', 'bc', '3c', 'lô xiên 2', 'xien 2', 'xiên 2', 'xien2', 'xiên2', 'xi2', 'x2', 'lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3', 'lo', 'lô', 'l', 'de', 'đề', 'đe', 'dê', 'đê', 'đ', 'd'];
@@ -700,26 +740,6 @@
                 }
 
                 let nums = [];
-                
-                // --- XỬ LÝ CHUỖI SỐ BẰNG CÁCH DỊCH TỪ KHÓA ---
-                if (type === 'de' || type === 'lo') {
-                    let strL = numStr.toLowerCase();
-                    strL = strL.replace(/kép lệch|kep lech/g, ' 05 50 16 61 27 72 38 83 49 94 ');
-                    strL = strL.replace(/kép bằng|kep bang|kép|kep/g, ' 00 11 22 33 44 55 66 77 88 99 ');
-                    strL = strL.replace(/(đầu|dau)\s*(\d)/g, (m, p1, p2) => {
-                        let r = []; for(let i=0;i<=9;i++) r.push(p2+i); return ' ' + r.join(' ') + ' ';
-                    });
-                    strL = strL.replace(/(đít|dit|đuôi|duoi)\s*(\d)/g, (m, p1, p2) => {
-                        let r = []; for(let i=0;i<=9;i++) r.push(i+p2); return ' ' + r.join(' ') + ' ';
-                    });
-                    strL = strL.replace(/(tổng|tong)\s*(\d)/g, (m, p1, p2) => {
-                        let v = parseInt(p2); let r = [];
-                        for(let i=0;i<=9;i++) for(let j=0;j<=9;j++) if((i+j)%10===v) r.push(i.toString()+j.toString());
-                        return ' ' + r.join(' ') + ' ';
-                    });
-                    numStr = strL;
-                }
-                
                 if (type === 'x2' || type === 'x3') {
                     const allNums = numStr.match(/\d{2}/g) || []; const gs = (type === 'x2') ? 2 : 3;
                     if(allNums.length % gs !== 0 || allNums.length === 0) return;
@@ -727,10 +747,56 @@
                 } else if (type === '3c') {
                     nums = numStr.split(/[^\d]+/).filter(n => n.match(/^\d{3}$/));
                 } else {
-                    numStr.split(/[^\d]+/).forEach(n => { 
-                        if (n.length === 2) nums.push(n); 
-                        else if (n.length === 3 && n[0] === n[2]) { nums.push(n.slice(0, 2)); nums.push(n.slice(1, 3)); } 
-                    }); 
+                    let segments = numStr.split(/[\s]+/);
+                    let currentMode = null;
+                    for (let i = 0; i < segments.length; i++) {
+                        let seg = segments[i].toLowerCase();
+                        if(!seg) continue;
+                        
+                        if (/^(đầu|dau)$/.test(seg)) { currentMode = 'dau'; continue; }
+                        if (/^(đít|dit|đuôi|duoi)$/.test(seg)) { currentMode = 'dit'; continue; }
+                        if (/^(tổng|tong)$/.test(seg)) { currentMode = 'tong'; continue; }
+                        if (/^(kép|kep)$/.test(seg)) {
+                            if (segments[i+1] && /^(lệch|lech)$/.test(segments[i+1].toLowerCase())) {
+                                ['05','50','16','61','27','72','38','83','49','94'].forEach(n => nums.push(n));
+                                i++; 
+                            } else {
+                                ['00','11','22','33','44','55','66','77','88','99'].forEach(n => nums.push(n));
+                            }
+                            continue;
+                        }
+
+                        let matchPrefix = seg.match(/^(đầu|dau|đít|dit|đuôi|duoi|tổng|tong)(\d+)$/);
+                        if (matchPrefix) {
+                            let p = matchPrefix[1], vStr = matchPrefix[2];
+                            let m = /đầu|dau/.test(p) ? 'dau' : (/đít|dit|đuôi|duoi/.test(p) ? 'dit' : 'tong');
+                            vStr.split('').forEach(d => {
+                                let v = parseInt(d);
+                                for(let j=0; j<=9; j++) {
+                                    if(m==='dau') nums.push(v.toString() + j.toString());
+                                    else if(m==='dit') nums.push(j.toString() + v.toString());
+                                    else { for(let k=0; k<=9; k++) if((j+k)%10 === v) nums.push(j.toString() + k.toString()); }
+                                }
+                            });
+                            continue;
+                        }
+
+                        if (/^\d+$/.test(seg)) {
+                            if (currentMode) {
+                                seg.split('').forEach(d => {
+                                    let v = parseInt(d);
+                                    for(let j=0; j<=9; j++) {
+                                        if(currentMode==='dau') nums.push(v.toString() + j.toString());
+                                        else if(currentMode==='dit') nums.push(j.toString() + v.toString());
+                                        else { for(let k=0; k<=9; k++) if((j+k)%10 === v) nums.push(j.toString() + k.toString()); }
+                                    }
+                                });
+                            } else {
+                                if (seg.length === 2) nums.push(seg);
+                                else if (seg.length === 3 && seg[0] === seg[2]) { nums.push(seg.slice(0,2)); nums.push(seg.slice(1,3)); }
+                            }
+                        }
+                    }
                 }
                 
                 if (nums.length === 0) return;
@@ -900,6 +966,7 @@
             }
         });
 
+        // ĐỊNH DẠNG XUẤT TIN NHẮN CHUẨN FORM
         document.getElementById('exportMessage')?.addEventListener('click', () => {
             if(!currentCalcData) return; 
             const dInput = document.getElementById('sessionDate');
