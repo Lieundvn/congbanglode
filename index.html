@@ -18,7 +18,7 @@
         .tabcontent { display: none; padding: 20px; border: 1px solid #ccc; border-top: none; background-color: white; border-radius: 0 0 5px 5px; min-height: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
         
         .table-responsive { overflow-x: auto; margin-top: 15px; }
-        table.debt-table { border-collapse: collapse; width: 100%; min-width: 650px; }
+        table.debt-table { border-collapse: collapse; width: 100%; min-width: 600px; }
         table.debt-table th, table.debt-table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         table.debt-table th { background-color: #f8f9fa; position: sticky; top: 0; }
         
@@ -42,9 +42,9 @@
 
     <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">Hệ Thống Quản Lý Tín Dụng & Lô Đề</h2>
 
-    <div class="flex justify-center items-center gap-3 mb-6 bg-white py-3 px-6 rounded-full border border-indigo-200 shadow-sm w-max mx-auto">
-        <label class="font-bold text-indigo-900 text-lg">Ngày chốt sổ:</label>
-        <input id="sessionDate" type="date" class="p-2 border border-indigo-300 rounded font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-400" />
+    <div class="flex justify-center items-center gap-3 mb-6">
+        <label class="font-bold text-indigo-800 text-lg">Ngày chốt sổ:</label>
+        <input id="sessionDate" type="date" class="p-2 border border-indigo-400 rounded font-bold shadow-inner" />
     </div>
 
     <div class="max-w-6xl mx-auto tab-container">
@@ -76,7 +76,7 @@
         <div id="TinhToan" class="tabcontent">
             <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg mb-4 flex flex-wrap items-center gap-4 shadow-sm">
                 <div class="w-full">
-                    <label class="block font-bold text-indigo-800 mb-1">CHỌN KHÁCH HÀNG (Để lưu tin nhắn & cài giá riêng):</label>
+                    <label class="block font-bold text-indigo-800 mb-1">CHỌN KHÁCH HÀNG (Để lưu tin nhắn & cài giá):</label>
                     <select id="customerSelector" class="w-full p-2 border border-indigo-300 rounded font-bold text-lg shadow-inner"></select>
                 </div>
             </div>
@@ -117,13 +117,13 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
+                <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
-                    <textarea id="master-input" rows="8" class="w-full p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
+                    <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
                 </div>
-                <div>
-                    <label class="font-bold mb-1 block text-gray-700">2. Nhập bảng kết quả (Được lưu lại theo ngày):</label>
-                    <textarea id="results-input" rows="8" class="w-full p-3 border rounded mono shadow-inner" placeholder="Dán 27 giải vào đây..."></textarea>
+                <div class="flex flex-col h-full">
+                    <label class="font-bold mb-1 block text-gray-700">2. Nhập bảng kết quả (27 giải):</label>
+                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Dán 27 giải vào đây..."></textarea>
                 </div>
             </div>
 
@@ -172,21 +172,17 @@
                             <th>Nợ Cũ (VNĐ)</th>
                             <th class="today-col" id="colTodayHeader">Hôm nay</th>
                             <th class="col-total">Tổng Cộng (VNĐ)</th>
-                            <th class="bg-emerald-100 text-emerald-800 border-emerald-300">Xuất TN</th>
+                            <th class="bg-emerald-100 text-emerald-800">Xuất TN</th>
                         </tr>
                     </thead>
                     <tbody id="chiTietBody"></tbody>
                 </table>
             </div>
-        </div>
-    </div>
-
-    <div id="messageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[10000] flex justify-center items-center p-4">
-        <div class="bg-white rounded-lg p-6 w-full max-w-lg shadow-2xl relative">
-            <h3 class="text-xl font-bold text-emerald-600 mb-2">Đã tự động copy nội dung bên dưới!</h3>
-            <p class="text-sm text-gray-500 mb-4">Anh có thể dán (Paste) ngay sang Zalo cho khách.</p>
-            <textarea id="messageOutput" rows="12" class="w-full p-3 border-2 border-emerald-500 rounded mono bg-emerald-50 text-emerald-900 font-bold text-sm outline-none" readonly></textarea>
-            <button onclick="document.getElementById('messageModal').classList.add('hidden')" class="mt-4 w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Đóng Lại</button>
+            
+            <div id="messageOutputContainer" class="mt-6 hidden">
+                <h4 class="font-bold text-emerald-700 mb-2">Nội dung tin nhắn (Đã copy sẵn, anh dán sang Zalo nhé):</h4>
+                <textarea id="messageOutput" rows="8" class="w-full p-4 border-2 border-emerald-500 rounded mono bg-emerald-50 text-emerald-900 font-bold text-sm" readonly></textarea>
+            </div>
         </div>
     </div>
 
@@ -216,19 +212,16 @@
         
         function migrateData() {
             let needsSave = false;
-            if (!creditData['__default_config__']) {
-                creditData['__default_config__'] = { ...defaultConfig };
-                needsSave = true;
-            }
+            // 2. KHỞI TẠO BỘ NHỚ KẾT QUẢ XỔ SỐ THEO NGÀY
             if (!creditData['__results__']) {
                 creditData['__results__'] = {};
                 needsSave = true;
             }
             for (let name in creditData) {
-                if(name === '__default_config__' || name === '__results__') continue;
+                if (name === '__results__') continue;
                 if (!creditData[name].debts) {
                     let oldDebts = { ...creditData[name] };
-                    creditData[name] = { debts: oldDebts, config: { ...creditData['__default_config__'] }, inputs: {} };
+                    creditData[name] = { debts: oldDebts, config: { ...defaultConfig }, inputs: {} };
                     needsSave = true;
                 }
                 if (!creditData[name].inputs) {
@@ -250,11 +243,13 @@
             renderTongHop();
             renderQuickSelectContacts();
             
-            // Lấy kết quả của ngày hôm nay đổ vào ô
+            // Lấy lại kết quả đã ghim của ngày hôm nay đổ ra ô kết quả
             const todayStr = document.getElementById('sessionDate').value;
             const resInput = document.getElementById('results-input');
             if (creditData['__results__'] && creditData['__results__'][todayStr]) {
                 resInput.value = creditData['__results__'][todayStr];
+            } else {
+                resInput.value = '';
             }
 
             switchCustomerContext(""); 
@@ -295,7 +290,7 @@
         }
 
         function calculateUserTotal(name) {
-            if(name === '__default_config__' || name === '__results__') return 0;
+            if (name === '__results__') return 0;
             let total = 0;
             if(creditData[name] && creditData[name].debts) {
                 for (let k in creditData[name].debts) total += parseFloat(creditData[name].debts[k]) || 0;
@@ -304,7 +299,7 @@
         }
 
         function calculateOldDebt(name) {
-            if(name === '__default_config__' || name === '__results__') return 0;
+            if (name === '__results__') return 0;
             let old = 0;
             const currentDate = document.getElementById('sessionDate')?.value;
             if(creditData[name] && creditData[name].debts) {
@@ -315,22 +310,19 @@
             return old;
         }
 
-        // ==========================================
-        // QUẢN LÝ NGỮ CẢNH & CẤU HÌNH
-        // ==========================================
         function populateCustomerSelector() {
             const sel = document.getElementById('customerSelector');
             if (!sel) return;
             sel.innerHTML = '<option value="">-- Chọn khách hàng --</option>';
-            Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__').forEach(name => sel.innerHTML += `<option value="${name}">${name}</option>`);
-            if (creditData[activeCustomer] && activeCustomer !== '__default_config__' && activeCustomer !== '__results__') sel.value = activeCustomer;
+            Object.keys(creditData).filter(n => n !== '__results__').forEach(name => sel.innerHTML += `<option value="${name}">${name}</option>`);
+            if (creditData[activeCustomer]) sel.value = activeCustomer;
         }
 
         function renderQuickSelectContacts() {
             const container = document.getElementById('quickSelectContacts');
             if (!container) return;
             container.innerHTML = '';
-            Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__').forEach(name => {
+            Object.keys(creditData).filter(n => n !== '__results__').forEach(name => {
                 const tag = document.createElement('span');
                 tag.className = 'bg-white border border-indigo-300 text-indigo-700 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-indigo-600 hover:text-white font-semibold transition shadow-sm';
                 tag.textContent = name;
@@ -347,14 +339,14 @@
         function applyCustomerConfig(name) {
             const noteEl = document.getElementById('configCustomerNote');
             if (!noteEl) return;
-            let cfg = creditData['__default_config__'] || defaultConfig;
+            let cfg = defaultConfig;
             if (name && creditData[name] && creditData[name].config) {
                 cfg = creditData[name].config;
                 noteEl.innerText = `(Đang áp dụng cấu hình của: ${name})`;
                 noteEl.className = "text-sm text-indigo-700 font-bold mb-2";
             } else {
-                noteEl.innerText = `(Cấu hình Mặc Định - Áp dụng chung)`;
-                noteEl.className = "text-sm text-red-500 font-bold mb-2";
+                noteEl.innerText = `(Cấu hình mặc định)`;
+                noteEl.className = "text-sm text-gray-500 italic mb-2";
             }
             for (let domId in configMap) {
                 const inputEl = document.getElementById(domId);
@@ -388,12 +380,11 @@
             switchCustomerContext(e.target.value);
         });
 
-        // BẮT SỰ KIỆN KHI ĐỔI NGÀY
+        // KHI ĐỔI NGÀY LÀ ĐỔI LUÔN BẢNG KẾT QUẢ BÊN DƯỚI TƯƠNG ỨNG
         document.getElementById('sessionDate')?.addEventListener('change', () => {
             updateDateHeaders();
-            const dateKey = document.getElementById('sessionDate').value;
             
-            // Kéo kết quả đã lưu của ngày đó lên
+            const dateKey = document.getElementById('sessionDate').value;
             const resInput = document.getElementById('results-input');
             if (creditData['__results__'] && creditData['__results__'][dateKey]) {
                 resInput.value = creditData['__results__'][dateKey];
@@ -415,7 +406,7 @@
             setTimeout(calculateAndRender, 300);
         });
 
-        // LƯU KẾT QUẢ XỔ SỐ VÀO BỘ NHỚ THEO NGÀY KHI ANH NHẬP
+        // 2. KHI ANH GÕ HAY DÁN KẾT QUẢ, NÓ LƯU THẲNG VÀO NGÀY ĐÓ TRÊN CLOUD
         document.getElementById('results-input')?.addEventListener('input', function() { 
             if (this.value.includes('.') || this.value.includes(',')) this.value = this.value.replace(/[.,]/g, ' '); 
             
@@ -427,34 +418,24 @@
             setTimeout(calculateAndRender, 300); 
         });
 
-        // LƯU CẤU HÌNH VÀO KHÁCH HOẶC LÀM MẶC ĐỊNH
         document.querySelectorAll('.config-input').forEach(input => {
             input.addEventListener('input', () => {
-                let targetConfig = null;
                 if (activeCustomer && creditData[activeCustomer]) {
-                    targetConfig = creditData[activeCustomer].config;
-                } else {
-                    if (!creditData['__default_config__']) creditData['__default_config__'] = { ...defaultConfig };
-                    targetConfig = creditData['__default_config__'];
+                    for (let domId in configMap) {
+                        const el = document.getElementById(domId);
+                        if(el) creditData[activeCustomer].config[configMap[domId]] = parseFloat(el.value) || 0;
+                    }
+                    debouncedCloudSave(); 
                 }
-
-                for (let domId in configMap) {
-                    const el = document.getElementById(domId);
-                    if(el) targetConfig[configMap[domId]] = parseFloat(el.value) || 0;
-                }
-                debouncedCloudSave(); 
                 calculateAndRender(); 
             });
         });
 
-        // ==========================================
-        // GIAO DIỆN QUẢN LÝ NGƯỜI DÙNG
-        // ==========================================
         function renderTongHop() {
             const tbody = document.getElementById('tongHopBody'); 
             if(!tbody) return;
             tbody.innerHTML = '';
-            let names = Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__');
+            let names = Object.keys(creditData).filter(n => n !== '__results__');
             if(names.length === 0) tbody.innerHTML = '<tr><td colspan="2">Chưa có dữ liệu.</td></tr>';
             else names.forEach(name => {
                 let total = calculateUserTotal(name);
@@ -471,12 +452,9 @@
             let nameInput = document.getElementById('newUserName'); 
             if(!nameInput) return;
             let name = nameInput.value.trim();
-            if(!name) return alert("Vui lòng nhập tên!"); 
-            if(name === '__default_config__' || name === '__results__' || creditData[name]) return alert("Khách đã tồn tại!");
-            
-            let baseDefault = creditData['__default_config__'] || defaultConfig;
-            creditData[name] = { debts: {}, config: { ...baseDefault }, inputs: {} }; 
-            
+            if(!name || name === '__results__') return alert("Vui lòng nhập tên hợp lệ!"); 
+            if(creditData[name]) return alert("Khách đã tồn tại!");
+            creditData[name] = { debts: {}, config: { ...defaultConfig }, inputs: {} }; 
             saveData(); nameInput.value = ""; renderTongHop(); goToDetail(name);
         }
         
@@ -487,7 +465,7 @@
         function renameUser(oldName) {
             let newName = prompt(`Tên mới thay thế cho "${oldName}":`, oldName);
             if (newName && newName.trim() && newName.trim() !== oldName) {
-                newName = newName.trim(); if (creditData[newName] || newName === '__default_config__' || newName === '__results__') return alert("Tên đã tồn tại!");
+                newName = newName.trim(); if (creditData[newName] || newName === '__results__') return alert("Tên đã tồn tại!");
                 creditData[newName] = creditData[oldName]; delete creditData[oldName]; saveData(); renderTongHop(); goToDetail(newName);
             }
         }
@@ -508,7 +486,7 @@
             
             tbody.innerHTML = ''; actionBtns.innerHTML = ''; 
 
-            let names = Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__');
+            let names = Object.keys(creditData).filter(n => n !== '__results__');
             if (filterName) {
                 names = names.filter(n => n === filterName); title.innerText = `Đang xem: ${filterName}`;
                 actionBtns.innerHTML = `<button class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded mr-2" onclick="renameUser('${filterName}')">✏️ Đổi Tên</button>
@@ -520,8 +498,14 @@
                 tr.innerHTML = `<td style="text-align:left; font-weight:bold; cursor:pointer;" onclick="switchCustomerContext('${name}'); document.getElementById('btnTabTinhToan').click();" class="hover:text-indigo-600">${name}</td>`;
                 
                 let oldDebt = calculateOldDebt(name);
-                let oldColor = oldDebt > 0 ? 'text-green-600' : (oldDebt < 0 ? 'text-red-600' : '');
-                tr.innerHTML += `<td class="col-old-debt ${oldColor}">${(oldDebt === 0) ? '0' : (oldDebt * 1000).toLocaleString('vi-VN')}</td>`;
+                let oldColor = oldDebt > 0 ? 'text-green-600 font-bold' : (oldDebt < 0 ? 'text-red-600 font-bold' : 'font-bold');
+                
+                tr.innerHTML += `<td class="col-old-debt bg-gray-50 border-r-2 border-l-2">
+                    <div class="flex items-center justify-center gap-1">
+                        <input type="number" step="any" class="day-input ${oldColor}" style="width:80px; padding:4px;" value="${oldDebt}" onchange="updateOldDebt('${name}', this.value)" title="Nhập số nợ mới để sửa nợ cũ">
+                        <button onclick="updateOldDebt('${name}', 0)" title="Khách trả hết nợ (Về 0)" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-2 py-1 rounded text-xs shadow-sm">Về 0</button>
+                    </div>
+                </td>`;
                 
                 const currentDate = document.getElementById('sessionDate')?.value || todayKey;
                 let todayVal = creditData[name].debts[currentDate] || '';
@@ -532,13 +516,28 @@
                 let totalColor = total > 0 ? 'text-green-600' : (total < 0 ? 'text-red-600' : '');
                 tr.innerHTML += `<td class="col-total ${totalColor}">${(total === 0) ? '0' : (total * 1000).toLocaleString('vi-VN')}</td>`;
                 
-                // NÚT XUẤT TIN NHẮN THEO TỪNG HÀNG
+                // 3. THÊM NÚT XUẤT TIN NHẮN TẠI ĐÂY (TAB 3)
                 tr.innerHTML += `<td class="bg-emerald-50 border-emerald-200">
-                    <button onclick="exportMessageForCustomer('${name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-3 rounded shadow text-sm w-full flex items-center justify-center">📋 Xuất TN</button>
+                    <button onclick="exportMessageForCustomer('${name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-3 rounded shadow text-sm w-full flex items-center justify-center">📋 Xuất</button>
                 </td>`;
 
                 tbody.appendChild(tr);
             });
+        }
+
+        function updateOldDebt(name, value) {
+            let num = parseFloat(value);
+            if(isNaN(num)) num = 0;
+            let currentOld = calculateOldDebt(name);
+            let diff = num - currentOld;
+            if(diff !== 0) {
+                creditData[name].debts['GachNo_DieuChinh'] = (creditData[name].debts['GachNo_DieuChinh'] || 0) + diff;
+                saveData(); 
+                let title = document.getElementById('chiTietTitle');
+                let currentFilter = (title && title.innerText.includes('Tất cả')) ? null : name;
+                renderChiTiet(currentFilter); 
+                renderTongHop();
+            }
         }
 
         function updateRecord(name, dateKey, value) {
@@ -572,12 +571,11 @@
             let allNumbers = [];
             tokens.forEach(t => {
                 if (t.length === 1) return; 
-                
-                if (t.length === 10 || t.length === 30) {
+                if (t.length === 10 || t.length === 30 || t.length === 15 || t.length === 25 || t.length === 20) {
                     for(let i=0; i<t.length; i+=5) allNumbers.push(t.slice(i, i+5));
-                } else if (t.length === 16 || t.length === 24) {
+                } else if (t.length === 16 || t.length === 24 || t.length === 12) {
                     for(let i=0; i<t.length; i+=4) allNumbers.push(t.slice(i, i+4));
-                } else if (t.length === 9) {
+                } else if (t.length === 9 || t.length === 18) {
                     for(let i=0; i<t.length; i+=3) allNumbers.push(t.slice(i, i+3));
                 } else if (t.length === 8) {
                     for(let i=0; i<t.length; i+=2) allNumbers.push(t.slice(i, i+2));
@@ -630,6 +628,24 @@
                 }
 
                 let nums = [];
+                if (type === 'de' || type === 'lo') {
+                    let strL = numStr.toLowerCase();
+                    strL = strL.replace(/kép lệch|kep lech/g, ' 05 50 16 61 27 72 38 83 49 94 ');
+                    strL = strL.replace(/kép bằng|kep bang|kép|kep/g, ' 00 11 22 33 44 55 66 77 88 99 ');
+                    strL = strL.replace(/(đầu|dau)\s*(\d)/g, (m, p1, p2) => {
+                        let r = []; for(let i=0;i<=9;i++) r.push(p2+i); return ' ' + r.join(' ') + ' ';
+                    });
+                    strL = strL.replace(/(đít|dit|đuôi|duoi)\s*(\d)/g, (m, p1, p2) => {
+                        let r = []; for(let i=0;i<=9;i++) r.push(i+p2); return ' ' + r.join(' ') + ' ';
+                    });
+                    strL = strL.replace(/(tổng|tong)\s*(\d)/g, (m, p1, p2) => {
+                        let v = parseInt(p2); let r = [];
+                        for(let i=0;i<=9;i++) for(let j=0;j<=9;j++) if((i+j)%10===v) r.push(i.toString()+j.toString());
+                        return ' ' + r.join(' ') + ' ';
+                    });
+                    numStr = strL;
+                }
+                
                 if (type === 'x2' || type === 'x3') {
                     const allNums = numStr.match(/\d{2}/g) || []; const gs = (type === 'x2') ? 2 : 3;
                     if(allNums.length % gs !== 0 || allNums.length === 0) return;
@@ -695,7 +711,7 @@
             return data;
         }
 
-        // HÀM TÍNH TOÁN NGẦM KHÔNG HIỂN THỊ LÊN MÀN HÌNH CHÍNH (Phục vụ nút xuất hóa đơn)
+        // TÍNH TOÁN NGẦM KHÔNG ẢNH HƯỞNG GIAO DIỆN (ĐỂ XUẤT HÓA ĐƠN)
         function runCoreMath(rawInput, rawResults, p) {
             const resData = parseResultsText(rawResults); 
             const pData = parseBets(rawInput);
@@ -708,7 +724,7 @@
                 let qty=parseFloat(q); sLoGhi += pData.lo[q].length * qty; 
                 pData.lo[q].forEach(n=>{ 
                     let hits = resData.loHitCounts[n]||0;
-                    if(hits>0){ sLoTrung += hits*qty; loHitsDetail[n] = hits; } 
+                    if(hits>0){ sLoTrung += hits*qty; loHitsDetail[n] = (loHitsDetail[n]||0) + hits; } 
                 }); 
             }
             for(let q in pData.de) { 
@@ -821,9 +837,7 @@
             goToDetail(activeCustomer);
         });
 
-        // ==========================================
-        // XUẤT TIN NHẮN TỪ TAB 3 ĐÚNG CHUẨN FORM YÊU CẦU
-        // ==========================================
+        // 4. XUẤT TIN NHẮN TỪ TAB 3 ĐÚNG CHUẨN FORM YÊU CẦU
         function exportMessageForCustomer(name) {
             const dInput = document.getElementById('sessionDate');
             if(!dInput) return;
@@ -831,7 +845,7 @@
             let d = dateKey.split('-'); let dateStr = `${d[2]}-${d[1]}-${d[0]}`; 
             
             let rawInput = (creditData[name] && creditData[name].inputs && creditData[name].inputs[dateKey]) ? creditData[name].inputs[dateKey] : '';
-            // Lấy kết quả đã lưu trong bộ nhớ của ngày hôm đó
+            // Lấy kết quả đã lưu trong bộ nhớ của ngày đó
             let rawResults = (creditData['__results__'] && creditData['__results__'][dateKey]) ? creditData['__results__'][dateKey] : '';
             
             let baseCfg = creditData['__default_config__'] || defaultConfig;
@@ -844,18 +858,18 @@
 
             let p = runCoreMath(rawInput, rawResults, pObj);
 
+            // Hàm format định dạng số tiền
             let fn = (val) => {
-                if(val === 0) return '0n';
+                if (val === 0) return '0n';
                 return (val/1000).toLocaleString('vi-VN') + 'n';
             };
-            
             let fs = (val) => { 
-                if(val === 0) return '0';
+                if (val === 0) return '0';
                 let sign = val < 0 ? '-' : ''; 
                 return sign + (Math.abs(val)/1000).toLocaleString('vi-VN'); 
             };
 
-            let loDet = Object.keys(p.loHitsDetail).join(' '); // [19]
+            let loDet = Object.entries(p.loHitsDetail).map(([n,h]) => h>1 ? `${n}(x${h})` : n).join(' ');
             let deDet = Object.keys(p.deHitsDetail).join(' ');
             let c3Det = Object.keys(p.c3HitsDetail).join(' ');
             let x2Det = Object.keys(p.x2HitsDetail).join(' ');
@@ -882,15 +896,19 @@
             msg += `No cu: ${fs(oldDebtVND)}n\n`;
 
             let finalTotal = oldDebtVND + p.netCost;
-            msg += `Tong: ${fs(p.netCost)} + (${fs(oldDebtVND)}) = ${fs(finalTotal)}n.`;
+            // Xử lý logic hiển thị dấu ngoặc đơn của Nợ cũ trong phép tính tổng
+            let bracketOldDebt = oldDebtVND < 0 ? `(${fs(oldDebtVND)})` : `${fs(oldDebtVND)}`;
+            msg += `Tong: ${fs(p.netCost)} + ${bracketOldDebt} = ${fs(finalTotal)}n.`;
 
+            // Mở khung chứa tin nhắn và dán vào
             const txt = document.getElementById('messageOutput'); 
-            const modal = document.getElementById('messageModal');
-            if(txt && modal) {
+            const container = document.getElementById('messageOutputContainer');
+            if(txt && container) {
                 txt.value = msg; 
-                modal.classList.remove('hidden'); 
+                container.classList.remove('hidden'); 
                 txt.select(); 
                 document.execCommand('copy'); 
+                alert('✅ Đã tính toán xong và copy tin nhắn vào bộ nhớ. Anh có thể xem trước ở ngay bên dưới bảng!');
             }
         }
 
