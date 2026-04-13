@@ -40,7 +40,7 @@
     <div id="loadingScreen">Đang tải sổ sách từ Cloud... ☁️</div>
     <div id="cloudStatus">Đã đồng bộ Cloud ☁️</div>
 
-    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">Cộng bảng Mr Liêu.</h2>
+    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">Hệ Thống Quản Lý Tín Dụng & Lô Đề</h2>
 
     <div class="flex justify-center items-center gap-3 mb-6">
         <label class="font-bold text-indigo-800 text-lg">Ngày chốt sổ:</label>
@@ -59,7 +59,7 @@
                 <input type="text" id="newUserName" class="p-2 border rounded shadow-sm w-64" placeholder="Nhập tên khách hàng mới...">
                 <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="addNewUser()">+ Thêm Khách Hàng</button>
             </div>
-            <p class="text-sm text-gray-500 italic mb-2">* Số <b>Âm (Màu đỏ)</b>: | Số <b>Dương (Màu xanh)</b>: .</p>
+            <p class="text-sm text-gray-500 italic mb-2">* Số <b>Âm (Màu đỏ)</b>: Khách nợ mình | Số <b>Dương (Màu xanh)</b>: Mình nợ khách.</p>
             <div class="table-responsive">
                 <table class="debt-table">
                     <thead>
@@ -171,7 +171,7 @@
             </div>
             
             <h3 id="chiTietTitle" class="text-xl font-bold text-indigo-700 mb-1">Đang hiển thị: Tất cả khách hàng</h3>
-            <p class="text-sm text-gray-500 italic mb-4">
+            <p class="text-sm text-gray-500 italic mb-4">* Chú ý: Dấu <b>âm (-)</b> là Khách nợ mình, Dấu <b>dương (+)</b> là Mình nợ khách.</p>
             
             <div class="table-responsive">
                 <table class="debt-table">
@@ -189,9 +189,9 @@
             </div>
             
             <div id="messageOutputContainer" class="mt-6 hidden">
-                <h4 class="font-bold text-emerald-700 mb-2">Nội dung hóa đơn (Đã tự động Copy) :</h4>
+                <h4 class="font-bold text-emerald-700 mb-2">Nội dung hóa đơn (Đã tự động Copy vào bộ nhớ, anh chỉ việc dán sang Zalo):</h4>
                 <textarea id="messageOutput" rows="8" class="w-full p-4 border-2 border-emerald-500 rounded mono bg-emerald-50 text-emerald-900 font-bold text-sm" readonly></textarea>
-                <button onclick="document.getElementById('messageOutputContainer')</button>
+                <button onclick="document.getElementById('messageOutputContainer').classList.add('hidden')" class="mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-4 rounded text-sm">Đóng Lại</button>
             </div>
         </div>
     </div>
@@ -389,7 +389,7 @@
                 let isComp = cfg.isCompany === true;
                 let nameLower = activeCustomer.toLowerCase();
                 
-                //
+                // Vẫn giữ dự phòng bắt tên "công ty" lỡ anh quên bật công tắc
                 if (isComp || nameLower.includes('công ty') || nameLower.includes('cong ty') || nameLower.includes('congty')) {
                     let aggregatedText = '';
                     for (let n in creditData) {
