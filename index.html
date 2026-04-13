@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cộng bảng Mr: Liêu (Cloud)</title>
+    <title>Cộng bảng Mr Liêu (Cloud)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         body { background-color: #f3f4f6; font-family: Arial, sans-serif; }
         .mono { font-family: ui-monospace, monospace; }
-        .tab-container { margin-top: 10px; margin-bottom: 20px; }
+        .tab-container { margin-bottom: 20px; }
         .tab { overflow: hidden; border: 1px solid #ccc; background-color: #e9ecef; border-radius: 5px 5px 0 0; }
         .tab button { background-color: inherit; float: left; border: none; outline: none; cursor: pointer; padding: 14px 20px; font-size: 16px; font-weight: bold; transition: 0.3s; }
         .tab button:hover { background-color: #ddd; }
@@ -18,7 +18,7 @@
         .tabcontent { display: none; padding: 20px; border: 1px solid #ccc; border-top: none; background-color: white; border-radius: 0 0 5px 5px; min-height: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
         
         .table-responsive { overflow-x: auto; margin-top: 15px; }
-        table.debt-table { border-collapse: collapse; width: 100%; min-width: 600px; }
+        table.debt-table { border-collapse: collapse; width: 100%; min-width: 650px; }
         table.debt-table th, table.debt-table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         table.debt-table th { background-color: #f8f9fa; position: sticky; top: 0; }
         
@@ -40,7 +40,7 @@
     <div id="loadingScreen">Đang tải sổ sách từ Cloud... ☁️</div>
     <div id="cloudStatus">Đã đồng bộ Cloud ☁️</div>
 
-    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">Cộng bảng Mr: Liêu /h2>
+    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">công bảng Mr Liêu </h2>
 
     <div class="flex justify-center items-center gap-3 mb-6">
         <label class="font-bold text-indigo-800 text-lg">Ngày chốt sổ:</label>
@@ -87,14 +87,13 @@
             </div>
 
             <div class="mb-4 flex gap-2">
-                <button id="toggleConfig" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm">Hiện Cấu Hình Giá Của Khách</button>
+                <button id="toggleConfig" onclick="toggleConfigPanel()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm shadow">Hiện Cấu Hình Giá Của Khách</button>
             </div>
 
             <div id="config-panel" class="mb-6 p-4 rounded-lg bg-gray-50 border border-gray-200 hidden">
                 <div class="flex justify-between items-center mb-3">
                     <p id="configCustomerNote" class="text-sm text-gray-500 italic">(Cấu hình mặc định)</p>
-                    
-                    <label class="relative inline-flex items-center cursor-pointer bg-red-50 py-1 px-3 rounded border border-red-200 shadow-sm" title="Bật lên để máy tự gom phơi của khách lẻ vào đây">
+                    <label class="relative inline-flex items-center cursor-pointer bg-red-50 py-1 px-3 rounded border border-red-200 shadow-sm">
                         <input type="checkbox" id="isCompanyConfig" class="sr-only peer config-input">
                         <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[6px] after:left-[14px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
                         <span class="ml-2 text-sm font-bold text-red-700 uppercase">Khách này là CÔNG TY</span>
@@ -131,8 +130,18 @@
                     <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
                 </div>
                 <div class="flex flex-col h-full">
-                    <label class="font-bold mb-1 block text-gray-700">2. Nhập bảng kết quả (Lưu theo ngày):</label>
-                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Dán 27 giải vào đây..."></textarea>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="font-bold text-gray-700">2. Kết quả XSMB (Lưu theo ngày):</label>
+                        <div class="flex gap-2">
+                            <button id="btnAutoFetch" onclick="autoFetchKQXS()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded shadow transition-colors flex items-center gap-1">
+                                ⚡ TỰ ĐỘNG LẤY KQXS
+                            </button>
+                            <button onclick="openXSMB()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded shadow transition-colors flex items-center gap-1" title="Mở web tự copy tay nếu lỗi">
+                                🔍 Copy Thủ Công
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Dán kết quả vào đây..."></textarea>
                 </div>
             </div>
 
@@ -156,11 +165,10 @@
                     <span class="text-2xl md:text-3xl font-bold text-gray-800">CHỐT HÔM NAY:</span>
                     <span id="totalProfitOutput" class="text-2xl md:text-3xl font-bold font-mono">0₫</span>
                 </div>
-                <p id="profitStatusText" class="text-center font-bold mt-2 text-sm"></p>
-            </div>
+                </div>
 
             <button id="saveToDebtButton" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-xl flex items-center justify-center gap-2 transition-all mb-4">
-                ✍️ CHỐT SỐ TỰ ĐỘNG LƯU VÀO CÔNG NỢ
+                ✍️ CHỐT SỐ & LƯU VÀO CÔNG NỢ
             </button>
         </div>
 
@@ -187,14 +195,10 @@
                     <tbody id="chiTietBody"></tbody>
                 </table>
             </div>
-            
-            <div id="messageOutputContainer" class="mt-6 hidden">
-                <h4 class="font-bold text-emerald-700 mb-2">Nội dung hóa đơn (Đã tự động Copy vào bộ nhớ, anh chỉ việc dán sang Zalo):</h4>
-                <textarea id="messageOutput" rows="8" class="w-full p-4 border-2 border-emerald-500 rounded mono bg-emerald-50 text-emerald-900 font-bold text-sm" readonly></textarea>
-                <button onclick="document.getElementById('messageOutputContainer').classList.add('hidden')" class="mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-4 rounded text-sm">Đóng Lại</button>
-            </div>
         </div>
     </div>
+
+    <textarea id="hiddenCopyTextarea" style="position: absolute; left: -9999px;"></textarea>
 
     <script>
         // ==========================================
@@ -233,7 +237,7 @@
                 needsSave = true;
             }
             for (let name in creditData) {
-                if (name === '__default_config__' || name === '__results__') continue;
+                if(name === '__default_config__' || name === '__results__') continue;
                 if (!creditData[name].debts) {
                     let oldDebts = { ...creditData[name] };
                     creditData[name] = { debts: oldDebts, config: { ...creditData['__default_config__'] }, inputs: {} };
@@ -303,11 +307,107 @@
             }
         }
 
+        async function autoFetchKQXS() {
+            const dateVal = document.getElementById('sessionDate')?.value;
+            if(!dateVal) { alert("Vui lòng chọn ngày chốt sổ trước!"); return; }
+            
+            const btn = document.getElementById('btnAutoFetch');
+            const resInput = document.getElementById('results-input');
+            
+            btn.innerHTML = "⏳ ĐANG LẤY...";
+            btn.disabled = true;
+            resInput.value = "Đang kết nối tải KQXS. Xin chờ 3-5 giây để đổi Proxy nếu mạng nghẽn...";
+            
+            let parts = dateVal.split('-'); 
+            let dStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            let dIntStr = `${parseInt(parts[2])}-${parseInt(parts[1])}-${parts[0]}`; 
+            
+            let url1 = `https://xoso.me/xsmb-${dStr}.html`;
+            let url2 = `https://xskt.com.vn/xsmb/ngay-${dIntStr}`;
+            
+            const cb = Date.now();
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url1 + '?t=' + cb)}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url2 + '?t=' + cb)}`
+            ];
+            
+            let htmlContent = null;
+
+            for (let i = 0; i < proxies.length; i++) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000);
+                    let response = await fetch(proxies[i], { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (response.ok) {
+                        let text = await response.text();
+                        if (text && text.includes('<html')) {
+                            htmlContent = text;
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`Proxy failed, trying next...`);
+                }
+            }
+            
+            if(htmlContent) {
+                let parser = new DOMParser();
+                let doc = parser.parseFromString(htmlContent, "text/html");
+                let numbers = [];
+
+                let spans = doc.querySelectorAll('table.table-result span[data-val], table span[data-val]');
+                if (spans.length >= 27) {
+                    spans.forEach(s => numbers.push(s.getAttribute('data-val').trim().replace(/\D/g, '')));
+                }
+
+                if (numbers.length < 27) {
+                    numbers = [];
+                    let ems = doc.querySelectorAll('table#KQCS em, table#MB0 em');
+                    if (ems.length >= 27) {
+                        ems.forEach(e => numbers.push(e.innerText.trim().replace(/\D/g, '')));
+                    }
+                }
+
+                numbers = numbers.filter(n => n.length >= 2 && n.length <= 5);
+                
+                if(numbers.length >= 27) {
+                    numbers = numbers.slice(0, 27);
+                    let finalString = numbers.join('\n');
+                    resInput.value = finalString;
+                    if (!creditData['__results__']) creditData['__results__'] = {};
+                    creditData['__results__'][dateVal] = finalString;
+                    debouncedCloudSave();
+                    if(document.getElementById('TinhToan').style.display === 'block') calculateAndRender();
+                } else {
+                    resInput.value = "";
+                    alert("⚠️ Chưa có kết quả ngày này!");
+                    openXSMB();
+                }
+            } else {
+                resInput.value = "";
+                alert("⚠️ Lỗi mạng, xin anh copy tay!");
+            }
+            btn.innerHTML = "⚡ TỰ ĐỘNG LẤY KQXS";
+            btn.disabled = false;
+        }
+
+        function openXSMB() {
+            let dateVal = document.getElementById('sessionDate')?.value;
+            if(!dateVal) return;
+            let parts = dateVal.split('-'); 
+            let url = `https://xoso.me/xsmb-${parts[2]}-${parts[1]}-${parts[0]}.html`;
+            window.open(url, 'XSMB', 'width=500,height=700');
+        }
+
         function calculateUserTotal(name) {
-            if (name === '__default_config__' || name === '__results__') return 0;
+            if(name === '__default_config__' || name === '__results__') return 0;
             let total = 0;
             if(creditData[name] && creditData[name].debts) {
-                for (let k in creditData[name].debts) total += parseFloat(creditData[name].debts[k]) || 0;
+                for (let k in creditData[name].debts) {
+                    if(k !== 'GachNo_DieuChinh') total += parseFloat(creditData[name].debts[k]) || 0;
+                }
+                total += parseFloat(creditData[name].debts['GachNo_DieuChinh']) || 0;
             }
             return total;
         }
@@ -318,10 +418,26 @@
             const currentDate = document.getElementById('sessionDate')?.value;
             if(creditData[name] && creditData[name].debts) {
                 for (let k in creditData[name].debts) {
-                    if (k !== currentDate) old += parseFloat(creditData[name].debts[k]) || 0;
+                    if (k !== currentDate && k !== 'GachNo_DieuChinh') old += parseFloat(creditData[name].debts[k]) || 0;
                 }
+                old += parseFloat(creditData[name].debts['GachNo_DieuChinh']) || 0;
             }
             return old;
+        }
+
+        function updateOldDebt(name, value) {
+            let num = parseFloat(value);
+            if(isNaN(num)) num = 0;
+            let currentOld = calculateOldDebt(name);
+            let diff = num - currentOld;
+            if(diff !== 0) {
+                creditData[name].debts['GachNo_DieuChinh'] = (creditData[name].debts['GachNo_DieuChinh'] || 0) + diff;
+                saveData(); 
+                let title = document.getElementById('chiTietTitle');
+                let currentFilter = (title && title.innerText.includes('Tất cả')) ? null : name;
+                renderChiTiet(currentFilter); 
+                renderTongHop();
+            }
         }
 
         function populateCustomerSelector() {
@@ -359,7 +475,7 @@
                 noteEl.innerText = `(Đang áp dụng cấu hình của: ${name})`;
                 noteEl.className = "text-sm text-indigo-700 font-bold mb-2";
             } else {
-                noteEl.innerText = `(Cấu hình Mặc Định - Áp dụng chung cho Khách Vãng Lai)`;
+                noteEl.innerText = `(Cấu hình Mặc Định)`;
                 noteEl.className = "text-sm text-red-500 font-bold mb-2";
             }
             for (let domId in configMap) {
@@ -371,7 +487,6 @@
             }
         }
 
-        // CHỨC NĂNG GOM PHƠI DỰA VÀO CÔNG TẮC "LÀ CÔNG TY"
         function switchCustomerContext(newCustomer) {
             const dateKey = document.getElementById('sessionDate')?.value;
             const inputEl = document.getElementById('master-input');
@@ -387,17 +502,11 @@
             if (activeCustomer && creditData[activeCustomer] && dateKey && inputEl) {
                 let cfg = creditData[activeCustomer].config || {};
                 let isComp = cfg.isCompany === true;
-                let nameLower = activeCustomer.toLowerCase();
                 
-                // Vẫn giữ dự phòng bắt tên "công ty" lỡ anh quên bật công tắc
-                if (isComp || nameLower.includes('công ty') || nameLower.includes('cong ty') || nameLower.includes('congty')) {
+                if (isComp) {
                     let aggregatedText = '';
                     for (let n in creditData) {
-                        let nLower = n.toLowerCase();
-                        let nCfg = creditData[n].config || {};
-                        let nIsComp = nCfg.isCompany === true || nLower.includes('công ty') || nLower.includes('cong ty') || nLower.includes('congty');
-                        
-                        if (n !== '__default_config__' && n !== '__results__' && n !== activeCustomer && !nIsComp) {
+                        if (n !== '__default_config__' && n !== '__results__' && n !== activeCustomer && !creditData[n].config.isCompany) {
                             if (creditData[n].inputs && creditData[n].inputs[dateKey] && creditData[n].inputs[dateKey].trim() !== '') {
                                 aggregatedText += creditData[n].inputs[dateKey].trim() + '\n\n';
                             }
@@ -408,7 +517,6 @@
                 } else {
                     inputEl.value = creditData[activeCustomer].inputs[dateKey] || '';
                 }
-                
                 applyCustomerConfig(activeCustomer);
             } else if (inputEl) {
                 inputEl.value = '';
@@ -423,7 +531,6 @@
 
         document.getElementById('sessionDate')?.addEventListener('change', () => {
             updateDateHeaders();
-            
             const dateKey = document.getElementById('sessionDate').value;
             const resInput = document.getElementById('results-input');
             if (creditData['__results__'] && creditData['__results__'][dateKey]) {
@@ -431,7 +538,6 @@
             } else {
                 resInput.value = '';
             }
-
             switchCustomerContext(activeCustomer);
             renderChiTiet(); 
             calculateAndRender();
@@ -447,38 +553,32 @@
         });
 
         document.getElementById('results-input')?.addEventListener('input', function() { 
-            if (this.value.includes('.') || this.value.includes(',')) this.value = this.value.replace(/[.,]/g, ' '); 
-            
             const dateKey = document.getElementById('sessionDate').value;
             if (!creditData['__results__']) creditData['__results__'] = {};
             creditData['__results__'][dateKey] = this.value;
             debouncedCloudSave();
-
             setTimeout(calculateAndRender, 300); 
         });
 
-        document.getElementById('toggleConfig')?.addEventListener('click', () => {
-            const p = document.getElementById('config-panel'); 
+        function toggleConfigPanel() {
+            const p = document.getElementById('config-panel');
             if(p) {
-                p.classList.toggle('hidden'); 
+                p.classList.toggle('hidden');
                 const btn = document.getElementById('toggleConfig');
-                if(btn) btn.textContent = p.classList.contains('hidden') ? 'Hiện Cấu Hình Giá Của Khách' : 'Ẩn Cấu Hình';
+                if(btn) btn.textContent = p.classList.contains('hidden') ? 'Hiện Cấu Hình Giá Của Khách' : 'Ẩn Cấu Hình Giá';
             }
-        });
+        }
 
-        // LƯU CẤU HÌNH KHI CÓ SỰ THAY ĐỔI (Bao gồm cả Công Tắc Mới)
         document.querySelectorAll('.config-input').forEach(input => {
             input.addEventListener('change', (e) => {
                 let targetConfig = null;
                 const currentCust = document.getElementById('customerSelector').value;
-
                 if (currentCust && creditData[currentCust]) {
                     targetConfig = creditData[currentCust].config;
                 } else {
                     if (!creditData['__default_config__']) creditData['__default_config__'] = { ...defaultConfig };
                     targetConfig = creditData['__default_config__'];
                 }
-
                 for (let domId in configMap) {
                     const el = document.getElementById(domId);
                     if(el) {
@@ -487,13 +587,8 @@
                     }
                 }
                 debouncedCloudSave(); 
-                
-                // Nếu bấm công tắc Công Ty, tự động tải lại màn hình để gom phơi ngay lập tức
-                if(e.target.id === 'isCompanyConfig') {
-                    switchCustomerContext(currentCust);
-                } else {
-                    calculateAndRender(); 
-                }
+                if(e.target.id === 'isCompanyConfig') switchCustomerContext(currentCust);
+                else calculateAndRender(); 
             });
         });
 
@@ -518,12 +613,9 @@
             let nameInput = document.getElementById('newUserName'); 
             if(!nameInput) return;
             let name = nameInput.value.trim();
-            if(!name) return alert("Vui lòng nhập tên!"); 
-            if(name === '__default_config__' || name === '__results__' || creditData[name]) return alert("Khách đã tồn tại!");
-            
+            if(!name || name === '__default_config__' || name === '__results__' || creditData[name]) return alert("Vui lòng nhập tên hợp lệ!"); 
             let baseDefault = creditData['__default_config__'] || defaultConfig;
             creditData[name] = { debts: {}, config: { ...baseDefault }, inputs: {} }; 
-            
             saveData(); nameInput.value = ""; renderTongHop(); goToDetail(name);
         }
         
@@ -552,9 +644,7 @@
             const title = document.getElementById('chiTietTitle');
             const actionBtns = document.getElementById('userActionButtons');
             if(!tbody || !title || !actionBtns) return;
-            
             tbody.innerHTML = ''; actionBtns.innerHTML = ''; 
-
             let names = Object.keys(creditData).filter(n => n !== '__default_config__' && n !== '__results__');
             if (filterName) {
                 names = names.filter(n => n === filterName); title.innerText = `Đang xem: ${filterName}`;
@@ -565,24 +655,19 @@
             names.forEach(name => {
                 let tr = document.createElement('tr'); 
                 tr.innerHTML = `<td style="text-align:left; font-weight:bold; cursor:pointer;" onclick="switchCustomerContext('${name}'); document.getElementById('btnTabTinhToan').click();" class="hover:text-indigo-600">${name}</td>`;
-                
                 let oldDebt = calculateOldDebt(name);
                 let oldColor = oldDebt > 0 ? 'text-green-600' : (oldDebt < 0 ? 'text-red-600' : '');
                 tr.innerHTML += `<td class="col-old-debt ${oldColor}">${(oldDebt === 0) ? '0' : (oldDebt * 1000).toLocaleString('vi-VN')}</td>`;
-                
                 const currentDate = document.getElementById('sessionDate')?.value || todayKey;
                 let todayVal = creditData[name].debts[currentDate] || '';
                 let todayColor = todayVal > 0 ? 'text-green-600 font-bold' : (todayVal < 0 ? 'text-red-600 font-bold' : 'font-bold');
                 tr.innerHTML += `<td class="today-col"><input type="number" step="any" class="day-input ${todayColor}" value="${todayVal}" onchange="updateRecord('${name}', '${currentDate}', this.value)" placeholder="0"></td>`;
-                
                 let total = calculateUserTotal(name);
                 let totalColor = total > 0 ? 'text-green-600' : (total < 0 ? 'text-red-600' : '');
                 tr.innerHTML += `<td class="col-total ${totalColor}">${(total === 0) ? '0' : (total * 1000).toLocaleString('vi-VN')}</td>`;
-                
                 tr.innerHTML += `<td class="bg-emerald-50 border-emerald-200">
-                    <button onclick="exportMessageForCustomer('${name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-3 rounded shadow text-sm w-full flex items-center justify-center">📋 Xuất TN</button>
+                    <button id="btnExport-${name}" onclick="exportMessageForCustomer('${name}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-3 rounded shadow text-sm w-full flex items-center justify-center">📋 Xuất TN</button>
                 </td>`;
-
                 tbody.appendChild(tr);
             });
         }
@@ -604,37 +689,28 @@
             if(evt) evt.currentTarget.className += " active";
         }
 
-        const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style:'currency', currency:'VND', minimumFractionDigits:0 }).format(amount||0);
-
         function parseResultsText(rawResults) {
             if(!rawResults || rawResults.trim()==='') return { deResult:null, de3CResult:null, loHitCounts:{} };
             const cleaned = rawResults.replace(/[^\d\s]/g, ' ');
             const tokens = cleaned.trim().split(/\s+/).filter(t=>t.length > 0);
             if(tokens.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
-            
             let allNumbers = [];
             tokens.forEach(t => {
                 if (t.length === 1) return; 
-                
-                if (t.length === 10 || t.length === 30) {
+                if (t.length === 10 || t.length === 30 || t.length === 15) {
                     for(let i=0; i<t.length; i+=5) allNumbers.push(t.slice(i, i+5));
-                } else if (t.length === 16 || t.length === 24) {
+                } else if (t.length === 16 || t.length === 24 || t.length === 12) {
                     for(let i=0; i<t.length; i+=4) allNumbers.push(t.slice(i, i+4));
-                } else if (t.length === 9) {
+                } else if (t.length === 9 || t.length === 18) {
                     for(let i=0; i<t.length; i+=3) allNumbers.push(t.slice(i, i+3));
                 } else if (t.length === 8) {
                     for(let i=0; i<t.length; i+=2) allNumbers.push(t.slice(i, i+2));
-                } else {
-                    allNumbers.push(t);
-                }
+                } else { allNumbers.push(t); }
             });
-
             if(allNumbers.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
-
             const gdb = allNumbers.find(t => t.length >= 4) || allNumbers[0] || ''; 
             const deResult = gdb.slice(-2); 
             const de3CResult = gdb.slice(-3);
-            
             const loHitCounts = {}; 
             allNumbers.forEach(num => { 
                 const lo = num.slice(-2); 
@@ -654,24 +730,14 @@
         function parseBets(rawInput) {
             const data = { lo: {}, de: {}, '3c': {}, x2: {}, x3: {} };
             const keys = ['ba càng đề', 'đề ba càng', 'ba càng', 'ba cang', '3 càng', '3 cang', '3cang', 'bacang', 'bc', '3c', 'lô xiên 2', 'xien 2', 'xiên 2', 'xien2', 'xiên2', 'xi2', 'x2', 'lô xiên 3', 'xien 3', 'xiên 3', 'xien3', 'xiên3', 'xi3', 'x3', 'lo', 'lô', 'l', 'de', 'đề', 'đe', 'dê', 'đê', 'đ', 'd'];
-            
             let pInput = rawInput.replace(/\n/g, '||').replace(/([a-zđ₫nk])\./gi, '$1||').replace(/\.\s+/g, '||').replace(/[.,]/g, ' ').replace(/((?:x|X|×|\*)\s*\d+\s*[a-zA-Zđ₫nk]*)\s+/gi, '$1||').replace(new RegExp(`(\\b(?:${keys.join('|')})\\s+)`, 'gi'), '||$1');
-            
             const withTypeRegex = new RegExp(`^(${keys.join('|')})\\s+(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
             const noTypeRegex = new RegExp(`^(.+?)\\s*(?:x|X|×|\\*)\\s*(\\d+)\\s*([^\\d\\s]+)?$`, 'i');
-
             let lastType = null;
             pInput.split('||').filter(l => l.trim() !== '').forEach((line, idx) => {
                 let match = line.trim().match(withTypeRegex), type, numStr, qty;
-                if (match) { 
-                    type = normalizeType(match[1]); numStr = match[2]; qty = parseInt(match[3]); lastType = type; 
-                } 
-                else { 
-                    match = line.trim().match(noTypeRegex); 
-                    if (match && lastType) { type = lastType; numStr = match[1]; qty = parseInt(match[2]); } 
-                    else return; 
-                }
-
+                if (match) { type = normalizeType(match[1]); numStr = match[2]; qty = parseInt(match[3]); lastType = type; } 
+                else { match = line.trim().match(noTypeRegex); if (match && lastType) { type = lastType; numStr = match[1]; qty = parseInt(match[2]); } else return; }
                 let nums = [];
                 if (type === 'de' || type === 'lo') {
                     let strL = numStr.toLowerCase();
@@ -690,20 +756,12 @@
                     });
                     numStr = strL;
                 }
-                
                 if (type === 'x2' || type === 'x3') {
                     const allNums = numStr.match(/\d{2}/g) || []; const gs = (type === 'x2') ? 2 : 3;
                     if(allNums.length % gs !== 0 || allNums.length === 0) return;
                     for (let i = 0; i < allNums.length; i += gs) nums.push(allNums.slice(i, i + gs).join('-'));
-                } else if (type === '3c') {
-                    nums = numStr.split(/[^\d]+/).filter(n => n.match(/^\d{3}$/));
-                } else {
-                    numStr.split(/[^\d]+/).forEach(n => { 
-                        if (n.length === 2) nums.push(n); 
-                        else if (n.length === 3 && n[0] === n[2]) { nums.push(n.slice(0, 2)); nums.push(n.slice(1, 3)); } 
-                    }); 
-                }
-                
+                } else if (type === '3c') { nums = numStr.split(/[^\d]+/).filter(n => n.match(/^\d{3}$/)); } 
+                else { numStr.split(/[^\d]+/).forEach(n => { if (n.length === 2) nums.push(n); else if (n.length === 3 && n[0] === n[2]) { nums.push(n.slice(0, 2)); nums.push(n.slice(1, 3)); } }); }
                 if (nums.length === 0) return;
                 if (!data[type][qty]) data[type][qty] = []; data[type][qty].push(...nums);
             });
@@ -713,11 +771,9 @@
         function runCoreMath(rawInput, rawResults, p) {
             const resData = parseResultsText(rawResults); 
             const pData = parseBets(rawInput);
-            
             let sLoGhi=0, sDeGhi=0, s3CGhi=0, sX2Ghi=0, sX3Ghi=0;
             let sLoTrung=0, sDeTrung=0, s3CTrung=0, sX2Trung=0, sX3Trung=0;
             let loHitsDetail = {}, deHitsDetail = {}, c3HitsDetail = {}, x2HitsDetail = {}, x3HitsDetail = {};
-
             for(let q in pData.lo) { 
                 let qty=parseFloat(q); sLoGhi += pData.lo[q].length * qty; 
                 pData.lo[q].forEach(n=>{ 
@@ -725,28 +781,16 @@
                     if(hits>0){ sLoTrung += hits*qty; loHitsDetail[n] = (loHitsDetail[n]||0) + hits; } 
                 }); 
             }
-            for(let q in pData.de) { 
-                let qty=parseFloat(q); sDeGhi += pData.de[q].length * qty; 
-                pData.de[q].forEach(n=>{ if(n===resData.deResult) { sDeTrung+=qty; deHitsDetail[n]=1; } }); 
-            }
-            for(let q in pData['3c']) { 
-                let qty=parseFloat(q); s3CGhi += pData['3c'][q].length * qty; 
-                pData['3c'][q].forEach(n=>{ if(n===resData.de3CResult) { s3CTrung+=qty; c3HitsDetail[n]=1; } }); 
-            }
-            for(let q in pData.x2) { 
-                let qty=parseFloat(q); sX2Ghi += pData.x2[q].length * qty; 
-                pData.x2[q].forEach(pair=>{ let [n1,n2]=pair.split('-'); if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0) { sX2Trung+=qty; x2HitsDetail[pair]=1; } }); 
-            }
-            for(let q in pData.x3) { 
-                let qty=parseFloat(q); sX3Ghi += pData.x3[q].length * qty; 
-                pData.x3[q].forEach(tri=>{ let [n1,n2,n3]=tri.split('-'); if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0 && (resData.loHitCounts[n3]||0)>0) { sX3Trung+=qty; x3HitsDetail[tri]=1; } }); 
-            }
+            for(let q in pData.de) { let qty=parseFloat(q); sDeGhi += pData.de[q].length * qty; pData.de[q].forEach(n=>{ if(n===resData.deResult) { sDeTrung+=qty; deHitsDetail[n]=1; } }); }
+            for(let q in pData['3c']) { let qty=parseFloat(q); s3CGhi += pData['3c'][q].length * qty; pData['3c'][q].forEach(n=>{ if(n===resData.de3CResult) { s3CTrung+=qty; c3HitsDetail[n]=1; } }); }
+            for(let q in pData.x2) { let qty=parseFloat(q); sX2Ghi += pData.x2[q].length * qty; pData.x2[q].forEach(pair=>{ let [n1,n2]=pair.split('-'); if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0) { sX2Trung+=qty; x2HitsDetail[pair]=1; } }); }
+            for(let q in pData.x3) { let qty=parseFloat(q); sX3Ghi += pData.x3[q].length * qty; pData.x3[q].forEach(tri=>{ let [n1,n2,n3]=tri.split('-'); if((resData.loHitCounts[n1]||0)>0 && (resData.loHitCounts[n2]||0)>0 && (resData.loHitCounts[n3]||0)>0) { sX3Trung+=qty; x3HitsDetail[tri]=1; } }); }
 
-            let cLo = sLoGhi*p.lo, wLo = sLoTrung*p.payLo;
-            let cDe = sDeGhi*p.de, wDe = sDeTrung*p.payDe;
-            let c3C = s3CGhi*p['3c'], w3C = s3CTrung*p.pay3C;
-            let cX2 = sX2Ghi*p.x2, wX2 = sX2Trung*p.payX2;
-            let cX3 = sX3Ghi*p.x3, wX3 = sX3Trung*p.payX3;
+            let cLo = Math.ceil((sLoGhi*p.lo)/1000)*1000, wLo = Math.floor((sLoTrung*p.payLo)/1000)*1000;
+            let cDe = Math.ceil((sDeGhi*p.de)/1000)*1000, wDe = Math.floor((sDeTrung*p.payDe)/1000)*1000;
+            let c3C = Math.ceil((s3CGhi*p['3c'])/1000)*1000, w3C = Math.floor((s3CTrung*p.pay3C)/1000)*1000;
+            let cX2 = Math.ceil((sX2Ghi*p.x2)/1000)*1000, wX2 = Math.floor((sX2Trung*p.payX2)/1000)*1000;
+            let cX3 = Math.ceil((sX3Ghi*p.x3)/1000)*1000, wX3 = Math.floor((sX3Trung*p.payX3)/1000)*1000;
 
             let totalCost = cLo+cDe+c3C+cX2+cX3; let totalWin = wLo+wDe+w3C+wX2+wX3; let profit = totalWin - totalCost;
             return { cost: totalCost, win: totalWin, netCost: profit, sLoGhi, sDeGhi, s3CGhi, sX2Ghi, sX3Ghi, sLoTrung, sDeTrung, s3CTrung, sX2Trung, sX3Trung, cLo, cDe, c3C, cX2, cX3, wLo, wDe, w3C, wX2, wX3, loHitsDetail, deHitsDetail, c3HitsDetail, x2HitsDetail, x3HitsDetail };
@@ -756,14 +800,17 @@
             const masterInputEl = document.getElementById('master-input');
             const resultsInputEl = document.getElementById('results-input');
             if(!masterInputEl || !resultsInputEl) return;
-
             const getValSafely = (id) => { const e = document.getElementById(id); return e ? e.value : 0; };
             const pObj = { 
                 lo: parseFloat(getValSafely('pricePerDiem'))||0, de: parseFloat(getValSafely('pricePerDeUnit'))||0, '3c': parseFloat(getValSafely('pricePer3CUnit'))||0, x2: parseFloat(getValSafely('pricePerX2Unit'))||0, x3: parseFloat(getValSafely('pricePerX3Unit'))||0, 
                 payLo: parseFloat(getValSafely('lottoPayout'))||0, payDe: parseFloat(getValSafely('dePayout'))||0, pay3C: 1000 * (parseFloat(getValSafely('payoutRatio3C'))||0), payX2: 1000 * (parseFloat(getValSafely('payoutRatioX2'))||0), payX3: 1000 * (parseFloat(getValSafely('payoutRatioX3'))||0) 
             };
-
             let p = runCoreMath(masterInputEl.value, resultsInputEl.value, pObj);
+            let loDetailStr = Object.entries(p.loHitsDetail).map(([n, h]) => h > 1 ? `${n}(x${h})` : n).join(' ');
+            let deDetailStr = Object.keys(p.deHitsDetail).join(' ');
+            let c3DetailStr = Object.keys(p.c3HitsDetail).join(' ');
+            let x2DetailStr = Object.keys(p.x2HitsDetail).join(' ');
+            let x3DetailStr = Object.keys(p.x3HitsDetail).join(' ');
 
             let html = `
             <div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
@@ -783,56 +830,41 @@
                     <div>
                         <h4 class="font-bold text-green-600 mb-2 border-b pb-1">🟢 TRÚNG THƯỞNG</h4>
                         <div class="space-y-1 text-[15px]">
-                            ${p.sLoTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Lô: <b>${p.sLoTrung}đ</b></span> <span>${formatVND(p.wLo)}</span></div>` : ''}
-                            ${p.sDeTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${p.sDeTrung}n</b></span> <span>${formatVND(p.wDe)}</span></div>` : ''}
-                            ${p.s3CTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>3 Càng: <b>${p.s3CTrung}n</b></span> <span>${formatVND(p.w3C)}</span></div>` : ''}
-                            ${p.sX2Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 2: <b>${p.sX2Trung}n</b></span> <span>${formatVND(p.wX2)}</span></div>` : ''}
-                            ${p.sX3Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 3: <b>${p.sX3Trung}n</b></span> <span>${formatVND(p.wX3)}</span></div>` : ''}
+                            ${p.sLoTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Lô: <b>${p.sLoTrung}đ</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${loDetailStr}]</span></span> <span>${formatVND(p.wLo)}</span></div>` : ''}
+                            ${p.sDeTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${p.sDeTrung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${deDetailStr}]</span></span> <span>${formatVND(p.wDe)}</span></div>` : ''}
+                            ${p.s3CTrung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>3 Càng: <b>${p.s3CTrung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${c3DetailStr}]</span></span> <span>${formatVND(p.w3C)}</span></div>` : ''}
+                            ${p.sX2Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 2: <b>${p.sX2Trung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${x2DetailStr}]</span></span> <span>${formatVND(p.wX2)}</span></div>` : ''}
+                            ${p.sX3Trung>0 ? `<div class="flex justify-between font-bold text-green-700"><span>Xiên 3: <b>${p.sX3Trung}n</b> <span class="text-xs text-indigo-600 font-normal ml-1">[${x3DetailStr}]</span></span> <span>${formatVND(p.wX3)}</span></div>` : ''}
                             ${p.win===0 && p.cost>0 ? '<span class="text-gray-400 italic">Trượt hết...</span>' : ''}
                         </div>
                     </div>
                 </div>
             </div>`;
-
             const resContainer = document.getElementById('results-container');
             if(resContainer) resContainer.innerHTML = html;
-
             const costOut = document.getElementById('totalCostOutput');
             if(costOut) costOut.textContent = formatVND(p.cost); 
-            
             const winOut = document.getElementById('totalWinningsOutput');
             if(winOut) winOut.textContent = formatVND(p.win);
-            
             const pEl = document.getElementById('totalProfitOutput'); 
-            const pStatus = document.getElementById('profitStatusText');
             if(pEl) {
                 pEl.textContent = formatVND(Math.abs(p.netCost)); 
                 pEl.className = `text-2xl md:text-3xl font-bold font-mono ${p.netCost > 0 ? 'text-green-600' : (p.netCost < 0 ? 'text-red-600' : 'text-gray-700')}`;
             }
-            if(pStatus) {
-                if(p.netCost > 0) { pStatus.textContent = "(Khách Dương - Mình nợ khách)"; pStatus.className = "text-center font-bold mt-2 text-sm text-green-600"; } 
-                else if (p.netCost < 0) { pStatus.textContent = "(Khách Âm - Khách nợ mình)"; pStatus.className = "text-center font-bold mt-2 text-sm text-red-600"; } 
-                else { pStatus.textContent = "(Hòa tiền)"; pStatus.className = "text-center font-bold mt-2 text-sm text-gray-500"; }
-            }
-            
             currentCalcData = p; 
         }
 
         document.getElementById('calculate-button')?.addEventListener('click', calculateAndRender);
 
         document.getElementById('saveToDebtButton')?.addEventListener('click', () => {
-            if(!activeCustomer) return alert("❌ Anh chưa chọn khách hàng!");
-            if(!currentCalcData || (currentCalcData.cost === 0 && currentCalcData.win === 0)) return alert("Chưa có dữ liệu!");
-            const rawDate = document.getElementById('sessionDate')?.value; if(!rawDate) return alert("Chưa chọn ngày!");
-            
+            if(!activeCustomer) return;
+            if(!currentCalcData || (currentCalcData.cost === 0 && currentCalcData.win === 0)) return;
+            const rawDate = document.getElementById('sessionDate')?.value;
             const amountToSave = currentCalcData.netCost / 1000;
             if(!creditData[activeCustomer].debts[rawDate]) creditData[activeCustomer].debts[rawDate] = 0;
-            
             creditData[activeCustomer].debts[rawDate] += amountToSave;
             saveData(); renderTongHop(); renderChiTiet();
-            
-            alert(`✅ Đã chốt sổ thành công cho "${activeCustomer}"!\n📅 Ngày: ${rawDate}\n💰 Hôm nay: ${currentCalcData.netCost > 0 ? `Khách Dương ${amountToSave}k` : `Khách Âm ${Math.abs(amountToSave)}k`}`);
-            goToDetail(activeCustomer);
+            alert(`✅ Chốt thành công cho "${activeCustomer}"!`);
         });
 
         function exportMessageForCustomer(name) {
@@ -840,29 +872,17 @@
             if(!dInput) return;
             let dateKey = dInput.value;
             let d = dateKey.split('-'); let dateStr = `${d[2]}-${d[1]}-${d[0]}`; 
-            
             let rawInput = (creditData[name] && creditData[name].inputs && creditData[name].inputs[dateKey]) ? creditData[name].inputs[dateKey] : '';
             let rawResults = (creditData['__results__'] && creditData['__results__'][dateKey]) ? creditData['__results__'][dateKey] : '';
-            
             let baseCfg = creditData['__default_config__'] || defaultConfig;
             let cfg = (creditData[name] && creditData[name].config) ? creditData[name].config : baseCfg;
-            
             let pObj = { 
                 lo: cfg.lo||0, de: cfg.de||0, '3c': cfg.c3||0, x2: cfg.x2||0, x3: cfg.x3||0, 
                 payLo: cfg.payLo||0, payDe: cfg.payDe||0, pay3C: 1000*(cfg.pay3C||0), payX2: 1000*(cfg.payX2||0), payX3: 1000*(cfg.payX3||0) 
             };
-
             let p = runCoreMath(rawInput, rawResults, pObj);
-
-            let fn = (val) => {
-                if (val === 0) return '0n';
-                return (val/1000).toLocaleString('vi-VN') + 'n';
-            };
-            let fs = (val) => { 
-                if (val === 0) return '0';
-                let sign = val < 0 ? '-' : ''; 
-                return sign + (Math.abs(val)/1000).toLocaleString('vi-VN'); 
-            };
+            let fn = (val) => (val === 0) ? '0n' : (val/1000).toLocaleString('vi-VN') + 'n';
+            let fs = (val) => (val === 0) ? '0' : (val < 0 ? '-' : '') + (Math.abs(val)/1000).toLocaleString('vi-VN');
 
             let loDet = Object.entries(p.loHitsDetail).map(([n,h]) => h>1 ? `${n}(x${h})` : n).join(' ');
             let deDet = Object.keys(p.deHitsDetail).join(' ');
@@ -871,13 +891,11 @@
             let x3Det = Object.keys(p.x3HitsDetail).join(' ');
 
             let msg = `Ngay: ${dateStr}\n`;
-            
             if (p.sLoGhi > 0) msg += `Lo: ${p.sLoGhi}d = ${fn(p.cLo)}\n`;
             if (p.sDeGhi > 0) msg += `De: ${p.sDeGhi}n = ${fn(p.cDe)}\n`;
             if (p.s3CGhi > 0) msg += `3c: ${p.s3CGhi}n = ${fn(p.c3C)}\n`;
             if (p.sX2Ghi > 0) msg += `X2: ${p.sX2Ghi}n = ${fn(p.cX2)}\n`;
             if (p.sX3Ghi > 0) msg += `X3: ${p.sX3Ghi}n = ${fn(p.cX3)}\n`;
-
             if (p.sLoTrung > 0) msg += `Th lo: ${p.sLoTrung}d [${loDet}] = ${fn(p.wLo)}\n`;
             if (p.sDeTrung > 0) msg += `Th de: ${p.sDeTrung}n [${deDet}] = ${fn(p.wDe)}\n`;
             if (p.s3CTrung > 0) msg += `Th 3c: ${p.s3CTrung}n [${c3Det}] = ${fn(p.w3C)}\n`;
@@ -886,22 +904,25 @@
 
             let profitStr = p.netCost > 0 ? `(duong) ${fn(p.netCost)}` : (p.netCost < 0 ? `(am) ${fn(Math.abs(p.netCost))}` : `0n`);
             msg += `Hom nay : ${profitStr}\n`;
-
             let oldDebtVND = calculateOldDebt(name) * 1000;
             msg += `No cu: ${fs(oldDebtVND)}n\n`;
-
             let finalTotal = oldDebtVND + p.netCost;
             let bracketOldDebt = oldDebtVND < 0 ? `(${fs(oldDebtVND)})` : `${fs(oldDebtVND)}`;
             msg += `Tong: ${fs(p.netCost)} + ${bracketOldDebt} = ${fs(finalTotal)}n.`;
 
-            const txt = document.getElementById('messageOutput'); 
-            const container = document.getElementById('messageOutputContainer');
-            if(txt && container) {
-                txt.value = msg; 
-                container.classList.remove('hidden'); 
-                txt.select(); 
-                document.execCommand('copy'); 
-                alert('✅ Đã copy tin nhắn hóa đơn chuẩn form vào bộ nhớ. Anh có thể qua Zalo dán luôn!');
+            // COPY VÀO BỘ NHỚ VÀ ĐỔI CHỮ NÚT BẤM
+            const dummy = document.getElementById('hiddenCopyTextarea');
+            dummy.value = msg; dummy.select(); document.execCommand('copy');
+
+            const btn = document.getElementById(`btnExport-${name}`);
+            if(btn) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = "✅ Đã Copy!";
+                btn.classList.replace('bg-emerald-600', 'bg-blue-600');
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.replace('bg-blue-600', 'bg-emerald-600');
+                }, 2000);
             }
         }
 
