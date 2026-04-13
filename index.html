@@ -119,7 +119,7 @@
                 <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
                     <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
-                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Tự động nhận diện: Đầu, Đít, Tổng, Kép, Kép Lệch, 3 Càng.</div>
+                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Tự động bung: Đầu, Đít, Tổng, Kép, Kép Lệch.</div>
                 </div>
                 <div class="flex flex-col h-full">
                     <div class="flex justify-between items-center mb-1">
@@ -284,7 +284,7 @@
         }
 
         // ==========================================
-        // CƠ CHẾ TỰ ĐỘNG KÉO KẾT QUẢ XSMB SIÊU VIỆT
+        // CƠ CHẾ TỰ ĐỘNG KÉO KẾT QUẢ XSMB (3 LỚP BẢO VỆ)
         // ==========================================
         async function autoFetchKQXS() {
             const dateVal = document.getElementById('sessionDate')?.value;
@@ -300,57 +300,74 @@
             let parts = dateVal.split('-'); // yyyy, mm, dd
             let d = parseInt(parts[2]), m = parseInt(parts[1]), y = parts[0];
             
-            // Dùng xskt.com.vn vì HTML dễ bóc tách, có id KQCS. Kết hợp AllOrigins proxy để lách luật CORS.
             let targetUrl = `https://xskt.com.vn/xsmb/ngay-${d}-${m}-${y}`; 
-            let proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
             
-            try {
-                let response = await fetch(proxyUrl);
-                let data = await response.json();
-                
-                if(data.contents) {
-                    let parser = new DOMParser();
-                    let doc = parser.parseFromString(data.contents, "text/html");
-                    let table = doc.getElementById('KQCS') || doc.querySelector('table'); 
-                    
-                    if(table) {
-                        let tds = table.querySelectorAll('td');
-                        let numbers = [];
-                        tds.forEach(td => {
-                            let txt = td.innerText.trim();
-                            // Tách khoảng trắng hoặc gạch ngang
-                            let segments = txt.split(/\s|-/);
-                            segments.forEach(p => {
-                                let cleanNum = p.replace(/\D/g, ''); // Xóa mọi ký tự không phải số
-                                if(cleanNum.length >= 2) numbers.push(cleanNum); // Lấy số dài >= 2
-                            });
-                        });
-                        
-                        // Thông thường bảng MB có ít nhất 27 số
-                        if(numbers.length >= 27) {
-                            resInput.value = numbers.join('\n');
-                            calculateAndRender();
-                            alert("✅ Đã tự động lấy thành công 27 giải KQXS!");
+            // Hệ thống 3 trạm trung chuyển dự phòng (Proxy Fallback)
+            const proxies = [
+                `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+                `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+            ];
+            
+            let htmlContent = null;
+
+            for (let i = 0; i < proxies.length; i++) {
+                try {
+                    let response = await fetch(proxies[i]);
+                    if (response.ok) {
+                        if (proxies[i].includes('allorigins')) {
+                            let data = await response.json();
+                            htmlContent = data.contents;
                         } else {
-                            resInput.value = "";
-                            alert("⚠️ Ngày này chưa có kết quả (chưa quay) hoặc web đổi cấu trúc. Vui lòng copy tay!");
-                            openXSMB(); // Tự bật web lên luôn
+                            htmlContent = await response.text();
                         }
+                        if (htmlContent && htmlContent.includes('KQCS')) break; // Thành công và lấy đúng trang
+                    }
+                } catch (e) {
+                    console.warn(`Trạm trung chuyển ${i+1} lỗi, thử trạm tiếp theo...`);
+                }
+            }
+            
+            if(htmlContent) {
+                let parser = new DOMParser();
+                let doc = parser.parseFromString(htmlContent, "text/html");
+                let table = doc.getElementById('KQCS') || doc.querySelector('table'); 
+                
+                if(table) {
+                    let tds = table.querySelectorAll('td');
+                    let numbers = [];
+                    tds.forEach(td => {
+                        let txt = td.innerText.trim();
+                        // Tách khoảng trắng hoặc gạch ngang
+                        let segments = txt.split(/\s|-/);
+                        segments.forEach(p => {
+                            let cleanNum = p.replace(/\D/g, ''); // Xóa mọi ký tự không phải số
+                            if(cleanNum.length >= 2) numbers.push(cleanNum); // Lấy số dài >= 2
+                        });
+                    });
+                    
+                    if(numbers.length >= 27) {
+                        resInput.value = numbers.join('\n');
+                        calculateAndRender();
+                        alert("✅ Đã tự động lấy thành công 27 giải KQXS!");
                     } else {
                         resInput.value = "";
-                        alert("⚠️ Không tìm thấy bảng KQXS. Vui lòng copy tay!");
+                        alert("⚠️ Ngày này chưa có kết quả (chưa quay) hoặc web đổi cấu trúc. Vui lòng lấy số thủ công!");
+                        openXSMB(); 
                     }
+                } else {
+                    resInput.value = "";
+                    alert("⚠️ Không tìm thấy bảng KQXS. Vui lòng dùng nút 'Copy Thủ Công'!");
                 }
-            } catch(e) {
+            } else {
                 resInput.value = "";
-                alert("⚠️ Lỗi đường truyền mạng. Vui lòng copy tay!");
+                alert("⚠️ Lỗi mạng (Các trạm trung chuyển đang quá tải). Vui lòng dùng nút 'Copy Thủ Công' để lấy số hôm nay!");
             }
             
             btn.innerText = "⚡ TỰ ĐỘNG LẤY KQXS";
             btn.disabled = false;
         }
 
-        // Nút mở web thủ công sơ cua
         function openXSMB() {
             let dateVal = document.getElementById('sessionDate')?.value;
             if(!dateVal) { alert("Vui lòng chọn ngày trước!"); return; }
@@ -378,9 +395,6 @@
             return old;
         }
 
-        // ==========================================
-        // CẬP NHẬT TRỰC TIẾP NỢ CŨ / GẠCH NỢ
-        // ==========================================
         function updateOldDebt(name, value) {
             let num = parseFloat(value);
             if(isNaN(num)) num = 0;
