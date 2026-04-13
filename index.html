@@ -119,16 +119,21 @@
                 <div class="flex flex-col h-full">
                     <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
                     <textarea id="master-input" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách tại đây..."></textarea>
-                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Tự động bung: Đầu, Đít, Tổng, Kép, Kép Lệch.</div>
+                    <div class="mt-1 text-xs text-indigo-600 font-semibold">Tự động nhận diện: Đầu, Đít, Tổng, Kép, Kép Lệch, 3 Càng.</div>
                 </div>
                 <div class="flex flex-col h-full">
                     <div class="flex justify-between items-center mb-1">
-                        <label class="font-bold text-gray-700">2. Nhập bảng kết quả (27 giải):</label>
-                        <button onclick="openXSMB()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-4 rounded shadow transition-colors flex items-center gap-1">
-                            🔍 Mở KQXS Đúng Ngày
-                        </button>
+                        <label class="font-bold text-gray-700">2. Kết quả XSMB (27 giải):</label>
+                        <div class="flex gap-2">
+                            <button id="btnAutoFetch" onclick="autoFetchKQXS()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded shadow transition-colors flex items-center gap-1">
+                                ⚡ TỰ ĐỘNG LẤY KQXS
+                            </button>
+                            <button onclick="openXSMB()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded shadow transition-colors flex items-center gap-1" title="Mở web tự copy tay nếu lỗi">
+                                🔍 Copy Thủ Công
+                            </button>
+                        </div>
                     </div>
-                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Bấm nút 'Mở KQXS Đúng Ngày' ở trên, copy kết quả rồi dán vào đây. Máy sẽ tự động chặt các số dính liền nhau (VD: 5481705087 -> 54817 và 05087)."></textarea>
+                    <textarea id="results-input" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Bấm nút '⚡ TỰ ĐỘNG LẤY KQXS' ở trên. Hệ thống sẽ tự động tìm và điền 27 giải vào đây cho anh!"></textarea>
                 </div>
             </div>
 
@@ -279,12 +284,77 @@
         }
 
         // ==========================================
-        // MỞ TRANG WEB XSMB THEO ĐÚNG NGÀY ĐÃ CHỌN
+        // CƠ CHẾ TỰ ĐỘNG KÉO KẾT QUẢ XSMB SIÊU VIỆT
         // ==========================================
+        async function autoFetchKQXS() {
+            const dateVal = document.getElementById('sessionDate')?.value;
+            if(!dateVal) { alert("Vui lòng chọn ngày trước!"); return; }
+            
+            const btn = document.getElementById('btnAutoFetch');
+            const resInput = document.getElementById('results-input');
+            
+            btn.innerText = "⏳ Đang lấy...";
+            btn.disabled = true;
+            resInput.value = "Hệ thống đang tự động tải kết quả xổ số miền Bắc. Xin chờ vài giây...";
+            
+            let parts = dateVal.split('-'); // yyyy, mm, dd
+            let d = parseInt(parts[2]), m = parseInt(parts[1]), y = parts[0];
+            
+            // Dùng xskt.com.vn vì HTML dễ bóc tách, có id KQCS. Kết hợp AllOrigins proxy để lách luật CORS.
+            let targetUrl = `https://xskt.com.vn/xsmb/ngay-${d}-${m}-${y}`; 
+            let proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+            
+            try {
+                let response = await fetch(proxyUrl);
+                let data = await response.json();
+                
+                if(data.contents) {
+                    let parser = new DOMParser();
+                    let doc = parser.parseFromString(data.contents, "text/html");
+                    let table = doc.getElementById('KQCS') || doc.querySelector('table'); 
+                    
+                    if(table) {
+                        let tds = table.querySelectorAll('td');
+                        let numbers = [];
+                        tds.forEach(td => {
+                            let txt = td.innerText.trim();
+                            // Tách khoảng trắng hoặc gạch ngang
+                            let segments = txt.split(/\s|-/);
+                            segments.forEach(p => {
+                                let cleanNum = p.replace(/\D/g, ''); // Xóa mọi ký tự không phải số
+                                if(cleanNum.length >= 2) numbers.push(cleanNum); // Lấy số dài >= 2
+                            });
+                        });
+                        
+                        // Thông thường bảng MB có ít nhất 27 số
+                        if(numbers.length >= 27) {
+                            resInput.value = numbers.join('\n');
+                            calculateAndRender();
+                            alert("✅ Đã tự động lấy thành công 27 giải KQXS!");
+                        } else {
+                            resInput.value = "";
+                            alert("⚠️ Ngày này chưa có kết quả (chưa quay) hoặc web đổi cấu trúc. Vui lòng copy tay!");
+                            openXSMB(); // Tự bật web lên luôn
+                        }
+                    } else {
+                        resInput.value = "";
+                        alert("⚠️ Không tìm thấy bảng KQXS. Vui lòng copy tay!");
+                    }
+                }
+            } catch(e) {
+                resInput.value = "";
+                alert("⚠️ Lỗi đường truyền mạng. Vui lòng copy tay!");
+            }
+            
+            btn.innerText = "⚡ TỰ ĐỘNG LẤY KQXS";
+            btn.disabled = false;
+        }
+
+        // Nút mở web thủ công sơ cua
         function openXSMB() {
             let dateVal = document.getElementById('sessionDate')?.value;
             if(!dateVal) { alert("Vui lòng chọn ngày trước!"); return; }
-            let parts = dateVal.split('-'); // parts = [yyyy, mm, dd]
+            let parts = dateVal.split('-'); 
             let url = `https://xoso.com.vn/xsmb-${parts[2]}-${parts[1]}-${parts[0]}.html`;
             window.open(url, 'XSMB', 'width=500,height=700');
         }
@@ -308,6 +378,9 @@
             return old;
         }
 
+        // ==========================================
+        // CẬP NHẬT TRỰC TIẾP NỢ CŨ / GẠCH NỢ
+        // ==========================================
         function updateOldDebt(name, value) {
             let num = parseFloat(value);
             if(isNaN(num)) num = 0;
@@ -325,6 +398,9 @@
             }
         }
 
+        // ==========================================
+        // QUẢN LÝ NGỮ CẢNH (CHUYỂN ĐỔI KHÁCH HÀNG)
+        // ==========================================
         function populateCustomerSelector() {
             const sel = document.getElementById('customerSelector');
             if (!sel) return;
@@ -543,20 +619,20 @@
 
         function parseResultsText(rawResults) {
             if(!rawResults || rawResults.trim()==='') return { deResult:null, de3CResult:null, loHitCounts:{} };
-            const cleaned = rawResults.replace(/[^\d\s]/g, ' ');
-            const tokens = cleaned.trim().split(/\s+/).filter(t=>t.length > 0);
+            // Lọc dính liền bằng khoảng trắng
+            let cleaned = rawResults.replace(/[^\d\s]/g, ' ');
+            let tokens = cleaned.trim().split(/\s+/).filter(t=>t.length > 0);
             if(tokens.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
             
-            // XỬ LÝ LỖI COPY BỊ DÍNH LIỀN SỐ THÀNH CỤC DÀI (Vd: 5481705087)
+            // XỬ LÝ LỖI DÍNH SỐ (Băm nhỏ chuỗi dài dựa trên luật giải thưởng)
             let allNumbers = [];
             tokens.forEach(t => {
-                if (t.length === 1) return; // Bỏ qua STT giải (1, 2, 3...)
-                
-                if (t.length === 10 || t.length === 30) {
+                if (t.length === 1) return; // Bỏ qua STT giải
+                if (t.length === 10 || t.length === 30 || t.length === 15) {
                     for(let i=0; i<t.length; i+=5) allNumbers.push(t.slice(i, i+5));
-                } else if (t.length === 16 || t.length === 24) {
+                } else if (t.length === 16 || t.length === 24 || t.length === 12) {
                     for(let i=0; i<t.length; i+=4) allNumbers.push(t.slice(i, i+4));
-                } else if (t.length === 9) {
+                } else if (t.length === 9 || t.length === 18) {
                     for(let i=0; i<t.length; i+=3) allNumbers.push(t.slice(i, i+3));
                 } else if (t.length === 8) {
                     for(let i=0; i<t.length; i+=2) allNumbers.push(t.slice(i, i+2));
@@ -567,6 +643,7 @@
 
             if(allNumbers.length===0) return { deResult:null, de3CResult:null, loHitCounts:{} };
 
+            // Giải đặc biệt luôn ưu tiên tìm giải dài >= 4 đầu tiên
             const gdb = allNumbers.find(t => t.length >= 4) || allNumbers[0] || ''; 
             const deResult = gdb.slice(-2); 
             const de3CResult = gdb.slice(-3);
@@ -835,6 +912,7 @@
             }
         });
 
+        // ĐỊNH DẠNG XUẤT TIN NHẮN CHUẨN FORM
         document.getElementById('exportMessage')?.addEventListener('click', () => {
             if(!currentCalcData) return; 
             const dInput = document.getElementById('sessionDate');
