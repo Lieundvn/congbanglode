@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cộng bảng. Mr: Liêu (Cloud)</title>
+    <title>Hệ Thống Quản Lý & Tính Lô Đề (Cloud)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
@@ -40,16 +40,16 @@
     <div id="loadingScreen">Đang tải sổ sách từ Cloud... ☁️</div>
     <div id="cloudStatus">Đã đồng bộ Cloud ☁️</div>
 
-    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">Cộng bảng. Mr: Liêu</h2>
+    <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">Hệ Thống Quản Lý Tín Dụng & Lô Đề</h2>
 
     <div class="flex justify-center items-center gap-3 mb-6">
-        <label class="font-bold text-indigo-800 text-lg">Ngày:</label>
+        <label class="font-bold text-indigo-800 text-lg">Ngày chốt sổ:</label>
         <input id="sessionDate" type="date" class="p-2 border border-indigo-400 rounded font-bold shadow-inner" />
     </div>
 
     <div class="max-w-6xl mx-auto tab-container">
         <div class="tab">
-            <button class="tablinks active" id="btnTabTongHop" onclick="openTab(event, 'TongHop')">1. danh sách</button>
+            <button class="tablinks active" id="btnTabTongHop" onclick="openTab(event, 'TongHop')">1. Sổ Khách (Tổng Nợ)</button>
             <button class="tablinks" id="btnTabTinhToan" onclick="openTab(event, 'TinhToan')">2. Tính Toán & Vào Sổ</button>
             <button class="tablinks" id="btnTabChiTiet" onclick="openTab(event, 'ChiTiet')">3. Sổ Chi Tiết</button>
         </div>
