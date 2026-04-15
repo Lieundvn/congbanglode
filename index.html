@@ -37,14 +37,14 @@
 </head>
 <body class="p-2 md:p-4">
 
-    <div id="loadingScreen">Đang tải dữ liệu từ Cloud... ☁️</div>
-    <div id="cloudStatus">Đã đồng bộ ☁️</div>
+    <div id="loadingScreen">Đang tải sổ sách từ Cloud... ☁️</div>
+    <div id="cloudStatus">Đã đồng bộ Cloud ☁️</div>
 
     <h2 class="text-3xl font-bold text-center text-indigo-700 mt-2 mb-4">Hệ Thống Quản Lý Tín Dụng & Lô Đề</h2>
 
     <div class="flex justify-center items-center gap-3 mb-6">
         <label class="font-bold text-indigo-800 text-lg">Ngày chốt sổ:</label>
-        <input id="sessionDate" type="date" class="p-2 border border-indigo-400 rounded font-bold shadow-inner" />
+        <input id="sessionDate" type="date" onchange="handleDateChange()" class="p-2 border border-indigo-400 rounded font-bold shadow-inner" />
     </div>
 
     <div class="max-w-6xl mx-auto tab-container">
@@ -76,65 +76,93 @@
             <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg mb-4 flex flex-wrap items-center gap-4 shadow-sm">
                 <div class="w-full">
                     <label class="block font-bold text-indigo-800 mb-1">CHỌN KHÁCH HÀNG:</label>
-                    <select id="customerSelector" class="w-full p-2 border border-indigo-300 rounded font-bold text-lg shadow-inner"></select>
+                    <select id="customerSelector" onchange="handleCustomerChange(this.value)" class="w-full p-2 border border-indigo-300 rounded font-bold text-lg shadow-inner"></select>
                 </div>
             </div>
 
-            <div id="config-panel" class="mb-6 p-4 rounded-lg bg-gray-50 border border-gray-200">
+            <div class="mb-4">
+                <div id="quickSelectContacts" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <div class="mb-4 flex gap-2">
+                <button id="toggleConfig" onclick="toggleConfigPanel()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded text-sm">Hiện Cấu Hình Giá</button>
+            </div>
+
+            <div id="config-panel" class="mb-6 p-4 rounded-lg bg-gray-50 border border-gray-200 hidden">
                 <div class="flex justify-between items-center mb-3">
-                    <p id="configCustomerNote" class="text-sm font-bold text-indigo-700">Cấu hình giá và trả thưởng:</p>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="isCompanyConfig" class="sr-only peer">
-                        <div class="w-9 h-5 bg-gray-300 rounded-full peer peer-checked:bg-red-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                    <p id="configCustomerNote" class="text-sm text-gray-500 italic">(Cấu hình mặc định)</p>
+                    <label class="relative inline-flex items-center cursor-pointer bg-red-50 py-1 px-3 rounded border border-red-200 shadow-sm">
+                        <input type="checkbox" id="isCompanyConfig" onchange="handleConfigInput()" class="sr-only peer">
+                        <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[6px] after:left-[14px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
                         <span class="ml-2 text-sm font-bold text-red-700 uppercase">Khách này là CÔNG TY</span>
                     </label>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-white p-3 rounded border">
-                        <label class="block text-xs font-bold text-red-600 uppercase mb-1">Giá Đánh (đ/n)</label>
-                        <div class="grid grid-cols-5 gap-1">
-                            <input id="pricePerDiem" type="number" placeholder="Lô" class="border p-1 text-center text-sm rounded">
-                            <input id="pricePerDeUnit" type="number" placeholder="Đề" class="border p-1 text-center text-sm rounded">
-                            <input id="pricePer3CUnit" type="number" placeholder="3C" class="border p-1 text-center text-sm rounded">
-                            <input id="pricePerX2Unit" type="number" placeholder="X2" class="border p-1 text-center text-sm rounded">
-                            <input id="pricePerX3Unit" type="number" placeholder="X3" class="border p-1 text-center text-sm rounded">
+                    <div class="bg-white p-4 rounded border border-red-200 shadow-sm">
+                        <h3 class="font-bold mb-2 text-red-600">Giá Đánh</h3>
+                        <div class="grid gap-2 text-sm">
+                            <label class="flex justify-between items-center">Lô: <input id="pricePerDiem" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">Đề: <input id="pricePerDeUnit" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">3 Càng: <input id="pricePer3CUnit" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">Xiên 2: <input id="pricePerX2Unit" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">Xiên 3: <input id="pricePerX3Unit" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
                         </div>
                     </div>
-                    <div class="bg-white p-3 rounded border">
-                        <label class="block text-xs font-bold text-green-600 uppercase mb-1">Trả thưởng (Tỷ lệ)</label>
-                        <div class="grid grid-cols-5 gap-1">
-                            <input id="lottoPayout" type="number" class="border p-1 text-center text-sm rounded">
-                            <input id="dePayout" type="number" class="border p-1 text-center text-sm rounded">
-                            <input id="payoutRatio3C" type="number" class="border p-1 text-center text-sm rounded">
-                            <input id="payoutRatioX2" type="number" class="border p-1 text-center text-sm rounded">
-                            <input id="payoutRatioX3" type="number" class="border p-1 text-center text-sm rounded">
+                    <div class="bg-white p-4 rounded border border-green-200 shadow-sm">
+                        <h3 class="font-bold mb-2 text-green-600">Trả Thưởng</h3>
+                        <div class="grid gap-2 text-sm">
+                            <label class="flex justify-between items-center">Lô: <input id="lottoPayout" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">Đề: <input id="dePayout" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">3C: <input id="payoutRatio3C" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">X2: <input id="payoutRatioX2" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
+                            <label class="flex justify-between items-center">X3: <input id="payoutRatioX3" type="number" oninput="handleConfigInput()" class="border p-1 w-24 text-right"></label>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="font-bold mb-1 block text-gray-700 uppercase text-xs">Lệnh cược:</label>
-                    <textarea id="master-input" rows="8" class="w-full p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white" placeholder="Nhập tin nhắn khách..."></textarea>
+                <div class="flex flex-col h-full">
+                    <label class="font-bold mb-1 block text-gray-700">1. Lệnh cược của <span id="lblActiveUser" class="text-indigo-600 uppercase">...</span>:</label>
+                    <textarea id="master-input" oninput="handleMasterInput()" class="w-full flex-grow p-3 border rounded mono shadow-inner bg-yellow-50 focus:bg-white min-h-[300px]" placeholder="Nhập tin nhắn khách lẻ tại đây..."></textarea>
                 </div>
-                <div>
-                    <label class="font-bold mb-1 block text-gray-700 uppercase text-xs">Kết quả (Bộ nhớ theo ngày):</label>
-                    <textarea id="results-input" rows="8" class="w-full p-3 border rounded mono shadow-inner" placeholder="Dán 27 giải vào đây..."></textarea>
+                <div class="flex flex-col h-full">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="font-bold text-gray-700">2. Kết quả XSMB (Lưu theo ngày):</label>
+                        <div class="flex gap-2">
+                            <button id="btnAutoFetch" onclick="autoFetchKQXS()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded shadow">⚡ TỰ ĐỘNG LẤY KQXS</button>
+                            <button onclick="openXSMB()" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded shadow">🔍 Copy Thủ Công</button>
+                        </div>
+                    </div>
+                    <textarea id="results-input" oninput="handleResultsInput()" class="w-full flex-grow p-3 border rounded mono shadow-inner min-h-[300px]" placeholder="Dán 27 giải vào đây..."></textarea>
                 </div>
             </div>
 
-            <button id="calculate-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded shadow-lg text-lg mb-4">PHÂN TÍCH & TÍNH TOÁN</button>
+            <div class="mb-6 flex flex-wrap gap-2 justify-center">
+                <button id="calculate-button" onclick="calculateAndRender()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded shadow-lg text-lg">PHÂN TÍCH & TÍNH TOÁN</button>
+            </div>
 
             <div id="results-container" class="mb-4"></div>
 
-            <div class="bg-gray-100 border rounded-lg p-4 mb-4 shadow-sm">
-                <div class="flex justify-between text-lg"><span class="font-bold">Tổng Nhận:</span> <span id="totalCostOutput" class="font-mono text-red-600">0₫</span></div>
-                <div class="flex justify-between text-lg"><span class="font-bold">Tổng Trúng:</span> <span id="totalWinningsOutput" class="font-mono text-green-600">0₫</span></div>
-                <div class="flex justify-between text-2xl mt-2 border-top pt-2"><span class="font-black">CHỐT:</span> <span id="totalProfitOutput" class="font-black">0₫</span></div>
+            <div id="total-summary" class="bg-gray-100 border border-gray-300 rounded-lg p-6 mb-6 shadow-sm">
+                <h2 class="text-xl font-bold text-center text-gray-800 mb-4">TỔNG KẾT PHƠI</h2>
+                <div class="flex justify-between items-center border-b pb-2 mb-2 text-lg">
+                    <span class="text-red-600 font-bold">Tổng Nhận (Đánh):</span>
+                    <span id="totalCostOutput" class="font-mono text-red-600 font-bold">0₫</span>
+                </div>
+                <div class="flex justify-between items-center border-b pb-2 mb-2 text-lg">
+                    <span class="text-green-600 font-bold">Tổng Trúng:</span>
+                    <span id="totalWinningsOutput" class="font-mono text-green-600 font-bold">0₫</span>
+                </div>
+                <div class="flex justify-between items-center mt-4 pt-2">
+                    <span class="text-2xl md:text-3xl font-bold text-gray-800">CHỐT HÔM NAY:</span>
+                    <span id="totalProfitOutput" class="text-2xl md:text-3xl font-bold font-mono">0₫</span>
+                </div>
             </div>
 
-            <button id="saveToDebtButton" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg text-xl shadow-xl">✍️ CHỐT & VÀO SỔ CÔNG NỢ</button>
+            <button id="saveToDebtButton" onclick="saveToDebt()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-lg text-xl shadow-xl flex items-center justify-center gap-2 transition-all mb-4">
+                ✍️ CHỐT SỐ & LƯU VÀO CÔNG NỢ
+            </button>
         </div>
 
         <div id="ChiTiet" class="tabcontent">
@@ -142,27 +170,30 @@
                 <button class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded shadow" onclick="renderChiTiet()">Hiển thị tất cả sổ</button>
                 <div id="userActionButtons"></div>
             </div>
+            <h3 id="chiTietTitle" class="text-xl font-bold text-indigo-700 mb-1">Đang hiển thị: Tất cả khách hàng</h3>
             <div class="table-responsive">
                 <table class="debt-table">
                     <thead>
-                        <tr>
+                        <tr id="headerRow">
                             <th style="text-align:left;">Tên Khách Hàng</th>
-                            <th>Nợ Cũ (Sửa)</th>
+                            <th>Nợ Cũ (VNĐ)</th>
                             <th class="today-col" id="colTodayHeader">Hôm nay</th>
-                            <th class="col-total">Tổng Cộng</th>
-                            <th class="bg-emerald-100">Xuất TN</th>
+                            <th class="col-total">Tổng Cộng (VNĐ)</th>
+                            <th class="bg-emerald-100 text-emerald-800 border-emerald-300">Xuất TN</th>
                         </tr>
                     </thead>
                     <tbody id="chiTietBody"></tbody>
                 </table>
             </div>
-            
-            <div id="copyNotice" class="hidden mt-4 p-3 bg-emerald-600 text-white font-bold text-center rounded animate-pulse">✅ Đã copy tin nhắn hóa đơn chuẩn form!</div>
         </div>
     </div>
 
+    <textarea id="hiddenCopyArea" style="position: absolute; left: -9999px;"></textarea>
+
     <script>
-        // --- CẤU HÌNH SUPABASE ---
+        // ==========================================
+        // KHỞI TẠO DỮ LIỆU & SUPABASE
+        // ==========================================
         const { createClient } = supabase;
         const supabaseUrl = 'https://rcndrqiebvdynqrmkamm.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjbmRycWllYnZkeW5xcm1rYW1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3OTA1MDQsImV4cCI6MjA5MTM2NjUwNH0.DZnXTSuGDkgwB8-vZvND7e7XhzTrXrqfVgKeydfYe_c';
@@ -170,246 +201,332 @@
 
         let creditData = {}; 
         let activeCustomer = '';
-        const basePrice = { lo: 22500, de: 1000, c3: 1000, x2: 1000, x3: 1000, payLo: 80000, payDe: 80000, pay3C: 400, payX2: 10, payX3: 40, isCompany: false };
+        let currentCalcData = null; 
 
         function debounce(fn, delay) { let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), delay); }; }
+        
+        // ==========================================
+        // TẢI & LƯU CLOUD
+        // ==========================================
+        async function loadDataFromSupabase() {
+            const { data, error } = await sb.from('nhat_ky_cong_no').select('du_lieu').eq('id', 1).single();
+            if (!error && data && data.du_lieu) {
+                creditData = data.du_lieu;
+                // Khởi tạo vùng nhớ rỗng nếu chưa có
+                if (!creditData['__results__']) creditData['__results__'] = {};
+                if (!creditData['__default_config__']) creditData['__default_config__'] = { ...defaultConfig };
+            }
+            document.getElementById('loadingScreen').style.display = 'none';
+            
+            // Nạp KQXS của ngày hiện tại
+            const dateKey = document.getElementById('sessionDate').value;
+            if (creditData['__results__'] && creditData['__results__'][dateKey]) {
+                document.getElementById('results-input').value = creditData['__results__'][dateKey];
+            }
 
-        // --- ĐỒNG BỘ DỮ LIỆU ---
-        async function syncData() {
-            const status = document.getElementById('cloudStatus');
-            status.style.display = 'block';
-            const { error } = await sb.from('nhat_ky_cong_no').update({ du_lieu: creditData }).eq('id', 1);
-            if(!error) setTimeout(() => status.style.display = 'none', 2000);
+            renderTongHop();
+            renderQuickSelectContacts();
+            switchCustomerContext(""); 
         }
-        const debouncedSave = debounce(syncData, 1000);
 
-        // --- XỬ LÝ SỰ KIỆN GIAO DIỆN ---
-        document.getElementById('sessionDate').value = new Date().toLocaleDateString('en-CA');
+        async function saveData() {
+            const status = document.getElementById('cloudStatus');
+            status.style.display = 'block'; status.innerText = 'Đang đồng bộ... ⏳'; status.style.background = '#f59e0b';
+            const { error } = await sb.from('nhat_ky_cong_no').update({ du_lieu: creditData }).eq('id', 1);
+            if(!error) {
+                status.innerText = 'Đã đồng bộ Cloud ☁️'; status.style.background = '#10b981';
+                setTimeout(() => { status.style.display = 'none'; }, 3000);
+            }
+        }
+        const debouncedCloudSave = debounce(saveData, 2000);
 
+        // ==========================================
+        // XỬ LÝ SỰ KIỆN GIAO DIỆN
+        // ==========================================
         function handleDateChange() {
-            const d = document.getElementById('sessionDate').value;
-            document.getElementById('results-input').value = creditData['__results__']?.[d] || '';
+            updateDateHeaders();
+            const dateKey = document.getElementById('sessionDate').value;
+            const resInput = document.getElementById('results-input');
+            resInput.value = (creditData['__results__'] && creditData['__results__'][dateKey]) ? creditData['__results__'][dateKey] : '';
             switchCustomerContext(activeCustomer);
             renderChiTiet();
             calculateAndRender();
         }
 
-        document.getElementById('sessionDate').onchange = handleDateChange;
+        function handleCustomerChange(name) {
+            switchCustomerContext(name);
+        }
 
-        document.getElementById('results-input').oninput = function() {
-            const d = document.getElementById('sessionDate').value;
-            if(!creditData['__results__']) creditData['__results__'] = {};
-            creditData['__results__'][d] = this.value;
-            debouncedSave();
-            calculateAndRender();
-        };
-
-        document.getElementById('master-input').oninput = function() {
-            const d = document.getElementById('sessionDate').value;
-            if(activeCustomer && creditData[activeCustomer]) {
-                creditData[activeCustomer].inputs[d] = this.value;
-                debouncedSave();
+        function handleMasterInput() {
+            const dateKey = document.getElementById('sessionDate').value;
+            if (activeCustomer && creditData[activeCustomer]) {
+                creditData[activeCustomer].inputs[dateKey] = document.getElementById('master-input').value;
+                debouncedCloudSave();
             }
-        };
+        }
 
-        // --- HÀM TÍNH TOÁN (LÀM TRÒN NHÀ CÁI) ---
-        function runCoreMath(input, result, p) {
-            const resClean = result.replace(/[^\d\s]/g, ' ');
-            const tokens = resClean.trim().split(/\s+/).filter(t => t.length >= 2);
-            let allNums = [];
+        function handleResultsInput() {
+            const dateKey = document.getElementById('sessionDate').value;
+            creditData['__results__'][dateKey] = document.getElementById('results-input').value;
+            debouncedCloudSave();
+            calculateAndRender();
+        }
+
+        function toggleConfigPanel() {
+            const panel = document.getElementById('config-panel');
+            panel.classList.toggle('hidden');
+            document.getElementById('toggleConfig').innerText = panel.classList.contains('hidden') ? 'Hiện Cấu Hình Giá' : 'Ẩn Cấu Hình';
+        }
+
+        function handleConfigInput() {
+            let target = (activeCustomer && creditData[activeCustomer]) ? creditData[activeCustomer].config : creditData['__default_config__'];
+            target.lo = parseFloat(document.getElementById('pricePerDiem').value) || 0;
+            target.de = parseFloat(document.getElementById('pricePerDeUnit').value) || 0;
+            target.c3 = parseFloat(document.getElementById('pricePer3CUnit').value) || 0;
+            target.x2 = parseFloat(document.getElementById('pricePerX2Unit').value) || 0;
+            target.x3 = parseFloat(document.getElementById('pricePerX3Unit').value) || 0;
+            target.payLo = parseFloat(document.getElementById('lottoPayout').value) || 0;
+            target.payDe = parseFloat(document.getElementById('dePayout').value) || 0;
+            target.pay3C = parseFloat(document.getElementById('payoutRatio3C').value) || 0;
+            target.payX2 = parseFloat(document.getElementById('payoutRatioX2').value) || 0;
+            target.payX3 = parseFloat(document.getElementById('payoutRatioX3').value) || 0;
+            target.isCompany = document.getElementById('isCompanyConfig').checked;
+            
+            debouncedCloudSave();
+            if (document.getElementById('isCompanyConfig').id === 'isCompanyConfig') switchCustomerContext(activeCustomer);
+            else calculateAndRender();
+        }
+
+        // ==========================================
+        // TÍNH TOÁN CỐT LÕI (LÀM TRÒN NHÀ CÁI)
+        // ==========================================
+        function runCoreMath(rawInput, rawResults, p) {
+            const cleaned = rawResults.replace(/[^\d\s]/g, ' ');
+            const tokens = cleaned.trim().split(/\s+/).filter(t=>t.length > 0);
+            let allNumbers = [];
             tokens.forEach(t => {
-                if (t.length >= 8) { for(let i=0; i<t.length; i+=Math.floor(t.length/2)) allNums.push(t.slice(i, i+5)); }
-                else allNums.push(t);
+                if (t.length === 1) return;
+                if (t.length === 10 || t.length === 30 || t.length === 15) { for(let i=0; i<t.length; i+=5) allNumbers.push(t.slice(i, i+5)); }
+                else if (t.length === 16 || t.length === 24) { for(let i=0; i<t.length; i+=4) allNumbers.push(t.slice(i, i+4)); }
+                else if (t.length === 8) { for(let i=0; i<t.length; i+=2) allNumbers.push(t.slice(i, i+2)); }
+                else { allNumbers.push(t); }
             });
-            const deRes = (allNums.find(t=>t.length>=4)||allNums[0]||'').slice(-2);
-            const loHits = {}; allNums.forEach(n => { const l = n.slice(-2); if(l.length===2) loHits[l] = (loHits[l]||0)+1; });
+            const deResult = (allNumbers.find(t=>t.length>=4)||allNumbers[0]||'').slice(-2);
+            const de3CResult = (allNumbers.find(t=>t.length>=4)||allNumbers[0]||'').slice(-3);
+            const loHitCounts = {}; allNumbers.forEach(n => { const l = n.slice(-2); if(l.length===2) loHitCounts[l] = (loHitCounts[l]||0)+1; });
 
-            let sLoG=0, sDeG=0, sLoW=0, sDeW=0;
-            let detailW = {};
+            const data = { lo: {}, de: {}, '3c': {}, x2: {}, x3: {} };
+            const keys = ['ba càng đề', 'đề ba càng', 'ba càng', '3 càng', 'xiên 2', 'xiên 3', 'lo', 'lô', 'de', 'đề'];
+            let pInput = rawInput.replace(/\n/g, '||').replace(/([a-zđ₫nk])\./gi, '$1||').replace(new RegExp(`(\\b(?:${keys.join('|')})\\s+)`, 'gi'), '||$1');
+            
+            let lastType = null;
+            pInput.split('||').forEach(line => {
+                let str = line.toLowerCase().trim(); if(!str) return;
+                let type = null;
+                if (str.startsWith('lo') || str.startsWith('lô')) type = 'lo';
+                else if (str.startsWith('de') || str.startsWith('đề')) type = 'de';
+                else if (str.includes('càng')) type = '3c';
+                else if (str.includes('x2') || str.includes('xiên 2')) type = 'x2';
+                else if (str.includes('x3') || str.includes('xiên 3')) type = 'x3';
+                else type = lastType;
+                if(!type) return; lastType = type;
 
-            const lines = input.toLowerCase().split('\n');
-            lines.forEach(line => {
-                let match = line.match(/(.+?)\s*(?:x|X|×|\*)\s*(\d+)/);
-                if(match) {
-                    let nums = match[1].match(/\d+/g) || [];
+                let match = str.match(/(.+?)\s*(?:x|X|×|\*)\s*(\d+)/);
+                if (match) {
+                    let numStr = match[1].replace(/[^\d\s kép lệc bằng đầu đít tổng]/g, '');
                     let qty = parseInt(match[2]);
-                    if(line.includes('de') || line.includes('đề')) {
-                        sDeG += nums.length * qty;
-                        nums.forEach(n => { if(n.slice(-2) === deRes) sDeW += qty; });
-                    } else {
-                        sLoG += nums.length * qty;
-                        nums.forEach(n => { 
-                            let h = loHits[n.slice(-2)] || 0; 
-                            if(h > 0) { sLoW += h * qty; detailW[n.slice(-2)] = (detailW[n.slice(-2)]||0) + h; }
-                        });
-                    }
+                    // Xử lý Đầu/Đít/Tổng/Kép
+                    numStr = numStr.replace(/kép lệch|kep lech/g, ' 05 50 16 61 27 72 38 83 49 94 ');
+                    numStr = numStr.replace(/kép bằng|kep bang|kép|kep/g, ' 00 11 22 33 44 55 66 77 88 99 ');
+                    numStr = numStr.replace(/(đầu|dau)\s*(\d)/g, (m,p1,p2)=>{ let r=[]; for(let i=0;i<=9;i++) r.push(p2+i); return ' '+r.join(' ')+' '; });
+                    numStr = numStr.replace(/(đít|dit|đuôi|duoi)\s*(\d)/g, (m,p1,p2)=>{ let r=[]; for(let i=0;i<=9;i++) r.push(i+p2); return ' '+r.join(' ')+' '; });
+                    numStr = numStr.replace(/(tổng|tong)\s*(\d)/g, (m,p1,p2)=>{ let v=parseInt(p2), r=[]; for(let i=0;i<=9;i++) for(let j=0;j<=9;j++) if((i+j)%10===v) r.push(i.toString()+j.toString()); return ' '+r.join(' ')+' '; });
+                    
+                    let nums = numStr.match(/\d+/g) || [];
+                    if (!data[type][qty]) data[type][qty] = []; data[type][qty].push(...nums);
                 }
             });
 
-            let cost = Math.ceil((sLoG * p.lo + sDeG * p.de)/1000)*1000;
-            let win = Math.floor((sLoW * p.payLo + sDeW * p.payDe)/1000)*1000;
-            return { cost, win, net: win - cost, sLoG, sDeG, sLoW, sDeW, detailW };
+            let sLoGhi=0, sDeGhi=0, s3CGhi=0, sX2Ghi=0, sX3Ghi=0;
+            let sLoTrung=0, sDeTrung=0, s3CTrung=0, sX2Trung=0, sX3Trung=0;
+            let loHitsDetail = {}, deHitsDetail = {};
+
+            for(let q in data.lo){ let qty=parseFloat(q); sLoGhi+=data.lo[q].length*qty; data.lo[q].forEach(n=>{ let h=loHitCounts[n]||0; if(h>0){ sLoTrung+=h*qty; loHitsDetail[n]=(loHitsDetail[n]||0)+h; } }); }
+            for(let q in data.de){ let qty=parseFloat(q); sDeGhi+=data.de[q].length*qty; data.de[q].forEach(n=>{ if(n===deResult){ sDeTrung+=qty; deHitsDetail[n]=1; } }); }
+            for(let q in data['3c']){ let qty=parseFloat(q); s3CGhi+=data['3c'][q].length*qty; data['3c'][q].forEach(n=>{ if(n===de3CResult) s3CTrung+=qty; }); }
+            // Làm tròn hàng nghìn: Nhận làm tròn LÊN, Trúng làm tròn XUỐNG
+            let cLo = Math.ceil((sLoGhi*p.lo)/1000)*1000, wLo = Math.floor((sLoTrung*p.payLo)/1000)*1000;
+            let cDe = Math.ceil((sDeGhi*p.de)/1000)*1000, wDe = Math.floor((sDeTrung*p.payDe)/1000)*1000;
+            let c3C = Math.ceil((s3CGhi*p.c3)/1000)*1000, w3C = Math.floor((s3CTrung*(1000*p.pay3C))/1000)*1000;
+
+            let totalCost = cLo+cDe+c3C; let totalWin = wLo+wDe+w3C;
+            return { cost: totalCost, win: totalWin, netCost: totalWin - totalCost, sLoGhi, sDeGhi, s3CGhi, cLo, cDe, c3C, wLo, wDe, w3C, loHitsDetail, deHitsDetail, sLoTrung, sDeTrung };
         }
 
         function calculateAndRender() {
-            const input = document.getElementById('master-input').value;
-            const result = document.getElementById('results-input').value;
-            const p = creditData[activeCustomer]?.config || basePrice;
-            const calc = runCoreMath(input, result, p);
+            const rawInput = document.getElementById('master-input').value;
+            const rawResults = document.getElementById('results-input').value;
+            const p = (activeCustomer && creditData[activeCustomer]) ? creditData[activeCustomer].config : creditData['__default_config__'];
+            
+            const calc = runCoreMath(rawInput, rawResults, p);
             currentCalcData = calc;
 
-            let loDet = Object.entries(calc.detailW).map(([n,h])=>h>1?`${n}(x${h})`:n).join(' ');
-            document.getElementById('totalCostOutput').innerText = formatVND(calc.cost);
-            document.getElementById('totalWinningsOutput').innerText = formatVND(calc.win);
-            document.getElementById('totalProfitOutput').innerText = formatVND(Math.abs(calc.net));
-            document.getElementById('totalProfitOutput').style.color = calc.net >= 0 ? 'green' : 'red';
-            
-            document.getElementById('results-container').innerHTML = calc.win > 0 ? 
-                `<div class="bg-green-50 p-3 rounded border border-green-200 text-sm"><b>Trúng Lô:</b> ${calc.sLoW}đ [${loDet}]</div>` : '';
+            let loDet = Object.entries(calc.loHitsDetail).map(([n,h])=>h>1?`${n}(x${h})`:n).join(' ');
+            let html = `<div class="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm"><div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><h4 class="font-bold text-red-600 mb-2">🔴 NHẬN ĐÁNH</h4><div class="text-sm">
+                    ${calc.sLoGhi>0?`<div class="flex justify-between"><span>Lô: <b>${calc.sLoGhi}đ</b></span> <span>${formatVND(calc.cLo)}</span></div>`:''}
+                    ${calc.sDeGhi>0?`<div class="flex justify-between"><span>Đề: <b>${calc.sDeGhi}n</b></span> <span>${formatVND(calc.cDe)}</span></div>`:''}
+                </div></div>
+                <div><h4 class="font-bold text-green-600 mb-2">🟢 TRÚNG THƯỞNG</h4><div class="text-sm">
+                    ${calc.sLoTrung>0?`<div class="flex justify-between"><span>Lô: <b>${calc.sLoTrung}đ</b> <span class="text-xs text-blue-600">[${loDet}]</span></span> <span>${formatVND(calc.wLo)}</span></div>`:''}
+                    ${calc.sDeTrung>0?`<div class="flex justify-between font-bold text-green-700"><span>Đề: <b>${calc.sDeTrung}n</b></span> <span>${formatVND(calc.wDe)}</span></div>`:''}
+                </div></div>
+            </div></div>`;
+            document.getElementById('results-container').innerHTML = html;
+            document.getElementById('totalCostOutput').textContent = formatVND(calc.cost);
+            document.getElementById('totalWinningsOutput').textContent = formatVND(calc.win);
+            document.getElementById('totalProfitOutput').textContent = formatVND(Math.abs(calc.netCost));
+            document.getElementById('totalProfitOutput').className = `text-2xl md:text-3xl font-bold font-mono ${calc.netCost >= 0 ? 'text-green-600' : 'text-red-600'}`;
         }
 
-        // --- XUẤT TIN NHẮN TỪ TAB 3 ---
-        function exportTN(name) {
-            const d = document.getElementById('sessionDate').value;
-            const input = creditData[name]?.inputs?.[d] || '';
-            const result = creditData['__results__']?.[d] || '';
-            const p = creditData[name]?.config || basePrice;
-            const c = runCoreMath(input, result, p);
+        // ==========================================
+        // XUẤT TIN NHẮN (TAB 3)
+        // ==========================================
+        function exportMessageForCustomer(name) {
+            const dateKey = document.getElementById('sessionDate').value;
+            const d = dateKey.split('-'); const dateStr = `${d[2]}-${d[1]}-${d[0]}`;
+            const rawInput = (creditData[name] && creditData[name].inputs[dateKey]) ? creditData[name].inputs[dateKey] : '';
+            const rawResults = (creditData['__results__'] && creditData['__results__'][dateKey]) ? creditData['__results__'][dateKey] : '';
+            const p = (creditData[name] && creditData[name].config) ? creditData[name].config : (creditData['__default_config__'] || defaultConfig);
 
-            const parts = d.split('-');
-            let msg = `Ngay: ${parts[2]}-${parts[1]}-${parts[0]}\n`;
-            if(c.sLoG > 0) msg += `Lo: ${c.sLoG}d = ${(c.sLoG * p.lo / 1000).toLocaleString()}n\n`;
-            if(c.sDeG > 0) msg += `De: ${c.sDeG}n = ${(c.sDeG * p.de / 1000).toLocaleString()}n\n`;
-            if(c.sLoW > 0) msg += `Th lo: ${c.sLoW}d [${Object.keys(c.detailW).join(' ')}] = ${(c.sLoW * p.payLo / 1000).toLocaleString()}n\n`;
-            if(c.sDeW > 0) msg += `Th de: ${c.sDeW}n = ${(c.sDeW * p.payDe / 1000).toLocaleString()}n\n`;
-            
-            msg += `Hom nay : ${c.net >= 0 ? `(duong) ${(c.net/1000).toLocaleString()}` : `(am) ${(Math.abs(c.net)/1000).toLocaleString()}`}n\n`;
-            
-            let oldD = 0;
-            for(let k in creditData[name].debts) if(k !== d) oldD += creditData[name].debts[k];
-            msg += `No cu: ${oldD >= 0 ? '' : '-'}${Math.abs(oldD).toLocaleString()}n\n`;
-            
-            let final = oldD + (c.net/1000);
-            msg += `Tong: ${c.net/1000 >= 0 ? '' : '-'}${Math.abs(c.net/1000).toLocaleString()} + (${oldD >= 0 ? '' : '-'}${Math.abs(oldD).toLocaleString()}) = ${final >= 0 ? '' : '-'}${Math.abs(final).toLocaleString()}n.`;
+            const c = runCoreMath(rawInput, rawResults, p);
+            const fn = (v) => (v/1000).toLocaleString('vi-VN') + 'n';
+            const fs = (v) => (v === 0 ? '0' : (v < 0 ? '-' : '') + (Math.abs(v)/1000).toLocaleString('vi-VN'));
+            const loDet = Object.keys(c.loHitsDetail).join(' ');
 
-            const area = document.getElementById('hiddenCopyArea');
-            area.value = msg; area.select(); document.execCommand('copy');
+            let msg = `Ngay: ${dateStr}\n`;
+            if (c.sLoGhi > 0) msg += `Lo: ${c.sLoGhi}d = ${fn(c.cLo)}\n`;
+            if (c.sDeGhi > 0) msg += `De: ${c.sDeGhi}n = ${fn(c.cDe)}\n`;
+            if (c.sLoTrung > 0) msg += `Th lo: ${c.sLoTrung}d [${loDet}] = ${fn(c.wLo)}\n`;
+            if (c.sDeTrung > 0) msg += `Th de: ${c.sDeTrung}n = ${fn(c.wDe)}\n`;
             
-            const notice = document.getElementById('copyNotice');
-            notice.classList.remove('hidden');
-            setTimeout(() => notice.classList.add('hidden'), 2500);
+            msg += `Hom nay : ${c.netCost >= 0 ? `(duong) ${fn(c.netCost)}` : `(am) ${fn(Math.abs(c.netCost))}`}\n`;
+            
+            const oldDebtVND = calculateOldDebt(name) * 1000;
+            msg += `No cu: ${fs(oldDebtVND)}n\n`;
+            
+            const finalTotal = oldDebtVND + c.netCost;
+            msg += `Tong: ${fs(c.netCost)} + (${fs(oldDebtVND)}) = ${fs(finalTotal)}n.`;
+
+            // COPY & HIỆN THÔNG BÁO TẠM
+            const dummy = document.getElementById('hiddenCopyArea'); dummy.value = msg; dummy.select(); document.execCommand('copy');
+            const container = document.getElementById('messageOutputContainer');
+            document.getElementById('messageOutput').value = msg;
+            container.classList.remove('hidden');
         }
 
-        // --- CÁC HÀM KHỞI TẠO KHÁC ---
+        // ==========================================
+        // CÁC HÀM QUẢN LÝ NGƯỜI DÙNG & TIỆN ÍCH
+        // ==========================================
+        const defaultConfig = { lo: 22500, de: 1000, c3: 1000, x2: 1000, x3: 1000, payLo: 80000, payDe: 80000, pay3C: 400, payX2: 10, payX3: 40, isCompany: false };
+
         function switchCustomerContext(name) {
-            const d = document.getElementById('sessionDate').value;
-            if(activeCustomer && creditData[activeCustomer]) creditData[activeCustomer].inputs[d] = document.getElementById('master-input').value;
+            const dateKey = document.getElementById('sessionDate').value;
+            const inputEl = document.getElementById('master-input');
+            if (activeCustomer && creditData[activeCustomer]) creditData[activeCustomer].inputs[dateKey] = inputEl.value;
+
             activeCustomer = name;
-            document.getElementById('lblActiveUser').innerText = name || "KHÁCH VÃNG LAI";
-            const input = document.getElementById('master-input');
+            document.getElementById('lblActiveUser').innerText = activeCustomer || "Khách Vãng Lai";
             
-            if(name && creditData[name]) {
-                if(creditData[name].config?.isCompany) {
-                    let total = "";
-                    for(let k in creditData) if(k!=='__results__' && k!=='__default_config__' && k!==name && !creditData[k].config?.isCompany) total += (creditData[k].inputs?.[d] || "") + "\n";
-                    input.value = total.trim();
+            if (activeCustomer && creditData[activeCustomer]) {
+                const cfg = creditData[activeCustomer].config;
+                if (cfg.isCompany) {
+                    let totalText = "";
+                    for(let n in creditData){
+                        if(n!=='__results__' && n!=='__default_config__' && n!==activeCustomer && !creditData[n].config.isCompany){
+                            let txt = creditData[n].inputs[dateKey];
+                            if(txt && txt.trim()) totalText += txt.trim() + "\n\n";
+                        }
+                    }
+                    inputEl.value = totalText.trim();
                 } else {
-                    input.value = creditData[name].inputs?.[d] || '';
+                    inputEl.value = creditData[activeCustomer].inputs[dateKey] || '';
                 }
-                applyCustomerConfig(name);
-            } else { input.value = ''; }
+                applyCustomerConfig(activeCustomer);
+            } else {
+                inputEl.value = ''; applyCustomerConfig('');
+            }
             calculateAndRender();
         }
 
-        function applyCustomerConfig(name) {
-            const cfg = creditData[name]?.config || creditData['__default_config__'] || basePrice;
-            document.getElementById('pricePerDiem').value = cfg.lo;
-            document.getElementById('pricePerDeUnit').value = cfg.de;
-            document.getElementById('pricePer3CUnit').value = cfg.c3;
-            document.getElementById('pricePerX2Unit').value = cfg.x2;
-            document.getElementById('pricePerX3Unit').value = cfg.x3;
-            document.getElementById('lottoPayout').value = cfg.payLo;
-            document.getElementById('dePayout').value = cfg.payDe;
-            document.getElementById('payoutRatio3C').value = cfg.pay3C;
-            document.getElementById('payoutRatioX2').value = cfg.payX2;
-            document.getElementById('payoutRatioX3').value = cfg.payX3;
-            document.getElementById('isCompanyConfig').checked = cfg.isCompany || false;
-        }
-
         function renderTongHop() {
-            const body = document.getElementById('tongHopBody'); body.innerHTML = '';
-            for(let name in creditData) {
-                if(name.startsWith('__')) continue;
-                let total = 0; for(let k in creditData[name].debts) total += creditData[name].debts[k];
+            const tbody = document.getElementById('tongHopBody'); tbody.innerHTML = '';
+            Object.keys(creditData).filter(n=>n!=='__results__' && n!=='__default_config__').forEach(name => {
+                let total = calculateUserTotal(name);
                 let tr = document.createElement('tr');
-                tr.innerHTML = `<td class="col-name" onclick="goToDetail('${name}')">${name}</td><td class="font-bold ${total>=0?'text-green-600':'text-red-600'}">${(total*1000).toLocaleString()} đ</td>`;
-                body.appendChild(tr);
-            }
-            populateSelectors();
+                tr.innerHTML = `<td class="col-name" onclick="goToDetail('${name}')">${name}</td><td class="${total>=0?'text-green-600':'text-red-600'} font-bold">${(total*1000).toLocaleString('vi-VN')} đ</td>`;
+                tbody.appendChild(tr);
+            });
+            populateCustomerSelector();
         }
 
-        function populateSelectors() {
-            const sel = document.getElementById('customerSelector'); sel.innerHTML = '<option value="">-- Chọn khách --</option>';
-            const quick = document.getElementById('quickSelectContacts'); quick.innerHTML = '';
-            for(let name in creditData) {
-                if(name.startsWith('__')) continue;
-                sel.innerHTML += `<option value="${name}">${name}</option>`;
-                let span = document.createElement('span');
-                span.className = "bg-white border px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-indigo-600 hover:text-white";
-                span.innerText = name; span.onclick = () => { sel.value = name; switchCustomerContext(name); };
-                quick.appendChild(span);
-            }
-        }
-
-        function renderChiTiet() {
-            const body = document.getElementById('chiTietBody'); body.innerHTML = '';
-            const d = document.getElementById('sessionDate').value;
-            for(let name in creditData) {
-                if(name.startsWith('__')) continue;
-                let old = 0; for(let k in creditData[name].debts) if(k!==d) old += creditData[name].debts[k];
-                let today = creditData[name].debts[d] || 0;
+        function renderChiTiet(filterName = null) {
+            const tbody = document.getElementById('chiTietBody'); tbody.innerHTML = '';
+            let names = Object.keys(creditData).filter(n=>n!=='__results__' && n!=='__default_config__');
+            if(filterName) names = names.filter(n=>n===filterName);
+            names.forEach(name => {
                 let tr = document.createElement('tr');
-                tr.innerHTML = `<td class="font-bold text-left">${name}</td>
-                    <td>${(old*1000).toLocaleString()}</td>
-                    <td><input type="number" value="${today}" onchange="updateDebt('${name}','${d}',this.value)" class="day-input"></td>
-                    <td class="font-bold">${((old+today)*1000).toLocaleString()}</td>
-                    <td><button onclick="exportTN('${name}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs">Xuất TN</button></td>`;
-                body.appendChild(tr);
-            }
+                let old = calculateOldDebt(name);
+                let todayVal = creditData[name].debts[document.getElementById('sessionDate').value] || 0;
+                let total = calculateUserTotal(name);
+                tr.innerHTML = `<td onclick="switchCustomerContext('${name}'); openTab(null,'TinhToan')" class="cursor-pointer font-bold hover:text-blue-700 underline">${name}</td>
+                    <td>${(old*1000).toLocaleString('vi-VN')}</td>
+                    <td><input type="number" value="${todayVal}" onchange="updateRecord('${name}',this.value)" class="day-input"></td>
+                    <td class="font-bold">${(total*1000).toLocaleString('vi-VN')}</td>
+                    <td><button onclick="exportMessageForCustomer('${name}')" class="bg-emerald-600 text-white font-bold py-1 px-3 rounded text-xs shadow-sm">Xuất TN</button></td>`;
+                tbody.appendChild(tr);
+            });
         }
 
-        function updateDebt(name, day, val) {
-            creditData[name].debts[day] = parseFloat(val) || 0;
-            debouncedSave(); renderTongHop();
+        function updateRecord(name, val) {
+            creditData[name].debts[document.getElementById('sessionDate').value] = parseFloat(val) || 0;
+            saveData(); renderTongHop(); renderChiTiet();
         }
 
         function saveToDebt() {
             if(!activeCustomer || !currentCalcData) return;
-            const d = document.getElementById('sessionDate').value;
-            creditData[activeCustomer].debts[d] = currentCalcData.net / 1000;
-            syncData(); renderTongHop(); renderChiTiet();
-            alert("✅ Đã lưu vào sổ!");
+            const dateKey = document.getElementById('sessionDate').value;
+            creditData[activeCustomer].debts[dateKey] = currentCalcData.netCost / 1000;
+            saveData(); renderTongHop(); renderChiTiet();
+            alert("✅ Đã chốt số vào công nợ!");
         }
 
         function addNewUser() {
-            let n = document.getElementById('newUserName').value.trim();
-            if(!n || creditData[n]) return;
-            creditData[n] = { debts: {}, config: {...(creditData['__default_config__']||basePrice)}, inputs: {} };
-            syncData(); document.getElementById('newUserName').value = ''; renderTongHop();
+            let name = document.getElementById('newUserName').value.trim();
+            if(!name || creditData[name]) return;
+            creditData[name] = { debts: {}, config: { ...creditData['__default_config__'] }, inputs: {} };
+            saveData(); renderTongHop(); switchCustomerContext(name);
         }
 
-        function openTab(evt, name) {
-            let content = document.getElementsByClassName("tabcontent");
-            for (let i = 0; i < content.length; i++) content[i].style.display = "none";
-            let links = document.getElementsByClassName("tablinks");
-            for (let i = 0; i < links.length; i++) links[i].className = links[i].className.replace(" active", "");
-            document.getElementById(name).style.display = "block";
-            if(evt) evt.currentTarget.className += " active";
+        async function autoFetchKQXS() {
+            const dateVal = document.getElementById('sessionDate').value;
+            const btn = document.getElementById('btnAutoFetch'); btn.innerText = "⏳ Đang lấy...";
+            const url = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://xoso.me/xsmb-' + dateVal.split('-').reverse().join('-') + '.html')}`;
+            try {
+                const res = await fetch(url); const text = await res.text();
+                const doc = new DOMParser().parseFromString(text, "text/html");
+                let numbers = []; doc.querySelectorAll('span[data-val]').forEach(s => numbers.push(s.getAttribute('data-val')));
+                if(numbers.length >= 27) {
+                    let final = numbers.slice(0, 27).join('\n');
+                    document.getElementById('results-input').value = final;
+                    creditData['__results__'][dateVal] = final;
+                    debouncedCloudSave(); calculateAndRender();
+                } else { alert("Chưa có kết quả!"); }
+            } catch(e) { alert("Lỗi mạng!"); }
+            btn.innerText = "⚡ TỰ ĐỘNG LẤY KQXS";
         }
 
-        function goToDetail(name) { document.getElementById('btnTabChiTiet').click(); renderChiTiet(); }
-        
-        loadDataFromSupabase();
+        window.onload = loadDataFromSupabase;
     </script>
 </body>
 </html>
